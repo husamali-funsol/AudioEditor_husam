@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_marginBottom="20dp"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/tvTitle_libItem"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:fontFamily="@font/poppins_medium"
+        android:text="Title"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constraintEnd_toStartOf="@+id/ibMenu_libItem"
+        app:layout_constraintStart_toEndOf="@+id/ivAvatar_libItem"
+        app:layout_constraintTop_toTopOf="@+id/ivAvatar_libItem" />
+
+    <TextView
+        android:id="@+id/tvMetaData_libItem"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Metadata"
+        android:fontFamily="@font/poppins_medium"
+        android:textSize="10sp"
+        android:textColor="@color/lightGrey"
+        app:layout_constraintBottom_toBottomOf="@+id/ivAvatar_libItem"
+        app:layout_constraintEnd_toEndOf="@+id/tvTitle_libItem"
+        app:layout_constraintStart_toStartOf="@+id/tvTitle_libItem"
+        app:layout_constraintTop_toBottomOf="@+id/tvTitle_libItem" />
+
+    <ImageView
+        android:id="@+id/ivAvatar_libItem"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/rounded_imageview"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/ibMenu_libItem"
+        android:padding="10dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        app:layout_constraintBottom_toBottomOf="@+id/ivAvatar_libItem"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/ivAvatar_libItem"
+        app:srcCompat="@drawable/ic_more" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

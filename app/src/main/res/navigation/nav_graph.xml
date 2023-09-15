@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/startFragment">
+
+    <fragment
+        android:id="@+id/startFragment"
+        android:name="com.example.audioeditor.ui.fragments.splash.StartFragment"
+        android:label="fragment_start"
+        tools:layout="@layout/fragment_start" >
+        <action
+            android:id="@+id/action_startFragment_to_onBoardingFragment"
+            app:destination="@id/onBoardingFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/onBoardingFragment"
+        android:name="com.example.audioeditor.ui.fragments.onboarding.OnBoardingFragment"
+        android:label="fragment_on_boarding"
+        tools:layout="@layout/fragment_on_boarding" >
+        <action
+            android:id="@+id/action_onBoardingFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.audioeditor.ui.fragments.home.HomeFragment"
+        android:label="fragment_home"
+        tools:layout="@layout/fragment_home" />
+    <fragment
+        android:id="@+id/libraryFragment"
+        android:name="com.example.audioeditor.ui.fragments.library.LibraryFragment"
+        android:label="fragment_library"
+        tools:layout="@layout/fragment_library" >
+        <action
+            android:id="@+id/action_libraryFragment_to_myAudioFragment"
+            app:destination="@id/myAudioFragment" />
+        <action
+            android:id="@+id/action_libraryFragment_to_myVideoFragment"
+            app:destination="@id/myVideoFragment" />
+        <action
+            android:id="@+id/action_libraryFragment_to_myAudioPlayerFragment2"
+            app:destination="@id/myAudioPlayerFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.audioeditor.ui.fragments.settings.SettingsFragment"
+        android:label="fragment_settings"
+        tools:layout="@layout/fragment_settings" />
+    <fragment
+        android:id="@+id/myAudioFragment"
+        android:name="com.example.audioeditor.ui.fragments.library.audioslist.MyAudioFragment"
+        android:label="fragment_my_audio"
+        tools:layout="@layout/fragment_my_audio" />
+    <fragment
+        android:id="@+id/myVideoFragment"
+        android:name="com.example.audioeditor.ui.fragments.library.videoslist.MyVideoFragment"
+        android:label="fragment_my_video"
+        tools:layout="@layout/fragment_my_video" />
+    <fragment
+        android:id="@+id/myAudioPlayerFragment"
+        android:name="com.example.audioeditor.ui.fragments.library.audioplayer.MyAudioPlayerFragment"
+        android:label="MyAudioPlayerFragment" />
+
+</navigation>

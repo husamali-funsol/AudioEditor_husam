@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:elevation="10dp"
+    android:background="@color/white"
+    style="@style/BottomSheet"
+    android:layout_height="wrap_content">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:padding="16dp"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvTitleLibSheet"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Title"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivAvatarLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivAvatarLibSheet" />
+
+        <TextView
+            android:id="@+id/tvMetaDataLibSheet"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Metadata"
+            android:textColor="@color/lightGrey"
+            app:layout_constraintBottom_toBottomOf="@+id/ivAvatarLibSheet"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tvTitleLibSheet"
+            app:layout_constraintTop_toBottomOf="@+id/tvTitleLibSheet" />
+
+        <ImageView
+            android:id="@+id/ivAvatarLibSheet"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_drop_down" />
+
+        <ImageView
+            android:id="@+id/ivRenameLibSheet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivAvatarLibSheet"
+            app:srcCompat="@drawable/ic_rename" />
+
+        <TextView
+            android:id="@+id/tvRenameLibSheet"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="Rename"
+            app:layout_constraintBottom_toBottomOf="@+id/ivRenameLibSheet"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivRenameLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivRenameLibSheet" />
+
+        <ImageView
+            android:id="@+id/ivDetailLibSheet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivRenameLibSheet"
+            app:srcCompat="@drawable/ic_detail" />
+
+        <TextView
+            android:id="@+id/tvDetailLibSheet"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="Detail"
+            app:layout_constraintBottom_toBottomOf="@+id/ivDetailLibSheet"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivDetailLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivDetailLibSheet" />
+
+        <ImageView
+            android:id="@+id/ivShareLibSheet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivDetailLibSheet"
+            app:srcCompat="@drawable/ic_share" />
+
+        <TextView
+            android:id="@+id/tvShareLibSheet"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="Share"
+            app:layout_constraintBottom_toBottomOf="@+id/ivShareLibSheet"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivShareLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivShareLibSheet" />
+
+        <ImageView
+            android:id="@+id/ivDeleteLibSheet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivShareLibSheet"
+            app:srcCompat="@drawable/ic_delete" />
+
+        <TextView
+            android:id="@+id/tvDeleteLibSheet"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="Delete"
+            android:textColor="#AB3131"
+            app:layout_constraintBottom_toBottomOf="@+id/ivDeleteLibSheet"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivDeleteLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivDeleteLibSheet" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>
