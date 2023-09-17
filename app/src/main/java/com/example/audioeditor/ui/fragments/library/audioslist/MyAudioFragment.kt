@@ -3,7 +3,6 @@ package com.example.audioeditor.ui.fragments.library.audioslist
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Intent
-import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -14,7 +13,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -36,10 +34,12 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.ArrayList
 
+private const val TAG = "hello"
 
 class MyAudioFragment(val callBack: (List<LibraryItemModel>, Int) -> Unit) : Fragment() {
 
     private lateinit var binding: FragmentMyAudioBinding
+
 
     private var alertDialog: AlertDialog? = null
 
@@ -230,76 +230,33 @@ class MyAudioFragment(val callBack: (List<LibraryItemModel>, Int) -> Unit) : Fra
 
     private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel, position: Int) {
         val filePath =
-            libItem!!.path
-//        val newFileName = "new_audio_file.wav" // Provide the new file name
+            libItem.path
         val newFileName = "$newName.$ext" // Provide the new file name
-        Log.d("library rename", newFileName)
-
-        // Create a File object for the original file
         val originalFile = File(filePath!!)
-
-        if (!originalFile.exists()) {
-            Log.e("asdf", "File does not exist at path: $filePath")
-            return
-        }
-
         // Create a File object for the new file with the desired name
         val directoryPath = originalFile.parentFile // Get the directory path
         val newFile = File(directoryPath, newFileName)
 
-
         // Rename the file
         if (originalFile.exists()) {
             if (originalFile.renameTo(newFile)) {
-                // File renamed successfully
-                val contentResolver = requireContext().contentResolver
-                val contentValues = ContentValues()
-                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, newName)
-                contentValues.put(MediaStore.MediaColumns.TITLE, newName)
 
-                audioUri = libItem.uri!!
+                val newPath =
+                    newFile.path
+                val updatedFile = File(newPath!!)
 
                 val currentTimeMillis = System.currentTimeMillis()
                 newFile.setLastModified(currentTimeMillis)
-
-                // Construct a content URI for the original file using its ID
-                val originalFileId = libItem.id // Assuming you have the ID of the media file
-                val originalUri = ContentUris.withAppendedId(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    originalFileId
-                )
-
-                // Update the path and URI in your LibraryItemViewModel
-                libItem.path = newFile.path
-                libItem.uri = originalUri // Use the content URI
-
-                val newPath =
-                    libItem.path
-
-                val updatedFile = File(newPath!!)
-                requireContext().refreshMediaStore(updatedFile)
-
-                val selection = "${MediaStore.MediaColumns.DATA} = ?"
-                val selectionArgs = arrayOf(newPath)
-
-                Log.d("asdf", "Original URI: $originalUri")
-
-                contentResolver.update(originalUri, contentValues, selection, selectionArgs)
-
+                originalFile.setLastModified(currentTimeMillis)
                 // Refresh the MediaStore to reflect the changes
                 requireContext().refreshMediaStore(updatedFile)
-
                 Toast.makeText(requireContext(), "Renaming Successful", Toast.LENGTH_SHORT).show()
-
-                //viewModel.getFiles()
-
                 adapter.itemUpdated(position, viewModel.getSingleFile(position))
 
             } else {
                 // Failed to rename the file
                 // Handle the error accordingly
                 Toast.makeText(requireContext(), "Renaming Failed", Toast.LENGTH_SHORT).show()
-
             }
         } else {
             // The original file does not exist

@@ -7,7 +7,7 @@ import android.os.Parcelable
 
 data class LibraryItemModel(
     val id: Long,
-    val title: String?,
+    var title: String?,
     var uri: Uri?,
     val metadata: String?,
     var path: String?,

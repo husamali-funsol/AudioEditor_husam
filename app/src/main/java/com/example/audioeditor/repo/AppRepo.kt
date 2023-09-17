@@ -8,6 +8,7 @@ import com.example.audioeditor.ui.fragments.library.LibraryItemModel
 import com.example.audioeditor.utils.formatDuration
 import com.example.audioeditor.utils.formatSizeToMB
 import com.example.audioeditor.utils.getAlbumArtwork
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -66,7 +67,7 @@ class AppRepo(private val appContext: Context) {
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
-                val title = cursor.getString(titleColumn)
+                var title = cursor.getString(titleColumn)
                 val uri = Uri.parse(cursor.getString(dataColumn)) // Get the audio URI
                 val path = cursor.getString(dataColumn)
                 val duration = cursor.getString(durationColumn)
@@ -86,6 +87,8 @@ class AppRepo(private val appContext: Context) {
                         Date(dateModified * 1000)
                     )
 
+                val fileNameWithExtension = File(path).name // This gives you "file.txt"
+                title = fileNameWithExtension.substringBeforeLast(".") // This gives you "file"
 
                 val metadata = "$durationFormatted | $sizeMB | $extension"
 
@@ -107,6 +110,7 @@ class AppRepo(private val appContext: Context) {
                 Log.d("achaa", "listAudioFiles: $id ")
                 Log.d("achaa", "listAudioFiles: $uri ")
                 Log.d("achaa", "listAudioFiles: $path ")
+                Log.d("achaa", "listAudioFiles: $title ")
 
                 audioItems.add(audioItem)
 
@@ -163,7 +167,7 @@ class AppRepo(private val appContext: Context) {
             cursor.moveToPosition(pos)
 
             val id = cursor.getLong(idColumn)
-            val title = cursor.getString(titleColumn)
+            var title = cursor.getString(titleColumn)
             val uri = Uri.parse(cursor.getString(dataColumn)) // Get the audio URI
             val path = cursor.getString(dataColumn)
             val duration = cursor.getString(durationColumn)
@@ -183,6 +187,8 @@ class AppRepo(private val appContext: Context) {
                     Date(dateModified * 1000)
                 )
 
+            val fileNameWithExtension = File(path).name // This gives you "file.txt"
+            title = fileNameWithExtension.substringBeforeLast(".") // This gives you "file"
 
             val metadata = "$durationFormatted | $sizeMB | $extension"
 
