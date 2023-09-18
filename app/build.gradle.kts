@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.audioeditor"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
@@ -77,6 +77,11 @@ dependencies {
     // LiveData
     implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
 
-    
+    //waveform
+    implementation  ("com.github.massoudss:waveformSeekBar:5.0.2")
+    implementation ("com.github.lincollincol:amplituda:2.2.2")
+
+    //ffmpeg
+    implementation ("com.arthenica:ffmpeg-kit-full:5.1")
 
 }

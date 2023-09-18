@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
 
         // Bottom Navigation Bar Visibility Checks
         navHost.addOnDestinationChangedListener{ controller , destination , arguments,->
+
             if((destination.id == R.id.homeFragment) || (destination.id == R.id.libraryFragment) || (destination.id == R.id.settingsFragment) ){
 binding.bottomNavigationView.visibility = View.VISIBLE
             }

@@ -28,7 +28,11 @@
         android:id="@+id/homeFragment"
         android:name="com.example.audioeditor.ui.fragments.home.HomeFragment"
         android:label="fragment_home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_homeFragment_to_convertFormat"
+            app:destination="@id/convertFormat" />
+    </fragment>
     <fragment
         android:id="@+id/libraryFragment"
         android:name="com.example.audioeditor.ui.fragments.library.LibraryFragment"
@@ -63,5 +67,10 @@
         android:id="@+id/myAudioPlayerFragment"
         android:name="com.example.audioeditor.ui.fragments.library.audioplayer.MyAudioPlayerFragment"
         android:label="MyAudioPlayerFragment" />
+    <fragment
+        android:id="@+id/convertFormat"
+        android:name="com.example.audioeditor.ui.fragments.features.convertformat.ConvertFormat"
+        android:label="fragment_convert_format"
+        tools:layout="@layout/fragment_convert_format" />
 
 </navigation>

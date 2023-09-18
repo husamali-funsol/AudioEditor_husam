@@ -12,10 +12,14 @@ import com.example.audioeditor.R
 
 class LibraryItemAdapter(
     private var mList: ArrayList<LibraryItemModel>,
-    private val showOptions: (LibraryItemModel , Int) -> Unit,
-    private val navigateToPlayer: (List<LibraryItemModel>, Int) -> Unit,
+    private val onItemClicked: OnItemClicked
 ) :
     RecyclerView.Adapter<LibraryItemAdapter.ViewHolder>() {
+    interface OnItemClicked {
+        fun onItemClicked(audioList: List<LibraryItemModel> ,position: Int)
+
+        fun onMenuClicked(audioItem: LibraryItemModel, position: Int)
+    }
 
     // Holds the views for adding it to image and text
     class ViewHolder(ItemView: View) : RecyclerView.ViewHolder(ItemView) {
@@ -38,14 +42,23 @@ class LibraryItemAdapter(
     }
 
     fun submitNewList(newList: ArrayList<LibraryItemModel>) {
-
         mList = newList
         notifyDataSetChanged()
     }
 
-    fun itemUpdated(position: Int, newItem : LibraryItemModel){
+    fun itemUpdated(position: Int, newItem: LibraryItemModel) {
         mList[position] = newItem
         notifyItemChanged(position)
+    }
+
+    fun itemRemoved(position: Int) {
+        mList.removeAt(position)  // Remove the item at the given position
+        notifyItemRemoved(position)  // Notify the adapter about the item removal
+
+        // Update indices for items after the removed item
+        for (i in position until mList.size) {
+            notifyItemChanged(i)  // Notify the adapter about data change for updated positions
+        }
     }
 
     override fun onBindViewHolder(holder: LibraryItemAdapter.ViewHolder, position: Int) {
@@ -63,26 +76,20 @@ class LibraryItemAdapter(
             .into(holder.avatar)
 
         holder.menu.setOnClickListener {
-            showOptions(audioItem, position)
-
+            onItemClicked.onMenuClicked(audioItem, position)
         }
 
         holder.title.setOnClickListener {
-//            playerActivity(audioItem)
-            navigateToPlayer(mList, position)
+            onItemClicked.onItemClicked(mList, position)
         }
 
         holder.metadata.setOnClickListener {
-//            playerActivity(audioItem)
-            navigateToPlayer(mList, position)
+            onItemClicked.onItemClicked(mList, position)
         }
 
         holder.avatar.setOnClickListener {
-//            playerActivity(audioItem)
-            navigateToPlayer(mList, position)
+            onItemClicked.onItemClicked(mList, position)
         }
-
-
     }
 
     override fun getItemCount(): Int {

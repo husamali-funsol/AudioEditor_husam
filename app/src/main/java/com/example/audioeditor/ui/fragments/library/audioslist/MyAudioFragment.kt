@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.audioeditor.R
 import com.example.audioeditor.databinding.DeleteDialogBinding
@@ -36,7 +37,7 @@ import java.util.ArrayList
 
 private const val TAG = "hello"
 
-class MyAudioFragment(val callBack: (List<LibraryItemModel>, Int) -> Unit) : Fragment() {
+class MyAudioFragment() : Fragment() {
 
     private lateinit var binding: FragmentMyAudioBinding
 
@@ -75,7 +76,17 @@ class MyAudioFragment(val callBack: (List<LibraryItemModel>, Int) -> Unit) : Fra
 //        listAudioFiles()
 
         binding.rvMyAudio.layoutManager = LinearLayoutManager(requireContext())
-        adapter = LibraryItemAdapter(ArrayList(), ::showOptions, ::navigateToPlayer)
+        adapter = LibraryItemAdapter(ArrayList() , object :LibraryItemAdapter.OnItemClicked{
+            override fun onItemClicked(audioList: List<LibraryItemModel>, position: Int) {
+                navigateToPlayer(audioList, position)
+            }
+
+            override fun onMenuClicked(audioItem: LibraryItemModel, position: Int) {
+                showOptions(audioItem, position)
+            }
+
+
+        })
         binding.rvMyAudio.adapter = adapter
 
         getList()
@@ -97,7 +108,13 @@ class MyAudioFragment(val callBack: (List<LibraryItemModel>, Int) -> Unit) : Fra
     }
 
     private fun navigateToPlayer(libList: List<LibraryItemModel>, position: Int) {
-        callBack.invoke(libList, position)
+        val libItemArray = libList.toTypedArray()
+        val bundle = Bundle().apply {
+            putParcelableArray("AUDIO_ITEMS", libItemArray)
+            putInt("AUDIO_POSITION", position)
+        }
+        findNavController().navigate(R.id.action_libraryFragment_to_myAudioPlayerFragment2,bundle)
+//        callBack.invoke(libList, position)
     }
 
 
@@ -212,6 +229,7 @@ class MyAudioFragment(val callBack: (List<LibraryItemModel>, Int) -> Unit) : Fra
                 }
 
                 requireContext().refreshMediaStoreForAudioFiles()
+                adapter.itemRemoved(position)
                 getList()
                 alertDialog?.dismiss()
             }
@@ -241,8 +259,7 @@ class MyAudioFragment(val callBack: (List<LibraryItemModel>, Int) -> Unit) : Fra
         if (originalFile.exists()) {
             if (originalFile.renameTo(newFile)) {
 
-                val newPath =
-                    newFile.path
+                val newPath = newFile.path
                 val updatedFile = File(newPath!!)
 
                 val currentTimeMillis = System.currentTimeMillis()
@@ -264,9 +281,7 @@ class MyAudioFragment(val callBack: (List<LibraryItemModel>, Int) -> Unit) : Fra
                 .show()
         }
 
-        val newPath =
-            libItem.path
-
+        val newPath = newFile.path
         val updatedFile = File(newPath!!)
         requireContext().refreshMediaStore(updatedFile)
 

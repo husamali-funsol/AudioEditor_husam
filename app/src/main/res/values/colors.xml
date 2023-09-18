@@ -17,4 +17,8 @@
     <color name="unselected_tab_color">#1A1071E3</color>
     <color name="transparent">#00FFFFFF</color>
 
+    //text color
+    <color name="textColorDarkGrey">#666666</color>
+
+
 </resources>

@@ -25,23 +25,12 @@ class LibraryFragment : Fragment() {
         return binding.root
     }
 
-
-    private val navigateToFrag = fun(libItem: List<LibraryItemModel>, position: Int) {
-        val libItemArray = libItem.toTypedArray() // Convert list to array
-
-        val bundle = Bundle().apply {
-            putParcelableArray("AUDIO_ITEMS", libItemArray)
-            putInt("AUDIO_POSITION", position)
-        }
-        findNavController().navigate(R.id.action_libraryFragment_to_myAudioPlayerFragment2, bundle)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val adapter = ViewPagerAdapter(childFragmentManager)
 
-        adapter.addFragment(MyAudioFragment(navigateToFrag), "My Audio")
+        adapter.addFragment(MyAudioFragment(), "My Audio")
         adapter.addFragment(MyVideoFragment(), "My Video")
 
         binding.viewPager.adapter = adapter
