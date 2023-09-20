@@ -4,9 +4,6 @@
     <color name="white">#FFFFFFFF</color>
 
     //husam
-    <color name="darkBlue">#19acff</color>
-    <color name="lightBlue">#9bcaf1</color>
-    <color name="fadedBlue">#B6D1E3</color>
     <color name="grey">#2B2B2B</color>
 
     <color name="textColor">#394752</color>
@@ -19,6 +16,10 @@
 
     //text color
     <color name="textColorDarkGrey">#666666</color>
+
+    //wave background color
+    <color name="lightBlue">#639BDD</color>
+
 
 
 </resources>

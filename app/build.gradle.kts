@@ -84,4 +84,14 @@ dependencies {
     //ffmpeg
     implementation ("com.arthenica:ffmpeg-kit-full:5.1")
 
+    //lottie
+//    implementation ("com.airbnb.android:lottie:$6.1.0")
+
+    //coroutines
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+
+    implementation ("com.airbnb.android:lottie:5.2.0")
+
+
+
 }

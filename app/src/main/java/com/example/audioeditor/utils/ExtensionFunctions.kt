@@ -2,24 +2,33 @@ package com.example.audioeditor.utils
 
 import android.content.ContentUris
 import android.content.Context
+import android.content.Context.VIBRATOR_SERVICE
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaPlayer
 import android.media.MediaScannerConnection
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import android.view.View
+import androidx.core.content.ContextCompat
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
-import com.example.audioeditor.ui.fragments.library.LibraryItemModel
+import com.example.audioeditor.interfaces.CommandExecutionCallback
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
@@ -71,6 +80,7 @@ fun View.setOnOneClickListener(debounceTime: Long = 600L, action: () -> Unit) {
         return "$hoursStr$minutesStr$secondsStr"
     }
 
+
     fun Long.formatSizeToMB(): String {
         val sizeKB = this / 1024.0
         val sizeMB = sizeKB / 1024.0
@@ -116,7 +126,7 @@ fun MediaPlayer.calculateProgress(): Float {
     return (currentPositionMillis.toFloat() / audioDurationMillis) * 100
 }
 
-fun Array<String>.executeCommand() {
+fun Array<String>.executeCommand(callback: CommandExecutionCallback) {
     try {
         FFmpegKit.executeAsync(
             this.joinToString(" ")
@@ -130,18 +140,31 @@ fun Array<String>.executeCommand() {
                 val outputText = session.output
                 Log.d("AudioEditor", "Output: $outputText")
 
+
+                Handler(Looper.getMainLooper()).post {
+                    callback.onCommandExecutionSuccess()
+                }
+
             } else {
                 // FFmpeg command execution failed
                 Log.d("AudioEditor", "Command Execution Failed")
 
                 val outputText = session.output
                 Log.d("AudioEditor", "Output: $outputText")
+
+                Handler(Looper.getMainLooper()).post {
+                    callback.onCommandExecutionFailure("Command Execution Failed")
+                }
             }
         }
     } catch (e: Exception) {
         Log.d("AudioEditor", "exception: ${e.toString()}")
+        callback.onCommandExecutionFailure("Exception: ${e.toString()}")
+
     }
 }
+
+
 
 fun Context.getInputPath(audioUri: Uri): String {
     val audioInputStream = contentResolver.openInputStream(audioUri)
@@ -181,21 +204,79 @@ fun getCurrentTimestampString(): String {
     return sdf.format(currentDate)
 }
 
-fun String.getOutputFilePath(): File {
+fun String.getOutputFilePath(ext: String): File {
 //        val storageDir = File(Environment.getExternalStorageDirectory(), "FunsolAudioEditor")
     val storageDir = File(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
         "FunsolAudioEditor"
     )
 
-    val ext = this.lowercase()
+    val ext = ext.lowercase()
 
     if (!storageDir.exists()) {
         storageDir.mkdirs() // Create the directory if it doesn't exist
     }
 
-    val fileName = "audio_editor_${getCurrentTimestampString()}.$ext"
+//    val fileName = "audio_editor_${getCurrentTimestampString()}.$ext"
+
+    val fileName = "${this}.$ext"
     return File(storageDir, fileName)
+}
+
+//@RequiresApi(Build.VERSION_CODES.O)
+fun Context.performHapticFeedback() {
+    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager =
+            getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        vibratorManager.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        getSystemService(VIBRATOR_SERVICE) as Vibrator
+    }
+    if (this.hasVibrationPermission()) {
+        val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE)
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
+        vibrator.vibrate(effect)
+    }
+}
+
+fun Context.hasVibrationPermission(): Boolean {
+    val permission = android.Manifest.permission.VIBRATE
+    val result = ContextCompat.checkSelfPermission(
+        this,
+        permission
+    )
+    return result == PackageManager.PERMISSION_GRANTED
+}
+
+
+fun String.getFileSize(): Long {
+    val file = File(this)
+    return if (file.exists()) {
+        file.length()
+    } else {
+        -1 // Return -1 if the file doesn't exist
+    }
+}
+
+fun String.getAudioFileDuration(): Long {
+    val mediaPlayer = MediaPlayer()
+
+
+    return try {
+        mediaPlayer.setDataSource(this)
+        mediaPlayer.prepare()
+        val duration = mediaPlayer.duration.toLong()
+        mediaPlayer.release()  // Release MediaPlayer after obtaining duration
+        duration
+    } catch (e: IOException) {
+        // Log the error or handle it as needed
+        mediaPlayer.release()  // Make sure to release the MediaPlayer on error
+        0
+    }
 }
 
 

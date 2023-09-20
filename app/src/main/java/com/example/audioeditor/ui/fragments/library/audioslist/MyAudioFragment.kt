@@ -31,7 +31,9 @@ import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
 import com.example.audioeditor.utils.scanFiles
 
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.ArrayList
 
@@ -66,7 +68,6 @@ class MyAudioFragment() : Fragment() {
         viewModel = ViewModelProvider(this, viewModelFactory)[AudioListViewModel::class.java]
 
         return binding.root
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -80,31 +81,60 @@ class MyAudioFragment() : Fragment() {
             override fun onItemClicked(audioList: List<LibraryItemModel>, position: Int) {
                 navigateToPlayer(audioList, position)
             }
-
             override fun onMenuClicked(audioItem: LibraryItemModel, position: Int) {
                 showOptions(audioItem, position)
             }
-
-
         })
+
         binding.rvMyAudio.adapter = adapter
 
-        getList()
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            // Perform your tasks on a background thread
+            withContext(Dispatchers.Main) {
+                binding.loader.visibility = View.VISIBLE
+                binding.rvMyAudio.visibility = View.GONE
+                binding.ivNoAudio.visibility= View.GONE
+                binding.tvNoAudio.visibility= View.GONE
+            }
+            // Fetch the list in the background
+            getList()
+            requireContext().refreshMediaStoreForAudioFiles()
+            viewModel.getFiles()
 
-        requireContext().refreshMediaStoreForAudioFiles()
-        viewModel.getFiles()
+            withContext(Dispatchers.Main) {
+
+                binding.loader.visibility = View.GONE
+
+                if (adapter.itemCount == 0) {
+                    binding.loader.visibility = View.GONE
+                    binding.ivNoAudio.visibility= View.VISIBLE
+                    binding.tvNoAudio.visibility= View.VISIBLE
+                    binding.rvMyAudio.visibility = View.GONE
+                } else {
+                    binding.loader.visibility = View.GONE
+                    binding.rvMyAudio.visibility = View.VISIBLE
+                    binding.ivNoAudio.visibility= View.GONE
+                    binding.tvNoAudio.visibility= View.GONE
+                }
+            }
+
+        }
     }
 
     private fun getList() {
         lifecycleScope.launch {
             viewModel.libraryList.collect { libraryList ->
-                submitNewList(libraryList)
+                withContext(Dispatchers.Main){
+                    submitNewList(libraryList)
+                }
             }
         }
     }
 
     private fun submitNewList(libraryList: ArrayList<LibraryItemModel>) {
         adapter.submitNewList(libraryList)
+
+
     }
 
     private fun navigateToPlayer(libList: List<LibraryItemModel>, position: Int) {

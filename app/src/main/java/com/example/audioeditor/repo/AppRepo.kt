@@ -8,6 +8,8 @@ import com.example.audioeditor.ui.fragments.library.LibraryItemModel
 import com.example.audioeditor.utils.formatDuration
 import com.example.audioeditor.utils.formatSizeToMB
 import com.example.audioeditor.utils.getAlbumArtwork
+import com.example.audioeditor.utils.getAudioFileDuration
+import com.example.audioeditor.utils.getFileSize
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -70,7 +72,7 @@ class AppRepo(private val appContext: Context) {
                 var title = cursor.getString(titleColumn)
                 val uri = Uri.parse(cursor.getString(dataColumn)) // Get the audio URI
                 val path = cursor.getString(dataColumn)
-                val duration = cursor.getString(durationColumn)
+                var duration = cursor.getString(durationColumn)
                 val size = cursor.getLong(sizeColumn)
                 val dateModified = cursor.getLong(dateModifiedColumn)
                 val albumId = cursor.getLong(albumIdColumn)
@@ -78,8 +80,11 @@ class AppRepo(private val appContext: Context) {
                 // Now, you have the album ID, and you can use it to fetch the album artwork.
                 val albumArt = appContext.getAlbumArtwork(albumId)
 
+//                val durationFormatted = (duration.toInt().formatDuration())
+                duration = path.getAudioFileDuration().toString()
                 val durationFormatted = duration.toInt().formatDuration()
-                val sizeMB = "${size.formatSizeToMB()}MB"
+
+                var sizeMB = "${size.formatSizeToMB()}MB"
                 val extension = uri.toString().substringAfterLast(".")
                 // Convert dateModified and dateAdded to human-readable format with 12-hour clock, minutes, and seconds with AM/PM
                 val modifiedDateTime =
@@ -89,6 +94,9 @@ class AppRepo(private val appContext: Context) {
 
                 val fileNameWithExtension = File(path).name // This gives you "file.txt"
                 title = fileNameWithExtension.substringBeforeLast(".") // This gives you "file"
+
+                val sizeInBytes = path.getFileSize()
+                sizeMB = "${sizeInBytes.formatSizeToMB()}MB"
 
                 val metadata = "$durationFormatted | $sizeMB | $extension"
 
@@ -170,16 +178,20 @@ class AppRepo(private val appContext: Context) {
             var title = cursor.getString(titleColumn)
             val uri = Uri.parse(cursor.getString(dataColumn)) // Get the audio URI
             val path = cursor.getString(dataColumn)
-            val duration = cursor.getString(durationColumn)
-            val size = cursor.getLong(sizeColumn)
+            var duration = cursor.getString(durationColumn)
+            var size = cursor.getLong(sizeColumn)
             val dateModified = cursor.getLong(dateModifiedColumn)
             val albumId = cursor.getLong(albumIdColumn)
 
             // Now, you have the album ID, and you can use it to fetch the album artwork.
             val albumArt = appContext.getAlbumArtwork(albumId)
 
+//            val durationFormatted = duration.toInt().formatDuration()
+            duration = path.getAudioFileDuration().toString()
             val durationFormatted = duration.toInt().formatDuration()
-            val sizeMB = "${size.formatSizeToMB()}MB"
+
+
+            var sizeMB = "${size.formatSizeToMB()}MB"
             val extension = uri.toString().substringAfterLast(".")
             // Convert dateModified and dateAdded to human-readable format with 12-hour clock, minutes, and seconds with AM/PM
             val modifiedDateTime =
@@ -189,6 +201,10 @@ class AppRepo(private val appContext: Context) {
 
             val fileNameWithExtension = File(path).name // This gives you "file.txt"
             title = fileNameWithExtension.substringBeforeLast(".") // This gives you "file"
+
+            val sizeInBytes = path.getFileSize()
+            sizeMB = "${sizeInBytes.formatSizeToMB()}MB"
+
 
             val metadata = "$durationFormatted | $sizeMB | $extension"
 
