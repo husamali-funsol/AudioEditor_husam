@@ -185,6 +185,7 @@ class MyAudioPlayerFragment : Fragment() {
         })
 
         binding.ibMoreLP.setOnClickListener {
+
             val bottomSheet = BottomSheetDialog(requireContext())
             libraryBottomSheetDialogBinding =
                 LibraryBottomSheetDialogBinding.inflate(layoutInflater)

@@ -14,6 +14,8 @@ import com.example.audioeditor.ui.fragments.library.audioslist.AudioListViewMode
 import com.example.audioeditor.ui.fragments.library.audioslist.AudioListViewModelFactory
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
+var TAG = "AudioEditor"
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding : ActivityMainBinding

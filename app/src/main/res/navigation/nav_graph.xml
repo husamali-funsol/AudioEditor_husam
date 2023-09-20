@@ -32,6 +32,9 @@
         <action
             android:id="@+id/action_homeFragment_to_convertFormat"
             app:destination="@id/convertFormat" />
+        <action
+            android:id="@+id/action_homeFragment_to_audioCompress"
+            app:destination="@id/audioCompress" />
     </fragment>
     <fragment
         android:id="@+id/libraryFragment"
@@ -72,5 +75,10 @@
         android:name="com.example.audioeditor.ui.fragments.features.convertformat.ConvertFormat"
         android:label="fragment_convert_format"
         tools:layout="@layout/fragment_convert_format" />
+    <fragment
+        android:id="@+id/audioCompress"
+        android:name="com.example.audioeditor.ui.fragments.features.audiocompress.AudioCompress"
+        android:label="fragment_audio_compress"
+        tools:layout="@layout/fragment_audio_compress" />
 
 </navigation>

@@ -30,6 +30,10 @@ class HomeFragment : Fragment() {
             findNavController().navigate(R.id.action_homeFragment_to_convertFormat)
         }
 
+        binding.btnCompress.setOnOneClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_audioCompress)
+        }
+
 
     }
 

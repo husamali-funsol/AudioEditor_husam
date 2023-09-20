@@ -18,6 +18,7 @@ import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import androidx.core.content.ContextCompat
@@ -29,6 +30,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
@@ -277,6 +279,38 @@ fun String.getAudioFileDuration(): Long {
         mediaPlayer.release()  // Make sure to release the MediaPlayer on error
         0
     }
+}
+fun Context.getFileNameFromUri(uri: Uri): String? {
+    val cursor = this?.contentResolver?.query(uri, null, null, null, null)
+    cursor?.use {
+        if (it.moveToFirst()) {
+            val displayNameIndex =
+                it.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+            if (displayNameIndex != -1) {
+                return it.getString(displayNameIndex).substringBeforeLast(".")
+            }
+        }
+    }
+    return null
+}
+
+
+fun Context.getExtensionFromUri(uri: Uri): String? {
+    val cursor = this?.contentResolver?.query(uri, null, null, null, null)
+    cursor?.use {
+        if (it.moveToFirst()) {
+            val displayNameIndex =
+                it.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+            if (displayNameIndex != -1) {
+                return it.getString(displayNameIndex).substringAfterLast(".")
+            }
+        }
+    }
+    return null
+}
+
+fun String.replaceSpaceWithUnderscore(): String{
+    return this.lowercase(Locale.getDefault()).replace(' ', '_').trim()
 }
 
 

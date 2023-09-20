@@ -19,6 +19,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.audioeditor.R
+import com.example.audioeditor.TAG
 import com.example.audioeditor.databinding.FragmentConvertFormatBinding
 import com.example.audioeditor.databinding.QuitDialogBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
@@ -28,20 +29,23 @@ import com.example.audioeditor.ui.fragments.home.HomeFragment
 import com.example.audioeditor.utils.calculateProgress
 import com.example.audioeditor.utils.executeCommand
 import com.example.audioeditor.utils.getCurrentTimestampString
+import com.example.audioeditor.utils.getFileNameFromUri
 import com.example.audioeditor.utils.getInputPath
 import com.example.audioeditor.utils.getOutputFilePath
 import com.example.audioeditor.utils.performHapticFeedback
+import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 
 
-var TAG = "Hello"
 
 class ConvertFormat : Fragment(), CommandExecutionCallback {
 
 
-    private lateinit var binding: FragmentConvertFormatBinding
+    private val binding by lazy {
+        FragmentConvertFormatBinding.inflate(layoutInflater)
+    }
 
     private var audioUri: Uri? = null
 
@@ -65,7 +69,6 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        binding = FragmentConvertFormatBinding.inflate(layoutInflater, container, false)
         return binding.root
     }
 
@@ -197,8 +200,10 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             // Handle the positive button click event here
             // You can retrieve the text entered in the EditText like this:
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
+            val name = enteredText.replaceSpaceWithUnderscore()
 
-            convertFormat(enteredText, audioUri!!)
+
+            convertFormat(name, audioUri!!)
 
             handleProgress(50)
             renameAlertDialog?.dismiss()
@@ -257,7 +262,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             createMediaPlayer(audioUri!!)
 //            setMetadata(audioUri!!)
 
-            binding.tvMusicTitle.text = getFileNameFromUri(uri)
+            binding.tvMusicTitle.text = context?.getFileNameFromUri(uri)
         }
     }
 
@@ -286,21 +291,6 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             }
         }
     }
-
-    private fun getFileNameFromUri(uri: Uri): String? {
-        val cursor = requireContext().contentResolver.query(uri, null, null, null, null)
-        cursor?.use {
-            if (it.moveToFirst()) {
-                val displayNameIndex =
-                    it.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
-                if (displayNameIndex != -1) {
-                    return it.getString(displayNameIndex).substringBeforeLast(".")
-                }
-            }
-        }
-        return null
-    }
-
     private fun updateSeekBar() {
         updateSeekBarHandler.postDelayed(updateSeekBarRunnable, 100)
     }
@@ -384,7 +374,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 //        savingDialogBinding.tvSaving.text  =progress.toString()
 
         savingAlertDialog = alertDialogBuilder.create()
-        savingAlertDialog!!.show()
+        savingAlertDialog?.show()
     }
 
     private fun dismissDialog() {
