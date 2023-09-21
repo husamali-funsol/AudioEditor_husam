@@ -23,6 +23,8 @@ import com.example.audioeditor.databinding.SavingDialogBinding
 import com.example.audioeditor.interfaces.CommandExecutionCallback
 import com.example.audioeditor.utils.calculateProgress
 import com.example.audioeditor.utils.executeCommand
+import com.example.audioeditor.utils.formatSizeToMB
+import com.example.audioeditor.utils.getAudioFileDuration
 import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getExtensionFromUri
 import com.example.audioeditor.utils.getFileNameFromUri
@@ -33,31 +35,46 @@ import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.util.Locale
 
 
 class AudioCompress : Fragment(), CommandExecutionCallback {
 
-    private lateinit var binding: FragmentAudioCompressBinding
+    private val binding by lazy {
+        FragmentAudioCompressBinding.inflate(layoutInflater)
+    }
 
     private var audioUri: Uri? = null
 
     private var selectedAudioQuality = "LOW"
     private var selectedSampleRate = "8000"
-    private var selectedBitrate = "64k"
+    private var selectedBitrate = "64"
 
-    private lateinit var renameDialogBinding: RenameDialogBinding
+    private val renameDialogBinding by lazy {
+        RenameDialogBinding.inflate(layoutInflater)
+    }
     private var renameAlertDialog: AlertDialog? = null
 
     private var savingAlertDialog: AlertDialog? = null
-    private lateinit var savingDialogBinding: SavingDialogBinding
+    private val savingDialogBinding by lazy {
+        SavingDialogBinding.inflate(layoutInflater)
+    }
 
     private var quitAlertDialog: AlertDialog? = null
-    private lateinit var quitDialogBinding: QuitDialogBinding
+    private val quitDialogBinding by lazy{
+        QuitDialogBinding.inflate(layoutInflater)
+    }
 
     private lateinit var mediaPlayer: MediaPlayer
 
     private val updateSeekBarHandler = Handler()
+
+    private var updatedText = ""
 
     private var extension: String? = null
 
@@ -66,150 +83,232 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        binding = FragmentAudioCompressBinding.inflate(layoutInflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
+
         binding.btnUpload.setOnClickListener {
             audioFileLauncher.launch("audio/*")
-            requireContext().performHapticFeedback()
+            context?.performHapticFeedback()
         }
 
 
         //audio quality selection
         binding.tvLowQuality.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tvLowQuality, "AudioQuality")
             onTextViewClick(binding.tv8khz, "SampleRate")
             onTextViewClick(binding.tv64kbs, "Bitrate")
 
+
             selectedAudioQuality = "low"
             selectedSampleRate = "8000"
-            selectedBitrate = "64k"
+            selectedBitrate = "64"
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tvMidQuality.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tvMidQuality, "AudioQuality")
             onTextViewClick(binding.tv22khz, "SampleRate")
             onTextViewClick(binding.tv192kbs, "Bitrate")
 
             selectedAudioQuality = "mid"
-            selectedSampleRate = "22000"
-            selectedBitrate = "192k"
+            selectedSampleRate = "22050"
+            selectedBitrate = "192"
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tvHighQuality.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tvHighQuality, "AudioQuality")
             onTextViewClick(binding.tv48khz, "SampleRate")
             onTextViewClick(binding.tv320kbs, "Bitrate")
 
             selectedAudioQuality = "high"
             selectedSampleRate = "48000"
-            selectedBitrate = "320k"
+            selectedBitrate = "320"
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
 
         //sample rate selection
         binding.tv48khz.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv48khz, "SampleRate")
             selectedSampleRate = "48000"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv44khz.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv44khz, "SampleRate")
-            selectedSampleRate = "44000"
+            selectedSampleRate = "44100"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv32khz.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv32khz, "SampleRate")
             selectedSampleRate = "32000"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv22khz.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv22khz, "SampleRate")
-            selectedSampleRate = "22000"
+            selectedSampleRate = "22050"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv16khz.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv16khz, "SampleRate")
             selectedSampleRate = "16000"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv11khz.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv11khz, "SampleRate")
-            selectedSampleRate = "11000"
+            selectedSampleRate = "11025"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv8khz.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv8khz, "SampleRate")
             selectedSampleRate = "8000"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
 
 
         //bitrate selection
         binding.tv320kbs.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv320kbs, "Bitrate")
-            selectedBitrate = "320k"
+            selectedBitrate = "320"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv256kbs.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv256kbs, "Bitrate")
-            selectedBitrate = "256k"
+            selectedBitrate = "256"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv192kbs.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv192kbs, "Bitrate")
-            selectedBitrate = "192k"
+            selectedBitrate = "192"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv128kbs.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv128kbs, "Bitrate")
-            selectedBitrate = "128k"
+            selectedBitrate = "128"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv96kbs.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv96kbs, "Bitrate")
-            selectedBitrate = "96k"
+            selectedBitrate = "96"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
         binding.tv64kbs.setOnOneClickListener {
+            context?.performHapticFeedback()
             onTextViewClick(binding.tv64kbs, "Bitrate")
-            selectedBitrate = "64k"
+            selectedBitrate = "64"
             unselectAudioQuality()
+
+            audioUri?.let{
+                updateEstimatedFilesizeText(it)
+            }
         }
 
 
         //save button
         binding.btnSave.setOnOneClickListener {
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
             showRenameDialog()
 
         }
 
         //back button
         binding.btnBack.setOnOneClickListener {
+            context?.performHapticFeedback()
             showQuitDialog()
         }
 
 
         binding.btnPlayPause.setOnOneClickListener {
-            requireContext().performHapticFeedback()
+            context?.performHapticFeedback()
 
             if (::mediaPlayer.isInitialized && !mediaPlayer.isPlaying) {
                 mediaPlayer.start()
@@ -247,8 +346,28 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
 
             binding.tvMusicTitle.text = context?.getFileNameFromUri(uri)
             extension = context?.getExtensionFromUri(uri)
+            updateEstimatedFilesizeText(uri)
+
         }
     }
+
+    private fun updateEstimatedFilesizeText(uri: Uri) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val duration = getAudioFileDuration(uri) / 1000L
+            val bitrate = selectedBitrate.toLong() * 1000
+            val filesize = estimateFileSizeAfterCompression(duration, bitrate).formatSizeToMB()
+
+            // Switch to the main thread to update the UI
+            withContext(Dispatchers.Main) {
+                // Update the UI
+                Log.d(TAG, "duration: $duration \n bitrate: $bitrate \n filesize: $filesize ")
+                updatedText = "Size will be about $filesize MB after compression"
+                binding.tvEstimateSize.text = updatedText
+                binding.tvEstimateSize.visibility = View.VISIBLE
+            }
+        }
+    }
+
 
     private fun createMediaPlayer(uri: Uri) {
 
@@ -258,7 +377,7 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
             mediaPlayer.release()
         }
         mediaPlayer = MediaPlayer().apply {
-            setDataSource(requireContext(), uri)
+            context?.let{ setDataSource(it, uri) }
             prepareAsync()
 
             setOnPreparedListener { mp ->
@@ -301,34 +420,38 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
 
     private fun showQuitDialog() {
         val alertDialogBuilder =
-            AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
 
-        quitDialogBinding = QuitDialogBinding.inflate(layoutInflater)
         val dialogView = quitDialogBinding.root
-        alertDialogBuilder.setView(dialogView)
+        alertDialogBuilder?.setView(dialogView)
 
         quitDialogBinding.tvNo.setOnClickListener {
+            context?.performHapticFeedback()
             quitAlertDialog?.dismiss()
         }
 
         quitDialogBinding.tvYes.setOnClickListener {
+            context?.performHapticFeedback()
             // Clear the back stack and navigate to the home fragment
             findNavController().popBackStack()
             findNavController().navigate(R.id.homeFragment)
             quitAlertDialog?.dismiss()
         }
 
-        quitAlertDialog = alertDialogBuilder.create()
+        quitAlertDialog = alertDialogBuilder?.create()
         quitAlertDialog!!.show()
     }
 
     private fun showRenameDialog() {
         val alertDialogBuilder =
-            AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
 
-        renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
         val dialogView = renameDialogBinding.root
-        alertDialogBuilder.setView(dialogView)
+        alertDialogBuilder?.setView(dialogView)
 
         val filename = "audio_editor_${getCurrentTimestampString()}"
 
@@ -337,6 +460,7 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
 
 
         renameDialogBinding.tvConfirmRD.setOnClickListener {
+            context?.performHapticFeedback()
             // Handle the positive button click event here
             // You can retrieve the text entered in the EditText like this:
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
@@ -349,13 +473,14 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         }
 
         renameDialogBinding.tvCancelRD.setOnClickListener {
+            context?.performHapticFeedback()
             // Handle the negative button click event here
             // This is where you can cancel the dialog if needed
             renameAlertDialog?.dismiss()
 
         }
 
-        renameAlertDialog = alertDialogBuilder.create()
+        renameAlertDialog = alertDialogBuilder?.create()
         renameAlertDialog!!.show()
 
     }
@@ -365,17 +490,18 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         Log.d("AudioEditor", "Progress: $progress%")
 
         val alertDialogBuilder =
-            AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
 
-        savingDialogBinding = SavingDialogBinding.inflate(layoutInflater)
         val dialogView = savingDialogBinding.root
 
-        alertDialogBuilder.setView(dialogView)
+        alertDialogBuilder?.setView(dialogView)
 
 //        savingDialogBinding.progressBar.progress = progress
 //        savingDialogBinding.tvSaving.text  =progress.toString()
 
-        savingAlertDialog = alertDialogBuilder.create()
+        savingAlertDialog = alertDialogBuilder?.create()
         savingAlertDialog?.show()
     }
 
@@ -384,30 +510,36 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         when(selectedAudioQuality.lowercase()){
             "low" -> {
                 binding.tvLowQuality.setBackgroundResource(R.drawable.button_outlined)
-                binding.tvLowQuality.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.appBlue
+                context?.let{
+                    binding.tvLowQuality.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.appBlue
+                        )
                     )
-                )
+                }
             }
             "mid" -> {
                 binding.tvMidQuality.setBackgroundResource(R.drawable.button_outlined)
-                binding.tvMidQuality.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.appBlue
+                context?.let{
+                    binding.tvMidQuality.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.appBlue
+                        )
                     )
-                )
+                }
             }
             "high" -> {
                 binding.tvHighQuality.setBackgroundResource(R.drawable.button_outlined)
-                binding.tvHighQuality.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.appBlue
+                context?.let{
+                    binding.tvHighQuality.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.appBlue
+                        )
                     )
-                )
+                }
             }
         }
 
@@ -452,53 +584,66 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         for (textView in allTextViews) {
             if(cardName=="AudioQuality"){
                 textView.setBackgroundResource(R.drawable.button_outlined)
-                textView.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.appBlue
+                context?.let{
+                    textView.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.appBlue
+                        )
                     )
-                )
+                }
             }
             else{
-                textView.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.transparent))
-                textView.setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.textColorlightGrey
+                context?.let{
+                    textView.setBackgroundColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.transparent
+                        )
                     )
-                )
+                    textView.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.textColorlightGrey
+                        )
+                    )
+                }
             }
         }
         clickedTextView.setBackgroundResource(R.drawable.button_bg)
-        clickedTextView.setTextColor(
-            ContextCompat.getColor(
-                requireContext(),
-                R.color.white
+        context?.let{
+            clickedTextView.setTextColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.white
+                )
             )
-        )
+        }
 
     }
 
     private fun audioCompress(filename: String, audioUri: Uri){
-        val inputAudioPath = requireContext().getInputPath(audioUri)
-        val outputFile = extension?.let { filename.getOutputFilePath(it) }
-        val outputPath = outputFile!!.path
+        context?.let{
+            val inputAudioPath = it.getInputPath(audioUri)
+            val outputFile = extension?.let { filename.getOutputFilePath(it) }
+            val outputPath = outputFile!!.path
 
-        val cmd = arrayOf(
-            "-y",
-            "-i",
-            inputAudioPath,
-            "-b:a",
-            selectedBitrate,
-            "-ar", selectedSampleRate,
-            "-map",
-            "a",
-            outputPath
-        )
+            val cmd = arrayOf(
+                "-y",
+                "-i",
+                inputAudioPath,
+                "-b:a",
+                "${selectedBitrate}k",
+                "-ar", selectedSampleRate,
+                "-map",
+                "a",
+                outputPath
+            )
 
-        Log.d(TAG, "audioCompress: ${cmd.joinToString  (" ") }")
+            Log.d(TAG, "audioCompress: ${cmd.joinToString(" ")}")
 
-        cmd.executeCommand(this)
+            cmd.executeCommand(this)
+        }
     }
 
     private fun dismissDialog() {
@@ -512,6 +657,15 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         savingDialogBinding.tvSaving.text = "File Saved!"
         dismissDialog()
 
+        val bundle = Bundle().apply {
+            putString("AUDIO_URI", audioUri.toString())
+        }
+
+        findNavController().apply {
+            if(currentDestination?.id == R.id.audioCompress){
+                navigate(R.id.action_audioCompress_to_savedScreenFragment, bundle)
+            }
+        }
 
     }
 
@@ -520,6 +674,29 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         savingDialogBinding.tvSaving.text = "File Saving Failed!"
         dismissDialog()
 
+    }
+
+    private fun estimateFileSizeAfterCompression(audioDuration: Long, targetBitrate: Long): Long{
+        //Estimated Compressed File Size = (Target Bitrate * Audio Duration in Seconds) / 8
+        //file size will be in bytes
+        return (targetBitrate * audioDuration) / 8
+    }
+
+    private fun getAudioFileDuration(uri: Uri): Long {
+        val mediaPlayer = MediaPlayer()
+
+
+        return try {
+            context?.let{ mediaPlayer.setDataSource(it, uri) }
+            mediaPlayer.prepare()
+            val duration = mediaPlayer.duration.toLong()
+            mediaPlayer.release()  // Release MediaPlayer after obtaining duration
+            duration
+        } catch (e: IOException) {
+            // Log the error or handle it as needed
+            mediaPlayer.release()  // Make sure to release the MediaPlayer on error
+            0
+        }
     }
 
 }

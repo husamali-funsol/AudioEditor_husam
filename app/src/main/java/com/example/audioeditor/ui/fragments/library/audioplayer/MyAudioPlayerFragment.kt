@@ -31,34 +31,44 @@ import com.example.audioeditor.utils.convertMillisToMinutes
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
 import com.example.audioeditor.utils.scanFiles
+import com.example.audioeditor.utils.showSmallLengthToast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
 
 
 class MyAudioPlayerFragment : Fragment() {
 
-    private lateinit var binding: FragmentMyAudioPlayerBinding
+    private val binding by lazy {
+        FragmentMyAudioPlayerBinding.inflate(layoutInflater)
+    }
 
-    private lateinit var libraryBottomSheetDialogBinding: LibraryBottomSheetDialogBinding
-    private lateinit var detailsBottomSheetDialogBinding: DetailsBottomSheetDialogBinding
-    private lateinit var renameDialogBinding: RenameDialogBinding
-    private lateinit var deleteDialogBinding: DeleteDialogBinding
+    private val libraryBottomSheetDialogBinding by lazy {
+        LibraryBottomSheetDialogBinding.inflate(layoutInflater)
+    }
+    private val detailsBottomSheetDialogBinding by lazy {
+        DetailsBottomSheetDialogBinding.inflate(layoutInflater)
+    }
+    private val renameDialogBinding by lazy {
+        RenameDialogBinding.inflate(layoutInflater)
+    }
+    private val deleteDialogBinding by lazy {
+        DeleteDialogBinding.inflate(layoutInflater)
+    }
 
     lateinit var mediaPlayer: MediaPlayer
 
     private val updateSeekBarHandler = Handler()
 
-    private lateinit var audioUri: Uri
+    private var audioUri: Uri? = null
     private var libItem: LibraryItemModel? = null
 
-    var alertDialog: AlertDialog? = null
+    private var alertDialog: AlertDialog? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        binding = FragmentMyAudioPlayerBinding.inflate(layoutInflater, container, false)
         return binding.root
     }
 
@@ -70,17 +80,14 @@ class MyAudioPlayerFragment : Fragment() {
         val mList = arguments?.getParcelableArray("AUDIO_ITEMS") as? Array<LibraryItemModel>
         var position = arguments?.getInt("AUDIO_POSITION", -1)
 
-
         libItem = mList?.get(position!!)
-
 
         audioUri = Uri.parse("")
 //        Log.d("library player debug", str.toString())
 
         setAudioFileData()
 //
-        createMediaPlayer(audioUri)
-
+        audioUri?.let{ createMediaPlayer(it) }
 
         binding.ibBack.setOnClickListener {
             findNavController().popBackStack()
@@ -97,25 +104,26 @@ class MyAudioPlayerFragment : Fragment() {
                 binding.tvTitleLP.text = libItem!!.title
                 binding.tvMetadataLP.text = libItem!!.metadata
                 // Use Glide to load and set the image
-                Glide.with(requireContext())
-                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                    .placeholder(R.drawable.music_thumbnail) // Placeholder image
-                    .error(R.drawable.music_thumbnail) // Error image
-                    .into(binding.imageView) // Set the ImageView you want to load the image into
-                // Use Glide to load and set the image
-                Glide.with(requireContext())
-                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                    .placeholder(R.drawable.placeholder_image) // Placeholder image
-                    .error(R.drawable.placeholder_image) // Error image
-                    .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
-
+                context?.let{
+                    Glide.with(it)
+                        .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                        .placeholder(R.drawable.music_thumbnail) // Placeholder image
+                        .error(R.drawable.music_thumbnail) // Error image
+                        .into(binding.imageView) // Set the ImageView you want to load the image into
+                    // Use Glide to load and set the image
+                    Glide.with(it)
+                        .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                        .placeholder(R.drawable.placeholder_image) // Placeholder image
+                        .error(R.drawable.placeholder_image) // Error image
+                        .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
+                }
                 binding.ivPlayerLP.setImageResource(R.drawable.play_circle)
 
 
                 Log.d("get path", libItem!!.path.toString())
             }
 //
-            createMediaPlayer(audioUri)
+            audioUri?.let{ createMediaPlayer(it) }
         }
 
         binding.ivSkipPrevLP.setOnClickListener {
@@ -129,25 +137,26 @@ class MyAudioPlayerFragment : Fragment() {
                 binding.tvTitleLP.text = libItem!!.title
                 binding.tvMetadataLP.text = libItem!!.metadata
                 // Use Glide to load and set the image
-                Glide.with(requireContext())
-                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                    .placeholder(R.drawable.music_thumbnail) // Placeholder image
-                    .error(R.drawable.music_thumbnail) // Error image
-                    .into(binding.imageView) // Set the ImageView you want to load the image into
-                // Use Glide to load and set the image
-                Glide.with(requireContext())
-                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                    .placeholder(R.drawable.placeholder_image) // Placeholder image
-                    .error(R.drawable.placeholder_image) // Error image
-                    .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
-
+                context?.let{
+                    Glide.with(it)
+                        .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                        .placeholder(R.drawable.music_thumbnail) // Placeholder image
+                        .error(R.drawable.music_thumbnail) // Error image
+                        .into(binding.imageView) // Set the ImageView you want to load the image into
+                    // Use Glide to load and set the image
+                    Glide.with(it)
+                        .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                        .placeholder(R.drawable.placeholder_image) // Placeholder image
+                        .error(R.drawable.placeholder_image) // Error image
+                        .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
+                }
                 binding.ivPlayerLP.setImageResource(R.drawable.play_circle)
 
 
                 Log.d("get path", libItem!!.path.toString())
             }
 //
-            createMediaPlayer(audioUri)
+            audioUri?.let{ createMediaPlayer(it) }
         }
 
         binding.ivPlayerLP.setOnClickListener {
@@ -187,8 +196,7 @@ class MyAudioPlayerFragment : Fragment() {
         binding.ibMoreLP.setOnClickListener {
 
             val bottomSheet = BottomSheetDialog(requireContext())
-            libraryBottomSheetDialogBinding =
-                LibraryBottomSheetDialogBinding.inflate(layoutInflater)
+
             bottomSheet.setContentView(libraryBottomSheetDialogBinding.root)
 
             if (libItem != null) {
@@ -199,11 +207,12 @@ class MyAudioPlayerFragment : Fragment() {
             libraryBottomSheetDialogBinding.tvRenameLibSheet.setOnClickListener {
 //                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
                 val alertDialogBuilder =
-                    AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+                    context?.let{
+                        AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+                    }
 
-                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
                 val dialogView = renameDialogBinding.root
-                alertDialogBuilder.setView(dialogView)
+                alertDialogBuilder?.setView(dialogView)
 
                 if (libItem != null) {
                     // Set the initial text in your EditText (if needed)
@@ -231,15 +240,13 @@ class MyAudioPlayerFragment : Fragment() {
 
                 }
 
-                alertDialog = alertDialogBuilder.create()
+                alertDialog = alertDialogBuilder?.create()
                 bottomSheet.dismiss()
                 alertDialog!!.show()
             }
 
             libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
                 val detailsBottomSheet = BottomSheetDialog(requireContext())
-                detailsBottomSheetDialogBinding =
-                    DetailsBottomSheetDialogBinding.inflate(layoutInflater)
                 detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
 
                 if (libItem != null) {
@@ -272,11 +279,12 @@ class MyAudioPlayerFragment : Fragment() {
             libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
 //                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
                 val alertDialogBuilder =
-                    AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+                    context?.let{
+                        AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+                    }
 
-                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
                 val dialogView = deleteDialogBinding.root
-                alertDialogBuilder.setView(dialogView)
+                alertDialogBuilder?.setView(dialogView)
 
 
                 deleteDialogBinding.tvDeleteBtnDD.setOnClickListener {
@@ -287,11 +295,11 @@ class MyAudioPlayerFragment : Fragment() {
 
                     if (originalFile.exists()) {
                         originalFile.delete()
-                        requireContext().scanFiles(originalFile)
+                        context?.scanFiles(originalFile)
 
                     }
 
-                    requireContext().refreshMediaStoreForAudioFiles()
+                    context?.refreshMediaStoreForAudioFiles()
 
                     alertDialog?.dismiss()
                     findNavController().popBackStack()
@@ -302,7 +310,7 @@ class MyAudioPlayerFragment : Fragment() {
                 }
 
 
-                alertDialog = alertDialogBuilder.create()
+                alertDialog = alertDialogBuilder?.create()
                 bottomSheet.dismiss()
                 alertDialog!!.show()
 
@@ -317,18 +325,19 @@ class MyAudioPlayerFragment : Fragment() {
             binding.tvTitleLP.text = libItem!!.title
             binding.tvMetadataLP.text = libItem!!.metadata
             // Use Glide to load and set the image
-            Glide.with(requireContext())
-                .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                .placeholder(R.drawable.music_thumbnail) // Placeholder image
-                .error(R.drawable.music_thumbnail) // Error image
-                .into(binding.imageView) // Set the ImageView you want to load the image into
-            // Use Glide to load and set the image
-            Glide.with(requireContext())
-                .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                .placeholder(R.drawable.placeholder_image) // Placeholder image
-                .error(R.drawable.placeholder_image) // Error image
-                .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
-
+            context?.let{
+                Glide.with(it)
+                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                    .placeholder(R.drawable.music_thumbnail) // Placeholder image
+                    .error(R.drawable.music_thumbnail) // Error image
+                    .into(binding.imageView) // Set the ImageView you want to load the image into
+                // Use Glide to load and set the image
+                Glide.with(it)
+                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                    .placeholder(R.drawable.placeholder_image) // Placeholder image
+                    .error(R.drawable.placeholder_image) // Error image
+                    .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
+            }
 
             Log.d("get path", libItem!!.path.toString())
         }
@@ -357,28 +366,27 @@ class MyAudioPlayerFragment : Fragment() {
                 newFile.setLastModified(currentTimeMillis)
                 originalFile.setLastModified(currentTimeMillis)
                 // Refresh the MediaStore to reflect the changes
-                requireContext().refreshMediaStore(updatedFile)
-                Toast.makeText(requireContext(), "Renaming Successful", Toast.LENGTH_SHORT).show()
+                context?.refreshMediaStore(updatedFile)
+                context?.showSmallLengthToast("Renaming Successful")
 //                adapter.itemUpdated(position, viewModel.getSingleFile(position))
 
             } else {
                 // Failed to rename the file
                 // Handle the error accordingly
-                Toast.makeText(requireContext(), "Renaming Failed", Toast.LENGTH_SHORT).show()
+                context?.showSmallLengthToast("Renaming Failed")
             }
         } else {
             // The original file does not exist
-            Toast.makeText(requireContext(), "Original File does not exist", Toast.LENGTH_SHORT)
-                .show()
+            context?.showSmallLengthToast("Original File doen not exist")
         }
 
         val newPath =
             newFile.path
 
         val updatedFile = File(newPath)
-        requireContext().refreshMediaStore(updatedFile)
+        context?.refreshMediaStore(updatedFile)
 
-        requireContext().refreshMediaStoreForAudioFiles()
+        context?.refreshMediaStoreForAudioFiles()
 //        getList()
 
         val fileNameWithExtension = updatedFile.name // This gives you "file.txt"
@@ -395,7 +403,7 @@ class MyAudioPlayerFragment : Fragment() {
         }
 
         mediaPlayer = MediaPlayer().apply {
-            setDataSource(requireContext(), uri)
+            context?.let{ setDataSource(it, uri) }
             prepareAsync()
 
             setOnPreparedListener { mp ->

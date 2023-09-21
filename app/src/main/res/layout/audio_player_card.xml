@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/materialCardViewPlayer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeWidth="0dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#1071E3"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/tvMusicTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppins_medium"
+                android:maxLines="1"
+                android:text="Title"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/btnPlayPause"
+                app:layout_constraintStart_toEndOf="@+id/ivAlbumImage"
+                app:layout_constraintTop_toTopOf="@+id/ivAlbumImage" />
+
+            <TextView
+                android:id="@+id/tvMetadata"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:fontFamily="@font/poppins_medium"
+                android:text="Metadata"
+                android:textColor="#78FFFFFF"
+                android:textSize="10sp"
+                app:layout_constraintBottom_toBottomOf="@+id/ivAlbumImage"
+                app:layout_constraintEnd_toEndOf="@+id/tvMusicTitle"
+                app:layout_constraintStart_toStartOf="@+id/tvMusicTitle"
+                app:layout_constraintTop_toBottomOf="@+id/tvMusicTitle" />
+
+            <ImageView
+                android:id="@+id/ivAlbumImage"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/rounded_imageview"
+                android:src="@drawable/placeholder_image"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/btnPlayPause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/play_pause_button_bg"
+                android:padding="5dp"
+                app:layout_constraintBottom_toBottomOf="@+id/ivAlbumImage"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/ivAlbumImage"
+                app:srcCompat="@drawable/ic_play" />
+
+            <com.masoudss.lib.WaveformSeekBar
+                android:id="@+id/waveform"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:layout_marginTop="10dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/ivAlbumImage"
+                app:wave_background_color="@color/lightBlue"
+                app:wave_progress_color="@color/white" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

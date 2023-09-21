@@ -18,8 +18,8 @@ class AudioListViewModel(private val appRepo: AppRepo) : ViewModel() {
     }
 
 
-    fun getSingleFile(pos: Int): LibraryItemModel {
-        return appRepo.getSingleFile(pos)
+    fun getSingleAudioFile(pos: Int): LibraryItemModel {
+        return appRepo.getSingleAudioFile(pos)
     }
 
 

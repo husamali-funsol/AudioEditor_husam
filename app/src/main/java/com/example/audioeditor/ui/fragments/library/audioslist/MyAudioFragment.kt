@@ -1,17 +1,13 @@
 package com.example.audioeditor.ui.fragments.library.audioslist
 
-import android.content.ContentUris
-import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -29,6 +25,7 @@ import com.example.audioeditor.ui.fragments.library.LibraryItemModel
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
 import com.example.audioeditor.utils.scanFiles
+import com.example.audioeditor.utils.showSmallLengthToast
 
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.Dispatchers
@@ -41,15 +38,25 @@ private const val TAG = "hello"
 
 class MyAudioFragment() : Fragment() {
 
-    private lateinit var binding: FragmentMyAudioBinding
+    private val binding by lazy {
+        FragmentMyAudioBinding.inflate(layoutInflater)
+    }
 
 
     private var alertDialog: AlertDialog? = null
 
-    private lateinit var libraryBottomSheetDialogBinding: LibraryBottomSheetDialogBinding
-    private lateinit var detailsBottomSheetDialogBinding: DetailsBottomSheetDialogBinding
-    private lateinit var renameDialogBinding: RenameDialogBinding
-    private lateinit var deleteDialogBinding: DeleteDialogBinding
+    private val libraryBottomSheetDialogBinding by lazy {
+        LibraryBottomSheetDialogBinding.inflate(layoutInflater)
+    }
+    private val detailsBottomSheetDialogBinding by lazy {
+        DetailsBottomSheetDialogBinding.inflate(layoutInflater)
+    }
+    private val renameDialogBinding by lazy {
+        RenameDialogBinding.inflate(layoutInflater)
+    }
+    private val deleteDialogBinding by lazy {
+        DeleteDialogBinding.inflate(layoutInflater)
+    }
 
     private lateinit var audioUri: Uri
 
@@ -62,8 +69,7 @@ class MyAudioFragment() : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         // Inflate the layout for this fragment
-        binding = FragmentMyAudioBinding.inflate(inflater, container, false)
-        appRepo = AppRepo(requireContext())
+        context?.let{ appRepo = AppRepo(it) }
         val viewModelFactory = AudioListViewModelFactory(appRepo)
         viewModel = ViewModelProvider(this, viewModelFactory)[AudioListViewModel::class.java]
 
@@ -73,10 +79,10 @@ class MyAudioFragment() : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        requireContext().refreshMediaStoreForAudioFiles()
+        context?.refreshMediaStoreForAudioFiles()
 //        listAudioFiles()
 
-        binding.rvMyAudio.layoutManager = LinearLayoutManager(requireContext())
+        context?.let{ binding.rvMyAudio.layoutManager = LinearLayoutManager(it) }
         adapter = LibraryItemAdapter(ArrayList() , object :LibraryItemAdapter.OnItemClicked{
             override fun onItemClicked(audioList: List<LibraryItemModel>, position: Int) {
                 navigateToPlayer(audioList, position)
@@ -98,7 +104,7 @@ class MyAudioFragment() : Fragment() {
             }
             // Fetch the list in the background
             getList()
-            requireContext().refreshMediaStoreForAudioFiles()
+            context?.refreshMediaStoreForAudioFiles()
             viewModel.getFiles()
 
             withContext(Dispatchers.Main) {
@@ -150,8 +156,7 @@ class MyAudioFragment() : Fragment() {
 
     private fun showOptions(libItem: LibraryItemModel, position: Int) {
         val bottomSheet = BottomSheetDialog(requireContext())
-        libraryBottomSheetDialogBinding =
-            LibraryBottomSheetDialogBinding.inflate(layoutInflater)
+
         bottomSheet.setContentView(libraryBottomSheetDialogBinding.root)
 
         if (libItem != null) {
@@ -162,11 +167,12 @@ class MyAudioFragment() : Fragment() {
         libraryBottomSheetDialogBinding.tvRenameLibSheet.setOnClickListener {
 //                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
             val alertDialogBuilder =
-                AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+                context?.let{
+                    AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+                }
 
-            renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
             val dialogView = renameDialogBinding.root
-            alertDialogBuilder.setView(dialogView)
+            alertDialogBuilder?.setView(dialogView)
 
             if (libItem != null) {
                 // Set the initial text in your EditText (if needed)
@@ -196,15 +202,14 @@ class MyAudioFragment() : Fragment() {
 
             }
 
-            alertDialog = alertDialogBuilder.create()
+            alertDialog = alertDialogBuilder?.create()
             bottomSheet.dismiss()
             alertDialog!!.show()
         }
 
         libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
             val detailsBottomSheet = BottomSheetDialog(requireContext())
-            detailsBottomSheetDialogBinding =
-                DetailsBottomSheetDialogBinding.inflate(layoutInflater)
+
             detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
 
             if (libItem != null) {
@@ -239,11 +244,12 @@ class MyAudioFragment() : Fragment() {
         libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
 //                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
             val alertDialogBuilder =
-                AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+                context?.let{
+                    AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+                }
 
-            deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
             val dialogView = deleteDialogBinding.root
-            alertDialogBuilder.setView(dialogView)
+            alertDialogBuilder?.setView(dialogView)
 
 
             deleteDialogBinding.tvDeleteBtnDD.setOnClickListener {
@@ -254,11 +260,11 @@ class MyAudioFragment() : Fragment() {
 
                 if (originalFile.exists()) {
                     originalFile.delete()
-                    requireContext().scanFiles(originalFile)
+                    context?.scanFiles(originalFile)
 
                 }
 
-                requireContext().refreshMediaStoreForAudioFiles()
+                context?.refreshMediaStoreForAudioFiles()
                 adapter.itemRemoved(position)
                 getList()
                 alertDialog?.dismiss()
@@ -268,7 +274,7 @@ class MyAudioFragment() : Fragment() {
                 alertDialog?.dismiss()
             }
 
-            alertDialog = alertDialogBuilder.create()
+            alertDialog = alertDialogBuilder?.create()
             bottomSheet.dismiss()
             alertDialog!!.show()
 
@@ -296,26 +302,27 @@ class MyAudioFragment() : Fragment() {
                 newFile.setLastModified(currentTimeMillis)
                 originalFile.setLastModified(currentTimeMillis)
                 // Refresh the MediaStore to reflect the changes
-                requireContext().refreshMediaStore(updatedFile)
-                Toast.makeText(requireContext(), "Renaming Successful", Toast.LENGTH_SHORT).show()
-                adapter.itemUpdated(position, viewModel.getSingleFile(position))
+                context?.refreshMediaStore(updatedFile)
+                context?.showSmallLengthToast("Renaming Successful")
+                adapter.itemUpdated(position, viewModel.getSingleAudioFile(position))
 
             } else {
                 // Failed to rename the file
                 // Handle the error accordingly
-                Toast.makeText(requireContext(), "Renaming Failed", Toast.LENGTH_SHORT).show()
+                context?.showSmallLengthToast("Renaming Failed")
+
             }
         } else {
             // The original file does not exist
-            Toast.makeText(requireContext(), "Original File does not exist", Toast.LENGTH_SHORT)
-                .show()
+            context?.showSmallLengthToast("Original File does not exist")
+
         }
 
         val newPath = newFile.path
         val updatedFile = File(newPath!!)
-        requireContext().refreshMediaStore(updatedFile)
+        context?.refreshMediaStore(updatedFile)
 
-        requireContext().refreshMediaStoreForAudioFiles()
+        context?.refreshMediaStoreForAudioFiles()
         getList()
     }
 

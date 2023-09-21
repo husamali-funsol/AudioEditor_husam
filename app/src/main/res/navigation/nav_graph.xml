@@ -35,6 +35,9 @@
         <action
             android:id="@+id/action_homeFragment_to_audioCompress"
             app:destination="@id/audioCompress" />
+        <action
+            android:id="@+id/action_homeFragment_to_audioSpeed"
+            app:destination="@id/audioSpeed" />
     </fragment>
     <fragment
         android:id="@+id/libraryFragment"
@@ -74,11 +77,33 @@
         android:id="@+id/convertFormat"
         android:name="com.example.audioeditor.ui.fragments.features.convertformat.ConvertFormat"
         android:label="fragment_convert_format"
-        tools:layout="@layout/fragment_convert_format" />
+        tools:layout="@layout/fragment_convert_format" >
+        <action
+            android:id="@+id/action_convertFormat_to_savedScreenFragment"
+            app:destination="@id/savedScreenFragment" />
+    </fragment>
     <fragment
         android:id="@+id/audioCompress"
         android:name="com.example.audioeditor.ui.fragments.features.audiocompress.AudioCompress"
         android:label="fragment_audio_compress"
-        tools:layout="@layout/fragment_audio_compress" />
+        tools:layout="@layout/fragment_audio_compress" >
+        <action
+            android:id="@+id/action_audioCompress_to_savedScreenFragment"
+            app:destination="@id/savedScreenFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/savedScreenFragment"
+        android:name="com.example.audioeditor.ui.fragments.SavedScreenFragment"
+        android:label="fragment_saved_screen"
+        tools:layout="@layout/fragment_saved_screen" />
+    <fragment
+        android:id="@+id/audioSpeed"
+        android:name="com.example.audioeditor.ui.fragments.features.AudioSpeed"
+        android:label="fragment_audio_speed"
+        tools:layout="@layout/fragment_audio_speed" >
+        <action
+            android:id="@+id/action_audioSpeed_to_savedScreenFragment"
+            app:destination="@id/savedScreenFragment" />
+    </fragment>
 
 </navigation>

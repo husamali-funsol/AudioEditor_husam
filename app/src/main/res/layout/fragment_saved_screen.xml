@@ -50,7 +50,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tvTitle_libItem"
+        android:id="@+id/tvMusicTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -61,11 +61,11 @@
         android:textSize="14sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/ivAvatar_libItem"
-        app:layout_constraintTop_toTopOf="@+id/ivAvatar_libItem" />
+        app:layout_constraintStart_toEndOf="@+id/ivAlbumImage"
+        app:layout_constraintTop_toTopOf="@+id/ivAlbumImage" />
 
     <TextView
-        android:id="@+id/tvMetaData_libItem"
+        android:id="@+id/tvMetadata"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
@@ -73,23 +73,24 @@
         android:text="Metadata"
         android:textColor="@color/lightGrey"
         android:textSize="10sp"
-        app:layout_constraintBottom_toBottomOf="@+id/ivAvatar_libItem"
-        app:layout_constraintEnd_toEndOf="@+id/tvTitle_libItem"
-        app:layout_constraintStart_toStartOf="@+id/tvTitle_libItem"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitle_libItem" />
+        app:layout_constraintBottom_toBottomOf="@+id/ivAlbumImage"
+        app:layout_constraintEnd_toEndOf="@+id/tvMusicTitle"
+        app:layout_constraintStart_toStartOf="@+id/tvMusicTitle"
+        app:layout_constraintTop_toBottomOf="@+id/tvMusicTitle" />
 
     <ImageView
-        android:id="@+id/ivAvatar_libItem"
+        android:id="@+id/ivAlbumImage"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginTop="35dp"
         android:background="@drawable/rounded_imageview"
+        android:src="@drawable/placeholder_image"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnDone" />
 
 
     <TextView
-        android:id="@+id/tvTitle_ljibItem"
+        android:id="@+id/tvSetAs"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
@@ -101,32 +102,32 @@
         android:textSize="14sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivAvatar_libItem" />
+        app:layout_constraintTop_toBottomOf="@+id/ivAlbumImage" />
 
 
     <TextView
-        android:id="@+id/tvMp3"
+        android:id="@+id/tvContactsRingtone"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
-        android:background="@drawable/button_bg"
         android:fontFamily="@font/poppins_medium"
         android:paddingLeft="12dp"
+        android:background="@drawable/button_outlined"
+        android:textColor="@color/appBlue"
         android:paddingTop="10dp"
         android:paddingRight="12dp"
         android:paddingBottom="10dp"
         android:text="Contacts ringtone"
         android:textAlignment="center"
-        android:textColor="@color/white"
         android:textSize="12sp"
-        app:layout_constraintEnd_toStartOf="@+id/tvWav"
+        app:layout_constraintEnd_toStartOf="@+id/tvNotificationSound"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitle_ljibItem" />
+        app:layout_constraintTop_toBottomOf="@+id/tvSetAs" />
 
     <TextView
-        android:id="@+id/tvWav"
+        android:id="@+id/tvNotificationSound"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -137,15 +138,16 @@
         android:paddingBottom="10dp"
         android:text="Notification sound"
         android:textAlignment="center"
-        android:textColor="@color/textColorDarkGrey"
+        android:background="@drawable/button_outlined"
+        android:textColor="@color/appBlue"
         android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tvMp3"
-        app:layout_constraintTop_toTopOf="@+id/tvMp3" />
+        app:layout_constraintStart_toEndOf="@+id/tvContactsRingtone"
+        app:layout_constraintTop_toTopOf="@+id/tvContactsRingtone" />
 
     <TextView
-        android:id="@+id/tvM4A"
+        android:id="@+id/tvCallRingtone"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -157,15 +159,16 @@
         android:paddingBottom="10dp"
         android:text="Call ringtone"
         android:textAlignment="center"
-        android:textColor="@color/textColorDarkGrey"
+        android:background="@drawable/button_outlined"
+        android:textColor="@color/appBlue"
         android:textSize="12sp"
-        app:layout_constraintEnd_toStartOf="@+id/tvFlac"
+        app:layout_constraintEnd_toStartOf="@+id/tvAlarmSound"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvMp3" />
+        app:layout_constraintTop_toBottomOf="@+id/tvContactsRingtone" />
 
     <TextView
-        android:id="@+id/tvFlac"
+        android:id="@+id/tvAlarmSound"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -176,15 +179,16 @@
         android:paddingBottom="10dp"
         android:text="Alarm Sound"
         android:textAlignment="center"
-        android:textColor="@color/textColorDarkGrey"
+        android:background="@drawable/button_outlined"
+        android:textColor="@color/appBlue"
         android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tvM4A"
-        app:layout_constraintTop_toTopOf="@+id/tvM4A" />
+        app:layout_constraintStart_toEndOf="@+id/tvCallRingtone"
+        app:layout_constraintTop_toTopOf="@+id/tvCallRingtone" />
 
     <TextView
-        android:id="@+id/tvTitledfdg_ljibItem"
+        android:id="@+id/tvShare"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
@@ -192,86 +196,86 @@
         android:fontFamily="@font/poppins_semibold"
         android:maxLines="1"
         android:text="Share"
-        android:textColor="#666666"
+        android:textColor="@color/textColorDarkGrey"
         android:textSize="14sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvM4A" />
+        app:layout_constraintTop_toBottomOf="@+id/tvCallRingtone" />
 
     <ImageView
-        android:id="@+id/imageView4"
+        android:id="@+id/ivWhatsapp"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:src="@drawable/whatsapp_logo"
-        app:layout_constraintEnd_toStartOf="@+id/imageView3"
+        app:layout_constraintEnd_toStartOf="@+id/ivFacebook"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitledfdg_ljibItem" />
+        app:layout_constraintTop_toBottomOf="@+id/tvShare" />
 
     <ImageView
-        android:id="@+id/imageView3"
+        android:id="@+id/ivFacebook"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:src="@drawable/facebook_logo"
-        app:layout_constraintEnd_toStartOf="@+id/imageView5"
+        app:layout_constraintEnd_toStartOf="@+id/ivInstagram"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/imageView4"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitledfdg_ljibItem" />
+        app:layout_constraintStart_toEndOf="@+id/ivWhatsapp"
+        app:layout_constraintTop_toBottomOf="@+id/tvShare" />
 
     <ImageView
-        android:id="@+id/imageView5"
+        android:id="@+id/ivInstagram"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:src="@drawable/instagram_logo"
-        app:layout_constraintEnd_toStartOf="@+id/imageView6"
+        app:layout_constraintEnd_toStartOf="@+id/ivTiktok"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/imageView3"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitledfdg_ljibItem" />
+        app:layout_constraintStart_toEndOf="@+id/ivFacebook"
+        app:layout_constraintTop_toBottomOf="@+id/tvShare" />
 
     <ImageView
-        android:id="@+id/imageView6"
+        android:id="@+id/ivTiktok"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:src="@drawable/tiktok_logo"
-        app:layout_constraintEnd_toStartOf="@+id/imageView7"
+        app:layout_constraintEnd_toStartOf="@+id/ivMore"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/imageView5"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitledfdg_ljibItem" />
+        app:layout_constraintStart_toEndOf="@+id/ivInstagram"
+        app:layout_constraintTop_toBottomOf="@+id/tvShare" />
 
     <ImageView
-        android:id="@+id/imageView7"
+        android:id="@+id/ivMore"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:src="@drawable/more_logo"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/imageView6"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitledfdg_ljibItem" />
+        app:layout_constraintStart_toEndOf="@+id/ivTiktok"
+        app:layout_constraintTop_toBottomOf="@+id/tvShare" />
 
     <TextView
-        android:id="@+id/tvTitledfdg_ljivdvbItem"
+        android:id="@+id/tvWhatsapp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:ellipsize="end"
         android:fontFamily="@font/poppins_regular"
         android:text="Whatsapp"
-        android:textColor="#666666"
+        android:textColor="@color/textColorDarkGrey"
         android:textSize="10sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/imageView4"
+        app:layout_constraintEnd_toEndOf="@+id/ivWhatsapp"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
-        app:layout_constraintStart_toStartOf="@+id/imageView4"
-        app:layout_constraintTop_toBottomOf="@+id/imageView4" />
+        app:layout_constraintStart_toStartOf="@+id/ivWhatsapp"
+        app:layout_constraintTop_toBottomOf="@+id/ivWhatsapp" />
 
     <TextView
-        android:id="@+id/tvTitledfdg_lsfsjivdvbItem"
+        android:id="@+id/tvFacebook"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -279,15 +283,15 @@
         android:fontFamily="@font/poppins_regular"
         android:maxLines="1"
         android:text="Facebook"
-        android:textColor="#666666"
+        android:textColor="@color/textColorDarkGrey"
         android:textSize="10sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/imageView3"
-        app:layout_constraintStart_toStartOf="@+id/imageView3"
-        app:layout_constraintTop_toBottomOf="@+id/imageView3" />
+        app:layout_constraintEnd_toEndOf="@+id/ivFacebook"
+        app:layout_constraintStart_toStartOf="@+id/ivFacebook"
+        app:layout_constraintTop_toBottomOf="@+id/ivFacebook" />
 
     <TextView
-        android:id="@+id/tvTitledfdg_ljivdvsgsbItem"
+        android:id="@+id/tvInstagram"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -295,15 +299,15 @@
         android:fontFamily="@font/poppins_regular"
         android:maxLines="1"
         android:text="Instagram"
-        android:textColor="#666666"
+        android:textColor="@color/textColorDarkGrey"
         android:textSize="10sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/imageView5"
-        app:layout_constraintStart_toStartOf="@+id/imageView5"
-        app:layout_constraintTop_toBottomOf="@+id/imageView5" />
+        app:layout_constraintEnd_toEndOf="@+id/ivInstagram"
+        app:layout_constraintStart_toStartOf="@+id/ivInstagram"
+        app:layout_constraintTop_toBottomOf="@+id/ivInstagram" />
 
     <TextView
-        android:id="@+id/tvTitledfdgsf_ljivdvbItem"
+        android:id="@+id/tvTiktok"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -311,15 +315,15 @@
         android:fontFamily="@font/poppins_regular"
         android:maxLines="1"
         android:text="Tiktok"
-        android:textColor="#666666"
+        android:textColor="@color/textColorDarkGrey"
         android:textSize="10sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/imageView6"
-        app:layout_constraintStart_toStartOf="@+id/imageView6"
-        app:layout_constraintTop_toBottomOf="@+id/imageView6" />
+        app:layout_constraintEnd_toEndOf="@+id/ivTiktok"
+        app:layout_constraintStart_toStartOf="@+id/ivTiktok"
+        app:layout_constraintTop_toBottomOf="@+id/ivTiktok" />
 
     <TextView
-        android:id="@+id/tvTitledfffdg_ljivdvbItem"
+        android:id="@+id/tvMore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -327,11 +331,11 @@
         android:fontFamily="@font/poppins_regular"
         android:maxLines="1"
         android:text="More"
-        android:textColor="#666666"
+        android:textColor="@color/textColorDarkGrey"
         android:textSize="10sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/imageView7"
-        app:layout_constraintStart_toStartOf="@+id/imageView7"
-        app:layout_constraintTop_toBottomOf="@+id/imageView7" />
+        app:layout_constraintEnd_toEndOf="@+id/ivMore"
+        app:layout_constraintStart_toStartOf="@+id/ivMore"
+        app:layout_constraintTop_toBottomOf="@+id/ivMore" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -144,6 +144,7 @@
         app:layout_constraintTop_toBottomOf="@+id/materialCardView" />
 
 
+
     <TextView
         android:id="@+id/tvMp3"
         android:layout_width="0dp"
@@ -174,6 +175,7 @@
         android:paddingLeft="12dp"
         android:paddingTop="10dp"
         android:paddingRight="12dp"
+        android:background="@drawable/button_bg_white"
         android:paddingBottom="10dp"
         android:text="WAV"
         android:textAlignment="center"
@@ -193,6 +195,8 @@
         android:fontFamily="@font/poppins_medium"
         android:paddingLeft="12dp"
         android:paddingTop="10dp"
+        android:background="@drawable/button_bg_white"
+
         android:paddingRight="12dp"
         android:paddingBottom="10dp"
         android:text="M4A"
@@ -214,6 +218,8 @@
         android:paddingTop="10dp"
         android:paddingRight="12dp"
         android:paddingBottom="10dp"
+        android:background="@drawable/button_bg_white"
+
         android:text="FLAC"
         android:textAlignment="center"
         android:textColor="@color/textColorDarkGrey"
@@ -234,6 +240,8 @@
         android:paddingLeft="12dp"
         android:paddingTop="10dp"
         android:paddingRight="12dp"
+        android:background="@drawable/button_bg_white"
+
         android:paddingBottom="10dp"
         android:text="AAC"
         android:textAlignment="center"
@@ -255,6 +263,7 @@
         android:paddingRight="12dp"
         android:paddingBottom="10dp"
         android:text="OGG"
+        android:background="@drawable/button_bg_white"
         android:textAlignment="center"
         android:textColor="@color/textColorDarkGrey"
         android:textSize="12sp"

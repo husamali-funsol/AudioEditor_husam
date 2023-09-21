@@ -14,7 +14,7 @@ data class LibraryItemModel(
     val extension: String?,
     val size: String?,
     val time: String?,
-    val albumArt: Bitmap? // Include album artwork as a Bitmap property
+    val albumArt: Bitmap? = null // Include album artwork as a Bitmap property
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readLong(),

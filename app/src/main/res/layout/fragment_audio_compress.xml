@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".ui.fragments.features.audiocompress.AudioCompress"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -52,6 +52,8 @@
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/btnBack"
             app:layout_constraintTop_toTopOf="parent" />
+
+
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/materialCardViewPlayer"
@@ -158,10 +160,12 @@
             android:ellipsize="end"
             android:fontFamily="@font/poppins_medium"
             android:maxLines="1"
-            android:text="Size will be about 1.3 MB after compression"
-            android:textColor="#666666"
+            android:text="Size will be about 00 MB after compression"
+            android:textColor="@color/textColorDarkGrey"
             android:textSize="12sp"
             android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvSelectAudioQuality" />
 
@@ -179,7 +183,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#1A1071E3"
+                android:background="@color/tenPrecentAppBlue"
                 android:padding="16dp">
 
                 <TextView
@@ -289,7 +293,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#0D1071E3"
+                android:background="@color/fivePrecentAppBlue"
                 android:padding="16dp">
 
                 <TextView
@@ -460,7 +464,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#0D1071E3"
+                android:background="@color/fivePrecentAppBlue"
                 android:padding="16dp">
 
                 <TextView

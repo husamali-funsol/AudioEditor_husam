@@ -14,14 +14,15 @@ import com.example.audioeditor.ui.fragments.library.videoslist.MyVideoFragment
 
 class LibraryFragment : Fragment() {
 
-    private lateinit var binding: FragmentLibraryBinding
+    private val binding: FragmentLibraryBinding by lazy {
+        FragmentLibraryBinding.inflate(layoutInflater)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        binding = FragmentLibraryBinding.inflate(layoutInflater, container, false)
         return binding.root
     }
 

@@ -37,7 +37,7 @@ import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
-
+import java.io.IOException
 
 
 class ConvertFormat : Fragment(), CommandExecutionCallback {
@@ -55,14 +55,20 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
     private var selected = "mp3"
 
-    private lateinit var renameDialogBinding: RenameDialogBinding
+    private val renameDialogBinding by lazy {
+        RenameDialogBinding.inflate(layoutInflater)
+    }
     private var renameAlertDialog: AlertDialog? = null
 
     private var savingAlertDialog: AlertDialog? = null
-    private lateinit var savingDialogBinding: SavingDialogBinding
+    private val savingDialogBinding by lazy {
+        SavingDialogBinding.inflate(layoutInflater)
+    }
 
     private var quitAlertDialog: AlertDialog? = null
-    private lateinit var quitDialogBinding: QuitDialogBinding
+    private val quitDialogBinding by lazy{
+        QuitDialogBinding.inflate(layoutInflater)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -77,48 +83,41 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
         binding.btnUpload.setOnClickListener {
             audioFileLauncher.launch("audio/*")
-            requireContext().performHapticFeedback()
+            context?.performHapticFeedback()
         }
 
         binding.tvMp3.setOnOneClickListener {
             onTextViewClick(binding.tvMp3)
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
         }
 
         binding.tvWav.setOnOneClickListener {
             onTextViewClick(binding.tvWav)
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
         }
 
         binding.tvM4A.setOnOneClickListener {
             onTextViewClick(binding.tvM4A)
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
         }
 
         binding.tvFlac.setOnOneClickListener {
             onTextViewClick(binding.tvFlac)
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
         }
 
         binding.tvAac.setOnOneClickListener {
             onTextViewClick(binding.tvAac)
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
         }
 
         binding.tvOgg.setOnOneClickListener {
             onTextViewClick(binding.tvOgg)
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
         }
 
         binding.btnPlayPause.setOnOneClickListener {
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
             if (::mediaPlayer.isInitialized && !mediaPlayer.isPlaying) {
                 mediaPlayer.start()
                 binding.btnPlayPause.setImageResource(R.drawable.ic_pause)
@@ -146,8 +145,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         }
 
         binding.btnSave.setOnOneClickListener {
-            requireContext().performHapticFeedback()
-
+            context?.performHapticFeedback()
             showRenameDialog()
 
 //            convertFormat(audioUri!!)
@@ -155,53 +153,61 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         }
 
         binding.btnBack.setOnOneClickListener {
+            context?.performHapticFeedback()
             showQuitDialog()
         }
     }
 
     private fun showQuitDialog() {
         val alertDialogBuilder =
-            AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
 
-        quitDialogBinding = QuitDialogBinding.inflate(layoutInflater)
         val dialogView = quitDialogBinding.root
-        alertDialogBuilder.setView(dialogView)
+        alertDialogBuilder?.setView(dialogView)
 
         quitDialogBinding.tvNo.setOnClickListener {
+            context?.performHapticFeedback()
             quitAlertDialog?.dismiss()
         }
 
         quitDialogBinding.tvYes.setOnClickListener {
+            context?.performHapticFeedback()
             // Clear the back stack and navigate to the home fragment
-            findNavController().popBackStack()
-            findNavController().navigate(R.id.homeFragment)
+            findNavController().apply{
+                if(currentDestination?.id == R.id.convertFormat ){
+                    popBackStack()
+                    navigate(R.id.homeFragment)
+                }
+            }
             quitAlertDialog?.dismiss()
         }
 
-        quitAlertDialog = alertDialogBuilder.create()
+        quitAlertDialog = alertDialogBuilder?.create()
         quitAlertDialog!!.show()
     }
 
     private fun showRenameDialog() {
         val alertDialogBuilder =
-            AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
 
-        renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
         val dialogView = renameDialogBinding.root
-        alertDialogBuilder.setView(dialogView)
+        alertDialogBuilder?.setView(dialogView)
 
         val filename = "audio_editor_${getCurrentTimestampString()}"
 
         renameDialogBinding.etRenameRD.setText(filename)
         renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
 
-
         renameDialogBinding.tvConfirmRD.setOnClickListener {
+            context?.performHapticFeedback()
             // Handle the positive button click event here
             // You can retrieve the text entered in the EditText like this:
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
             val name = enteredText.replaceSpaceWithUnderscore()
-
 
             convertFormat(name, audioUri!!)
 
@@ -210,13 +216,14 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         }
 
         renameDialogBinding.tvCancelRD.setOnClickListener {
+            context?.performHapticFeedback()
             // Handle the negative button click event here
             // This is where you can cancel the dialog if needed
             renameAlertDialog?.dismiss()
 
         }
 
-        renameAlertDialog = alertDialogBuilder.create()
+        renameAlertDialog = alertDialogBuilder?.create()
         renameAlertDialog!!.show()
 
     }
@@ -232,13 +239,17 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             binding.tvOgg
         )
         for (textView in allTextViews) {
-            textView.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.white))
-            textView.setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.textColorDarkGrey
+
+            context?.let{
+                textView.setBackgroundResource(R.drawable.button_bg_white)
+                textView.setTextColor(
+                    ContextCompat.getColor(
+                        it,
+                        R.color.textColorDarkGrey
+                    )
                 )
-            )  // Set your desired text color here
+            }
+
         }
 
         selected = clickedTextView.text.toString()
@@ -246,12 +257,14 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
         // Change the background color of the clicked TextView to blue
         clickedTextView.setBackgroundResource(R.drawable.button_bg)
-        clickedTextView.setTextColor(
-            ContextCompat.getColor(
-                requireContext(),
-                R.color.white
+        context?.let{
+            clickedTextView.setTextColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.white
+                )
             )
-        )  // Set your desired text color here
+        }
 
     }
 
@@ -274,7 +287,9 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             mediaPlayer.release()
         }
         mediaPlayer = MediaPlayer().apply {
-            setDataSource(requireContext(), uri)
+            context?.let{
+                setDataSource(it, uri)
+            }
             prepareAsync()
 
             setOnPreparedListener { mp ->
@@ -316,14 +331,15 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
     private fun convertFormat(filename: String, audioUri: Uri) {
 
-        val inputAudioPath = requireContext().getInputPath(audioUri)
-        val outputFile = filename.getOutputFilePath(selected)
-        val outputPath = outputFile.path
+        context?.let{
+            val inputAudioPath = it.getInputPath(audioUri)
+            val outputFile = filename.getOutputFilePath(selected)
+            val outputPath = outputFile.path
 
-        //ffmpeg -i input_file.ext output_file.ext
+            //ffmpeg -i input_file.ext output_file.ext
 
-        //to m4a
-        //ffmpeg -i input_file.mp3 -c:a aac -b:a 256k output_file.m4a
+            //to m4a
+            //ffmpeg -i input_file.mp3 -c:a aac -b:a 256k output_file.m4a
 
 //        if(ext == "m4a") {
 //            val cmd = arrayOf(
@@ -342,17 +358,18 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 //            )
 //        }
 
-        //problem whil econverting to m4a===========================
-        //retry it again with above commands.==================================
+            //problem whil econverting to m4a===========================
+            //retry it again with above commands.==================================
 
 
-        val cmd = arrayOf(
-            "-y",
-            "-i", inputAudioPath,
-            outputPath
-        )
+            val cmd = arrayOf(
+                "-y",
+                "-i", inputAudioPath,
+                outputPath
+            )
 
-        cmd.executeCommand(this)
+            cmd.executeCommand(this)
+        }
 
 
     }
@@ -363,17 +380,18 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         Log.d("AudioEditor", "Progress: $progress%")
 
         val alertDialogBuilder =
-            AlertDialog.Builder(requireContext(), R.style.CustomAlertDialogStyle)
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
 
-        savingDialogBinding = SavingDialogBinding.inflate(layoutInflater)
         val dialogView = savingDialogBinding.root
 
-        alertDialogBuilder.setView(dialogView)
+        alertDialogBuilder?.setView(dialogView)
 
 //        savingDialogBinding.progressBar.progress = progress
 //        savingDialogBinding.tvSaving.text  =progress.toString()
 
-        savingAlertDialog = alertDialogBuilder.create()
+        savingAlertDialog = alertDialogBuilder?.create()
         savingAlertDialog?.show()
     }
 
@@ -397,6 +415,8 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
        dismissDialog()
 
     }
+
+
 
 }
 

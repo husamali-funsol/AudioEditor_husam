@@ -21,6 +21,7 @@ import android.os.VibratorManager
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
@@ -158,6 +159,8 @@ fun Array<String>.executeCommand(callback: CommandExecutionCallback) {
                     callback.onCommandExecutionFailure("Command Execution Failed")
                 }
             }
+
+
         }
     } catch (e: Exception) {
         Log.d("AudioEditor", "exception: ${e.toString()}")
@@ -280,6 +283,24 @@ fun String.getAudioFileDuration(): Long {
         0
     }
 }
+
+fun String.getVideoFileDuration(): Long {
+    val mediaPlayer = MediaPlayer()
+
+    return try {
+        mediaPlayer.setDataSource(this)
+        mediaPlayer.prepare()
+        val duration = mediaPlayer.duration.toLong()
+        mediaPlayer.release()  // Release MediaPlayer after obtaining duration
+        duration
+    } catch (e: IOException) {
+        // Log the error or handle it as needed
+        mediaPlayer.release()  // Make sure to release the MediaPlayer on error
+        0
+    }
+}
+
+
 fun Context.getFileNameFromUri(uri: Uri): String? {
     val cursor = this?.contentResolver?.query(uri, null, null, null, null)
     cursor?.use {
@@ -312,6 +333,19 @@ fun Context.getExtensionFromUri(uri: Uri): String? {
 fun String.replaceSpaceWithUnderscore(): String{
     return this.lowercase(Locale.getDefault()).replace(' ', '_').trim()
 }
+
+fun Context.showSmallLengthToast(text: String) {
+    Handler(Looper.getMainLooper()).post{
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+}
+
+fun Context.showLongLengthToast(text: String) {
+    Handler(Looper.getMainLooper()).post {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show()
+    }
+}
+
 
 
 
