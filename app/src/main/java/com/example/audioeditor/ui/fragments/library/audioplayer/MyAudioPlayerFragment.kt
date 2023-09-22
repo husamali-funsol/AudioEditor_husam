@@ -31,6 +31,7 @@ import com.example.audioeditor.utils.convertMillisToMinutes
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
 import com.example.audioeditor.utils.scanFiles
+import com.example.audioeditor.utils.setOnOneClickListener
 import com.example.audioeditor.utils.showSmallLengthToast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
@@ -89,11 +90,13 @@ class MyAudioPlayerFragment : Fragment() {
 //
         audioUri?.let{ createMediaPlayer(it) }
 
-        binding.ibBack.setOnClickListener {
-            findNavController().popBackStack()
+        binding.ibBack.setOnOneClickListener {
+            findNavController().apply {
+                popBackStack()
+            }
         }
 
-        binding.ivSkipNextLP.setOnClickListener {
+        binding.ivSkipNextLP.setOnOneClickListener {
             position = position!! + 1
 
             if (position != null && position!! >= 0 && position!! < (mList?.size ?: 0)) {
@@ -126,7 +129,7 @@ class MyAudioPlayerFragment : Fragment() {
             audioUri?.let{ createMediaPlayer(it) }
         }
 
-        binding.ivSkipPrevLP.setOnClickListener {
+        binding.ivSkipPrevLP.setOnOneClickListener {
             position = position!! - 1
 
             if (position != null && position!! >= 0 && position!! < (mList?.size ?: 0)) {
@@ -193,7 +196,7 @@ class MyAudioPlayerFragment : Fragment() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        binding.ibMoreLP.setOnClickListener {
+        binding.ibMoreLP.setOnOneClickListener {
 
             val bottomSheet = BottomSheetDialog(requireContext())
 

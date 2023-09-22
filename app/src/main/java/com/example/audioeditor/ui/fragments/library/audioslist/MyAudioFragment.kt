@@ -149,7 +149,14 @@ class MyAudioFragment() : Fragment() {
             putParcelableArray("AUDIO_ITEMS", libItemArray)
             putInt("AUDIO_POSITION", position)
         }
-        findNavController().navigate(R.id.action_libraryFragment_to_myAudioPlayerFragment2,bundle)
+
+        findNavController().apply {
+            navigate(
+                R.id.action_libraryFragment_to_myAudioPlayerFragment2,
+                bundle
+            )
+
+        }
 //        callBack.invoke(libList, position)
     }
 

@@ -5,7 +5,6 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.provider.MediaStore
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -15,8 +14,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.audioeditor.R
 import com.example.audioeditor.TAG
@@ -25,8 +22,8 @@ import com.example.audioeditor.databinding.QuitDialogBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.databinding.SavingDialogBinding
 import com.example.audioeditor.interfaces.CommandExecutionCallback
-import com.example.audioeditor.ui.fragments.home.HomeFragment
 import com.example.audioeditor.utils.calculateProgress
+import com.example.audioeditor.utils.dismissDialog
 import com.example.audioeditor.utils.executeCommand
 import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getFileNameFromUri
@@ -37,7 +34,6 @@ import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
-import java.io.IOException
 
 
 class ConvertFormat : Fragment(), CommandExecutionCallback {
@@ -59,16 +55,22 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         RenameDialogBinding.inflate(layoutInflater)
     }
     private var renameAlertDialog: AlertDialog? = null
+    private var renameDialogView: ConstraintLayout? = null
+
 
     private var savingAlertDialog: AlertDialog? = null
     private val savingDialogBinding by lazy {
         SavingDialogBinding.inflate(layoutInflater)
     }
+    private var savingDialogView: ConstraintLayout? = null
+
 
     private var quitAlertDialog: AlertDialog? = null
     private val quitDialogBinding by lazy{
         QuitDialogBinding.inflate(layoutInflater)
     }
+    private var quitDialogView: ConstraintLayout? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -147,9 +149,6 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         binding.btnSave.setOnOneClickListener {
             context?.performHapticFeedback()
             showRenameDialog()
-
-//            convertFormat(audioUri!!)
-
         }
 
         binding.btnBack.setOnOneClickListener {
@@ -166,10 +165,14 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
         val dialogView = quitDialogBinding.root
         alertDialogBuilder?.setView(dialogView)
+        quitAlertDialog = alertDialogBuilder?.create()
+
+        quitDialogView = dialogView
+
 
         quitDialogBinding.tvNo.setOnClickListener {
             context?.performHapticFeedback()
-            quitAlertDialog?.dismiss()
+            dismissDialog(quitAlertDialog, quitDialogView)
         }
 
         quitDialogBinding.tvYes.setOnClickListener {
@@ -181,10 +184,14 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
                     navigate(R.id.homeFragment)
                 }
             }
-            quitAlertDialog?.dismiss()
+            dismissDialog(quitAlertDialog, quitDialogView)
         }
 
-        quitAlertDialog = alertDialogBuilder?.create()
+
+        quitAlertDialog?.setOnDismissListener {
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
         quitAlertDialog!!.show()
     }
 
@@ -196,7 +203,9 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
         val dialogView = renameDialogBinding.root
         alertDialogBuilder?.setView(dialogView)
+        renameAlertDialog = alertDialogBuilder?.create()
 
+        renameDialogView = dialogView
         val filename = "audio_editor_${getCurrentTimestampString()}"
 
         renameDialogBinding.etRenameRD.setText(filename)
@@ -210,20 +219,23 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             val name = enteredText.replaceSpaceWithUnderscore()
 
             convertFormat(name, audioUri!!)
+            dismissDialog(renameAlertDialog, renameDialogView)
 
-            handleProgress(50)
-            renameAlertDialog?.dismiss()
+            savingDialog()
         }
 
         renameDialogBinding.tvCancelRD.setOnClickListener {
             context?.performHapticFeedback()
             // Handle the negative button click event here
             // This is where you can cancel the dialog if needed
-            renameAlertDialog?.dismiss()
-
+            dismissDialog(renameAlertDialog, renameDialogView)
         }
 
-        renameAlertDialog = alertDialogBuilder?.create()
+
+        renameAlertDialog?.setOnDismissListener {
+            dismissDialog(renameAlertDialog, renameDialogView)
+        }
+
         renameAlertDialog!!.show()
 
     }
@@ -375,7 +387,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
     }
 
 
-    private fun handleProgress(progress: Int) {
+    private fun savingDialog(progress: Int =50) {
         // Update your progress UI or dialog here
         Log.d("AudioEditor", "Progress: $progress%")
 
@@ -385,19 +397,22 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             }
 
         val dialogView = savingDialogBinding.root
-
-        alertDialogBuilder?.setView(dialogView)
-
-//        savingDialogBinding.progressBar.progress = progress
-//        savingDialogBinding.tvSaving.text  =progress.toString()
-
+        alertDialogBuilder?.setView(dialogView)?.setCancelable(false)
         savingAlertDialog = alertDialogBuilder?.create()
+
+        savingDialogView = dialogView
+
+
+        savingAlertDialog?.setOnDismissListener {
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }
+
         savingAlertDialog?.show()
     }
 
     private fun dismissDialog() {
         Handler().postDelayed({
-            savingAlertDialog?.dismiss()
+            dismissDialog(savingAlertDialog, savingDialogView)
         }, 1000)    }
 
     override fun onCommandExecutionSuccess() {
@@ -405,6 +420,16 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         savingDialogBinding.progressBar.progress = 100
         savingDialogBinding.tvSaving.text = "File Saved!"
         dismissDialog()
+
+        val bundle = Bundle().apply {
+            putString("AUDIO_URI", audioUri.toString())
+        }
+
+        findNavController().apply {
+            if(currentDestination?.id == R.id.convertFormat){
+                navigate(R.id.action_convertFormat_to_savedScreenFragment, bundle)
+            }
+        }
 
 
     }

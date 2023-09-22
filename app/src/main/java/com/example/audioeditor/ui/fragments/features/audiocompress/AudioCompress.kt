@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import com.example.audioeditor.R
@@ -22,9 +23,9 @@ import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.databinding.SavingDialogBinding
 import com.example.audioeditor.interfaces.CommandExecutionCallback
 import com.example.audioeditor.utils.calculateProgress
+import com.example.audioeditor.utils.dismissDialog
 import com.example.audioeditor.utils.executeCommand
 import com.example.audioeditor.utils.formatSizeToMB
-import com.example.audioeditor.utils.getAudioFileDuration
 import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getExtensionFromUri
 import com.example.audioeditor.utils.getFileNameFromUri
@@ -40,7 +41,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import java.util.Locale
 
 
 class AudioCompress : Fragment(), CommandExecutionCallback {
@@ -59,16 +59,21 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         RenameDialogBinding.inflate(layoutInflater)
     }
     private var renameAlertDialog: AlertDialog? = null
+    private var renameDialogView: ConstraintLayout? = null
+
 
     private var savingAlertDialog: AlertDialog? = null
     private val savingDialogBinding by lazy {
         SavingDialogBinding.inflate(layoutInflater)
     }
+    private var savingDialogView: ConstraintLayout? = null
 
     private var quitAlertDialog: AlertDialog? = null
     private val quitDialogBinding by lazy{
         QuitDialogBinding.inflate(layoutInflater)
     }
+    private var quitDialogView: ConstraintLayout? = null
+
 
     private lateinit var mediaPlayer: MediaPlayer
 
@@ -425,23 +430,37 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
             }
 
         val dialogView = quitDialogBinding.root
+        quitDialogView = dialogView
         alertDialogBuilder?.setView(dialogView)
+        quitAlertDialog = alertDialogBuilder?.create()
+
+
 
         quitDialogBinding.tvNo.setOnClickListener {
             context?.performHapticFeedback()
-            quitAlertDialog?.dismiss()
+            dismissDialog(quitAlertDialog, quitDialogView)
+
         }
 
         quitDialogBinding.tvYes.setOnClickListener {
             context?.performHapticFeedback()
             // Clear the back stack and navigate to the home fragment
-            findNavController().popBackStack()
-            findNavController().navigate(R.id.homeFragment)
-            quitAlertDialog?.dismiss()
+            findNavController().apply{
+                if(currentDestination?.id == R.id.audioCompress)
+                {
+                    popBackStack()
+                    navigate(R.id.homeFragment)
+                }
+            }
+            dismissDialog(quitAlertDialog, quitDialogView)
+
         }
 
-        quitAlertDialog = alertDialogBuilder?.create()
-        quitAlertDialog!!.show()
+        quitAlertDialog?.setOnDismissListener {
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitAlertDialog?.show()
     }
 
     private fun showRenameDialog() {
@@ -450,8 +469,10 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
                 AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
             }
 
-        val dialogView = renameDialogBinding.root
+        var dialogView = renameDialogBinding.root
+        renameDialogView = dialogView
         alertDialogBuilder?.setView(dialogView)
+        renameAlertDialog = alertDialogBuilder?.create()
 
         val filename = "audio_editor_${getCurrentTimestampString()}"
 
@@ -467,25 +488,31 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
             val name = enteredText.replaceSpaceWithUnderscore()
 
             audioCompress(name, audioUri!!)
+            dismissDialog(renameAlertDialog, renameDialogView)
+            savingDialog()
 
-            handleProgress(50)
-            renameAlertDialog?.dismiss()
         }
+
 
         renameDialogBinding.tvCancelRD.setOnClickListener {
             context?.performHapticFeedback()
             // Handle the negative button click event here
             // This is where you can cancel the dialog if needed
-            renameAlertDialog?.dismiss()
-
+           dismissDialog(renameAlertDialog, renameDialogView)
         }
 
-        renameAlertDialog = alertDialogBuilder?.create()
+        renameAlertDialog?.setOnDismissListener {
+            dismissDialog(renameAlertDialog, renameDialogView)
+        }
+
+
+
         renameAlertDialog!!.show()
 
     }
 
-    private fun handleProgress(progress: Int) {
+
+    private fun savingDialog(progress: Int = 50) {
         // Update your progress UI or dialog here
         Log.d("AudioEditor", "Progress: $progress%")
 
@@ -495,15 +522,17 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
             }
 
         val dialogView = savingDialogBinding.root
-
-        alertDialogBuilder?.setView(dialogView)
-
-//        savingDialogBinding.progressBar.progress = progress
-//        savingDialogBinding.tvSaving.text  =progress.toString()
-
+        savingDialogView = dialogView
+        alertDialogBuilder?.setView(dialogView)?.setCancelable(false)
         savingAlertDialog = alertDialogBuilder?.create()
+
+        savingAlertDialog?.setOnDismissListener {
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }
+
         savingAlertDialog?.show()
     }
+
 
 
     private fun unselectAudioQuality(){
@@ -646,16 +675,17 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         }
     }
 
-    private fun dismissDialog() {
+    private fun dialogDismiss() {
         Handler().postDelayed({
-            savingAlertDialog?.dismiss()
-        }, 1000)    }
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }, 1000)
+    }
 
     override fun onCommandExecutionSuccess() {
 
         savingDialogBinding.progressBar.progress = 100
         savingDialogBinding.tvSaving.text = "File Saved!"
-        dismissDialog()
+        dialogDismiss()
 
         val bundle = Bundle().apply {
             putString("AUDIO_URI", audioUri.toString())
@@ -672,7 +702,7 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
     override fun onCommandExecutionFailure(errorMessage: String) {
         savingDialogBinding.progressBar.progress = 0
         savingDialogBinding.tvSaving.text = "File Saving Failed!"
-        dismissDialog()
+        dialogDismiss()
 
     }
 

@@ -21,7 +21,10 @@ import android.os.VibratorManager
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
@@ -344,6 +347,12 @@ fun Context.showLongLengthToast(text: String) {
     Handler(Looper.getMainLooper()).post {
         Toast.makeText(this, text, Toast.LENGTH_LONG).show()
     }
+}
+
+fun dismissDialog(alertDialog: AlertDialog?, dialogView: ConstraintLayout?){
+    alertDialog?.dismiss()
+    val parentView = dialogView?.parent as? ViewGroup
+    parentView?.removeView(dialogView)
 }
 
 
