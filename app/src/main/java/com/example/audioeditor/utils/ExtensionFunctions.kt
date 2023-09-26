@@ -356,6 +356,13 @@ fun dismissDialog(alertDialog: AlertDialog?, dialogView: ConstraintLayout?){
 }
 
 
+fun String.getUriFromPath(): Uri? {
+
+    return Uri.parse(this)
+
+}
+
+
 
 
 

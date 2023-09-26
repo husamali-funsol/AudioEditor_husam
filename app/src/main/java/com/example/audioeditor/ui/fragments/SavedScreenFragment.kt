@@ -16,6 +16,7 @@ import com.example.audioeditor.databinding.FragmentSavedScreenBinding
 import com.example.audioeditor.utils.getFileNameFromUri
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.setOnOneClickListener
+import java.io.File
 
 
 class SavedScreenFragment : Fragment() {
@@ -38,9 +39,9 @@ class SavedScreenFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        audioUri = Uri.parse(arguments?.getString("AUDIO_URI"))
-
-        binding.tvMusicTitle.text = audioUri?.let { context?.getFileNameFromUri(it) }
+        val abc = arguments?.getString("AUDIO_URI")
+        val name = File(abc).name
+        binding.tvMusicTitle.text = name
 
         binding.btnBack.setOnOneClickListener {
             context?.performHapticFeedback()

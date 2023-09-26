@@ -55,6 +55,16 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/btnCompress" />
 
+        <Button
+            android:id="@+id/btnTrim"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Audio Trim"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnSpeed" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

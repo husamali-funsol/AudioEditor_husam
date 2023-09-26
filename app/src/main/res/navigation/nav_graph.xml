@@ -38,6 +38,9 @@
         <action
             android:id="@+id/action_homeFragment_to_audioSpeed"
             app:destination="@id/audioSpeed" />
+        <action
+            android:id="@+id/action_homeFragment_to_trimAudio"
+            app:destination="@id/trimAudio" />
     </fragment>
     <fragment
         android:id="@+id/libraryFragment"
@@ -98,11 +101,20 @@
         tools:layout="@layout/fragment_saved_screen" />
     <fragment
         android:id="@+id/audioSpeed"
-        android:name="com.example.audioeditor.ui.fragments.features.AudioSpeed"
+        android:name="com.example.audioeditor.ui.fragments.features.audiospeed.AudioSpeed"
         android:label="fragment_audio_speed"
         tools:layout="@layout/fragment_audio_speed" >
         <action
             android:id="@+id/action_audioSpeed_to_savedScreenFragment"
+            app:destination="@id/savedScreenFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/trimAudio"
+        android:name="com.example.audioeditor.ui.fragments.features.trimaudio.TrimAudio"
+        android:label="fragment_trim_audio"
+        tools:layout="@layout/fragment_trim_audio" >
+        <action
+            android:id="@+id/action_trimAudio_to_savedScreenFragment"
             app:destination="@id/savedScreenFragment" />
     </fragment>
 

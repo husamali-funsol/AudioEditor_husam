@@ -90,6 +90,11 @@ dependencies {
     //coroutines
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
+    //lottie
     implementation ("com.airbnb.android:lottie:5.2.0")
+
+    //rangeview for trim
+//    implementation ("com.github.iammert:rangeview:0.1")
+
 
 }

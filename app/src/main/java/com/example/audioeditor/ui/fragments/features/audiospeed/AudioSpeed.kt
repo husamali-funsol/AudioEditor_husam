@@ -1,4 +1,4 @@
-package com.example.audioeditor.ui.fragments.features
+package com.example.audioeditor.ui.fragments.features.audiospeed
 
 import AudioFileContract
 import android.media.MediaPlayer

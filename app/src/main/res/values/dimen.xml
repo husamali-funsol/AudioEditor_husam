@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    //rangeview
+    <dimen name="rangeView_HorizontalSpace">16dp</dimen>
+    <dimen name="rangeView_StrokeWidth">4dp</dimen>
+    <dimen name="rangeView_ToggleRadius">8dp</dimen>
+
+</resources>

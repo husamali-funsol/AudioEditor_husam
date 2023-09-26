@@ -29,6 +29,7 @@ import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getFileNameFromUri
 import com.example.audioeditor.utils.getInputPath
 import com.example.audioeditor.utils.getOutputFilePath
+import com.example.audioeditor.utils.getUriFromPath
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
@@ -70,6 +71,8 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         QuitDialogBinding.inflate(layoutInflater)
     }
     private var quitDialogView: ConstraintLayout? = null
+
+    private var outputPath = ""
 
 
     override fun onCreateView(
@@ -346,7 +349,8 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         context?.let{
             val inputAudioPath = it.getInputPath(audioUri)
             val outputFile = filename.getOutputFilePath(selected)
-            val outputPath = outputFile.path
+            outputPath = outputFile.path
+
 
             //ffmpeg -i input_file.ext output_file.ext
 
@@ -422,7 +426,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         dismissDialog()
 
         val bundle = Bundle().apply {
-            putString("AUDIO_URI", audioUri.toString())
+            putString("AUDIO_URI", outputPath)
         }
 
         findNavController().apply {
