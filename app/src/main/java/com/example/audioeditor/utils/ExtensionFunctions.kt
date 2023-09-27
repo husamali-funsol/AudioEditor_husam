@@ -73,13 +73,14 @@ fun View.setOnOneClickListener(debounceTime: Long = 600L, action: () -> Unit) {
         val seconds = TimeUnit.MILLISECONDS.toSeconds(this.toLong()) % 60
 
         // Check if hours is zero, and format accordingly
-        val hoursStr = if (hours > 0) {
-            String.format("%02d:", hours)
-        } else {
-            "" // If hours is zero, don't display it
-        }
+//        val hoursStr = if (hours > 0) {
+//            String.format("%02d:", hours)
+//        } else {
+//            "" // If hours is zero, don't display it
+//        }
 
         // Format minutes and seconds as usual
+        val hoursStr = String.format("%02d:", hours)
         val minutesStr = String.format("%02d:", minutes)
         val secondsStr = String.format("%02d", seconds)
 

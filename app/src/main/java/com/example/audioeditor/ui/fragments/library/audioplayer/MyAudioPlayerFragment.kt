@@ -21,10 +21,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.audioeditor.R
+import com.example.audioeditor.databinding.BottomSheetDetailsBinding
+import com.example.audioeditor.databinding.BottomSheetLibraryBinding
 import com.example.audioeditor.databinding.DeleteDialogBinding
-import com.example.audioeditor.databinding.DetailsBottomSheetDialogBinding
 import com.example.audioeditor.databinding.FragmentMyAudioPlayerBinding
-import com.example.audioeditor.databinding.LibraryBottomSheetDialogBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.ui.fragments.library.LibraryItemModel
 import com.example.audioeditor.utils.convertMillisToMinutes
@@ -44,10 +44,10 @@ class MyAudioPlayerFragment : Fragment() {
     }
 
     private val libraryBottomSheetDialogBinding by lazy {
-        LibraryBottomSheetDialogBinding.inflate(layoutInflater)
+        BottomSheetLibraryBinding.inflate(layoutInflater)
     }
     private val detailsBottomSheetDialogBinding by lazy {
-        DetailsBottomSheetDialogBinding.inflate(layoutInflater)
+        BottomSheetDetailsBinding.inflate(layoutInflater)
     }
     private val renameDialogBinding by lazy {
         RenameDialogBinding.inflate(layoutInflater)
@@ -199,7 +199,8 @@ class MyAudioPlayerFragment : Fragment() {
         binding.ibMoreLP.setOnOneClickListener {
 
             val bottomSheet = BottomSheetDialog(requireContext())
-
+            val parent = libraryBottomSheetDialogBinding.root.parent as? ViewGroup
+            parent?.removeView(libraryBottomSheetDialogBinding.root)
             bottomSheet.setContentView(libraryBottomSheetDialogBinding.root)
 
             if (libItem != null) {
@@ -213,7 +214,8 @@ class MyAudioPlayerFragment : Fragment() {
                     context?.let{
                         AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
                     }
-
+                val parent = renameDialogBinding.root.parent as? ViewGroup
+                parent?.removeView(renameDialogBinding.root)
                 val dialogView = renameDialogBinding.root
                 alertDialogBuilder?.setView(dialogView)
 
@@ -250,6 +252,8 @@ class MyAudioPlayerFragment : Fragment() {
 
             libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
                 val detailsBottomSheet = BottomSheetDialog(requireContext())
+                val parent = detailsBottomSheetDialogBinding.root.parent as? ViewGroup
+                parent?.removeView(detailsBottomSheetDialogBinding.root)
                 detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
 
                 if (libItem != null) {
@@ -285,7 +289,8 @@ class MyAudioPlayerFragment : Fragment() {
                     context?.let{
                         AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
                     }
-
+                val parent = deleteDialogBinding.root.parent as? ViewGroup
+                parent?.removeView(deleteDialogBinding.root)
                 val dialogView = deleteDialogBinding.root
                 alertDialogBuilder?.setView(dialogView)
 

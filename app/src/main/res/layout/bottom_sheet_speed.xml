@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:elevation="10dp"
+    android:backgroundTint="@color/white"
+    app:strokeWidth="0dp"
+    style="@style/BottomSheet" >
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppins_bold"
+            android:text="Speed"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <TextView
+            android:id="@+id/btnDone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_bg"
+            android:fontFamily="@font/poppins_medium"
+            android:paddingLeft="12dp"
+            android:paddingTop="4dp"
+            android:paddingRight="12dp"
+            android:paddingBottom="4dp"
+            android:text="Done"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <TextView
+            android:id="@+id/tv05x"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/button_bg_grey"
+            android:fontFamily="@font/poppins_medium"
+            android:paddingLeft="12dp"
+            android:paddingTop="10dp"
+            android:paddingRight="12dp"
+            android:paddingBottom="10dp"
+            android:text="0.5x"
+            android:textAlignment="center"
+            android:textColor="@color/textColorlightGrey"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@+id/tv075x"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+        <TextView
+            android:id="@+id/tv075x"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="30dp"
+            android:background="@drawable/button_bg_grey"
+            android:fontFamily="@font/poppins_medium"
+            android:paddingLeft="12dp"
+            android:paddingTop="10dp"
+            android:paddingRight="12dp"
+            android:paddingBottom="10dp"
+            android:text="0.75x"
+            android:textAlignment="center"
+            android:textColor="@color/textColorlightGrey"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@+id/tv10x"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/tv05x"
+            app:layout_constraintTop_toTopOf="@+id/tv05x" />
+
+        <TextView
+            android:id="@+id/tv10x"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_bg_grey"
+            android:fontFamily="@font/poppins_medium"
+            android:paddingLeft="12dp"
+            android:paddingTop="10dp"
+            android:paddingRight="12dp"
+            android:paddingBottom="10dp"
+            android:text="1.0x"
+            android:textAlignment="center"
+            android:textColor="@color/textColorlightGrey"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/tv075x"
+            app:layout_constraintTop_toTopOf="@+id/tv05x" />
+
+
+                <TextView
+                    android:id="@+id/tv125x"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/button_bg_grey"
+                    android:fontFamily="@font/poppins_medium"
+                    android:paddingLeft="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingRight="12dp"
+                    android:paddingBottom="10dp"
+                    android:text="1.25x"
+                    android:textAlignment="center"
+                    android:textColor="@color/textColorlightGrey"
+                    android:textSize="12sp"
+                    app:layout_constraintEnd_toStartOf="@+id/tv15x"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv05x" />
+
+                <TextView
+                    android:id="@+id/tv15x"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="30dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="30dp"
+                    android:background="@drawable/button_bg_grey"
+                    android:fontFamily="@font/poppins_medium"
+                    android:paddingLeft="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingRight="12dp"
+                    android:paddingBottom="10dp"
+                    android:text="1.5x"
+                    android:textAlignment="center"
+                    android:textColor="@color/textColorlightGrey"
+                    android:textSize="12sp"
+                    app:layout_constraintEnd_toStartOf="@+id/tv20x"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/tv125x"
+                    app:layout_constraintTop_toBottomOf="@+id/tv075x" />
+
+                <TextView
+                    android:id="@+id/tv20x"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/button_bg_grey"
+                    android:fontFamily="@font/poppins_medium"
+                    android:paddingLeft="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingRight="12dp"
+                    android:paddingBottom="10dp"
+                    android:text="2.0x"
+                    android:textAlignment="center"
+                    android:textColor="@color/textColorlightGrey"
+                    android:textSize="12sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/tv15x"
+                    app:layout_constraintTop_toBottomOf="@+id/tv10x" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

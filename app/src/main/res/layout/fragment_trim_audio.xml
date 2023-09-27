@@ -222,11 +222,11 @@
 
         <TextView
             android:id="@+id/tvCropWindowLeft"
-            android:layout_width="wrap_content"
+            android:layout_width="50dp"
             android:layout_height="0dp"
             android:background="@color/tenPrecentAppBlue"
             android:fontFamily="@font/poppins_regular"
-            android:gravity="center_vertical"
+            android:gravity="center"
             android:paddingHorizontal="3dp"
             android:text="00:00:00"
             android:textColor="@color/appBlue"
@@ -260,11 +260,11 @@
 
         <TextView
             android:id="@+id/tvCropWindowRight"
-            android:layout_width="wrap_content"
+            android:layout_width="50dp"
             android:layout_height="0dp"
             android:background="@color/tenPrecentAppBlue"
             android:fontFamily="@font/poppins_regular"
-            android:gravity="center_vertical"
+            android:gravity="center"
             android:paddingHorizontal="3dp"
             android:text="00:00:00"
             android:textColor="@color/appBlue"
@@ -473,6 +473,15 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/ivVolume" />
 
+                <View
+                    android:id="@+id/viewVolume"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvVolume"
+                    app:layout_constraintEnd_toEndOf="@+id/ivVolume"
+                    app:layout_constraintStart_toStartOf="@+id/ivVolume"
+                    app:layout_constraintTop_toTopOf="@+id/ivVolume" />
+
                 <TextView
                     android:id="@+id/tvSpeed"
                     android:layout_width="0dp"
@@ -486,6 +495,15 @@
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toEndOf="@+id/tvVolume"
                     app:layout_constraintTop_toBottomOf="@+id/ivSpeed" />
+
+                <View
+                    android:id="@+id/viewSpeed"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvSpeed"
+                    app:layout_constraintEnd_toEndOf="@+id/ivSpeed"
+                    app:layout_constraintStart_toStartOf="@+id/ivSpeed"
+                    app:layout_constraintTop_toTopOf="@+id/ivSpeed" />
 
                 <TextView
                     android:id="@+id/tvFadeIn"
@@ -501,6 +519,15 @@
                     app:layout_constraintStart_toEndOf="@+id/tvSpeed"
                     app:layout_constraintTop_toBottomOf="@+id/ivFadeIn" />
 
+                <View
+                    android:id="@+id/viewFadeIn"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvFadeIn"
+                    app:layout_constraintEnd_toEndOf="@+id/ivFadeIn"
+                    app:layout_constraintStart_toStartOf="@+id/ivFadeIn"
+                    app:layout_constraintTop_toTopOf="@+id/ivFadeIn" />
+
                 <TextView
                     android:id="@+id/tvFadeOut"
                     android:layout_width="0dp"
@@ -514,6 +541,15 @@
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toEndOf="@+id/tvFadeIn"
                     app:layout_constraintTop_toBottomOf="@+id/ivFadeOut" />
+
+                <View
+                    android:id="@+id/viewFadeOut"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvFadeOut"
+                    app:layout_constraintEnd_toEndOf="@+id/ivFadeOut"
+                    app:layout_constraintStart_toStartOf="@+id/ivFadeOut"
+                    app:layout_constraintTop_toTopOf="@+id/ivFadeOut" />
 
                 <View
                     android:id="@+id/view"
@@ -536,6 +572,7 @@
                     app:layout_constraintTop_toTopOf="@+id/ivSpeed" />
 
                 <View
+                    android:id="@+id/view3"
                     android:layout_width="1dp"
                     android:layout_height="0dp"
                     android:background="#1A000000"

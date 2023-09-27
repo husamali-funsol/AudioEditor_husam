@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    //rangeview
+    //rangeview and scroll ruler
     <declare-styleable name="RangeView">
 
         <attr name="colorBackground" format="color" />
         <attr name="strokeColor" format="color" />
         <attr name="minValue" format="float" />
         <attr name="maxValue" format="float" />
+        <attr name="initialValue" format="float"/>
+
 
     </declare-styleable>
+
+    //scroll ruler
+<!--    <declare-styleable name="DarioScrollRuler">-->
+<!--        <attr name="minValue" format="float"/>-->
+<!--        <attr name="maxValue" format="float"/>-->
+<!--        <attr name="initialValue" format="float"/>-->
+<!--    </declare-styleable>-->
 
 
 </resources>

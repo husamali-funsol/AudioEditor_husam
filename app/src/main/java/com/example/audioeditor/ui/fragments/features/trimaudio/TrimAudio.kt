@@ -1,29 +1,41 @@
 package com.example.audioeditor.ui.fragments.features.trimaudio
 
 import AudioFileContract
+import android.annotation.SuppressLint
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
+import androidx.viewbinding.ViewBinding
 import com.example.audioeditor.R
+import com.example.audioeditor.TAG
+import com.example.audioeditor.databinding.BottomSheetFadeinBinding
+import com.example.audioeditor.databinding.BottomSheetFadeoutBinding
+import com.example.audioeditor.databinding.BottomSheetSpeedBinding
+import com.example.audioeditor.databinding.BottomSheetVolumeBinding
 import com.example.audioeditor.databinding.FragmentTrimAudioBinding
 import com.example.audioeditor.databinding.QuitDialogBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.databinding.SavingDialogBinding
+import com.example.audioeditor.lib.darioscrollruler.ScrollRulerListener
 import com.example.audioeditor.lib.rangeview.RangeView
 import com.example.audioeditor.utils.calculateProgress
-import com.example.audioeditor.utils.convertMillisToMinutes
 import com.example.audioeditor.utils.formatDuration
 import com.example.audioeditor.utils.getExtensionFromUri
 import com.example.audioeditor.utils.getFileNameFromUri
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.setOnOneClickListener
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 
@@ -32,6 +44,22 @@ class TrimAudio : Fragment() {
 
     private val binding by lazy {
         FragmentTrimAudioBinding.inflate(layoutInflater)
+    }
+
+    private val volumeBinding by lazy {
+        BottomSheetVolumeBinding.inflate(layoutInflater)
+    }
+
+    private val fadeInBinding by lazy {
+        BottomSheetFadeinBinding.inflate(layoutInflater)
+    }
+
+    private val fadeOutBinding by lazy {
+        BottomSheetFadeoutBinding.inflate(layoutInflater)
+    }
+
+    private val speedBinding by lazy {
+        BottomSheetSpeedBinding.inflate(layoutInflater)
     }
 
     private var audioUri: Uri? = null
@@ -68,6 +96,9 @@ class TrimAudio : Fragment() {
 
     private var trimIn = false
     private var trimOut = false
+
+    private val valueUpdateHandler = Handler()
+    private var valueUpdateRunnable: Runnable? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -135,36 +166,44 @@ class TrimAudio : Fragment() {
                     cropRight = value
                     val audioDurationMillis = mediaPlayer.duration
                     val progress = (value * 100) - 3
+                    val exactProgress = value*100
                     val selectedPositionMillis = (progress * audioDurationMillis) / 100
-                    binding.tvCropWindowRight.text = selectedPositionMillis.toInt().formatDuration()
+                    val exactMillis = (exactProgress * audioDurationMillis) /100
+                    binding.tvCropWindowRight.text = exactMillis.toInt().formatDuration()
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
                 }
             }
 
         binding.cardTrimIn.setOnOneClickListener {
-            if(!trimIn) {
-                binding.cardTrimOut.setBackgroundResource(R.drawable.button_bg_unselected)
-                binding.cardTrimIn.setBackgroundResource(R.drawable.button_bg_selected)
-                binding.ivTrimInIcon.setImageResource(R.drawable.ic_trim_in_selected)
-                binding.ivTrimOutIcon.setImageResource(R.drawable.ic_trim_out_unselected)
-                binding.tvTrimIn.setTextColor(resources.getColor(R.color.white))
-                binding.tvTrimOut.setTextColor(resources.getColor(R.color.textColorlightGrey))
-                binding.cropWindowTrim.visibility = View.VISIBLE
-                trimIn = true
-                trimOut = false
-            }
-            else{
-                binding.cardTrimIn.setBackgroundResource(R.drawable.button_bg_unselected)
-                binding.ivTrimInIcon.setImageResource(R.drawable.ic_trim_in_unselected)
-                binding.tvTrimIn.setTextColor(resources.getColor(R.color.textColorlightGrey))
-                binding.cropWindowTrim.visibility = View.GONE
-                trimOut = false
-                trimIn = false
+            if(::mediaPlayer.isInitialized){
+                if (!trimIn) {
+                    binding.cardTrimOut.setBackgroundResource(R.drawable.button_bg_unselected)
+                    binding.cardTrimIn.setBackgroundResource(R.drawable.button_bg_selected)
+                    binding.ivTrimInIcon.setImageResource(R.drawable.ic_trim_in_selected)
+                    binding.ivTrimOutIcon.setImageResource(R.drawable.ic_trim_out_unselected)
+                    binding.tvTrimIn.setTextColor(resources.getColor(R.color.white))
+                    binding.tvTrimOut.setTextColor(resources.getColor(R.color.textColorlightGrey))
+                    binding.cropWindowTrim.visibility = View.VISIBLE
+                    binding.tvCropWindowRight.text = mediaPlayer.duration.formatDuration()
+                    binding.tvCropWindowLeft.text = 0.formatDuration()
+
+                    trimIn = true
+                    trimOut = false
+                } else {
+                    binding.cardTrimIn.setBackgroundResource(R.drawable.button_bg_unselected)
+                    binding.ivTrimInIcon.setImageResource(R.drawable.ic_trim_in_unselected)
+                    binding.tvTrimIn.setTextColor(resources.getColor(R.color.textColorlightGrey))
+                    binding.cropWindowTrim.visibility = View.GONE
+                    trimOut = false
+                    trimIn = false
+                }
             }
         }
 
         binding.cardTrimOut.setOnOneClickListener {
-            if(!trimOut)
+            if(::mediaPlayer.isInitialized){
+
+                if(!trimOut)
             {
                 binding.cardTrimIn.setBackgroundResource(R.drawable.button_bg_unselected)
                 binding.cardTrimOut.setBackgroundResource(R.drawable.button_bg_selected)
@@ -173,6 +212,10 @@ class TrimAudio : Fragment() {
                 binding.tvTrimOut.setTextColor(resources.getColor(R.color.white))
                 binding.tvTrimIn.setTextColor(resources.getColor(R.color.textColorlightGrey))
                 binding.cropWindowTrim.visibility = View.VISIBLE
+
+                binding.tvCropWindowRight.text = mediaPlayer.duration.formatDuration()
+                binding.tvCropWindowLeft.text = 0.formatDuration()
+
                 trimOut = true
                 trimIn = false
 //                binding.cropWindowTrim.trimOutRangeView()
@@ -184,9 +227,428 @@ class TrimAudio : Fragment() {
                 binding.cropWindowTrim.visibility = View.GONE
                 trimIn = false
                 trimOut = false
+            }}
+        }
+
+
+        binding.viewVolume.setOnOneClickListener {
+            openVolumeBottomSheet()
+        }
+
+        binding.viewFadeIn.setOnOneClickListener {
+            openFadeInBottomSheet()
+        }
+
+        binding.viewFadeOut.setOnOneClickListener {
+            openFadeOutBottomSheet()
+        }
+
+        binding.viewSpeed.setOnOneClickListener {
+            openSpeedBottomSheet()
+        }
+
+        binding.ivMinusLeft.setOnOneClickListener {
+            if(::mediaPlayer.isInitialized) {
+                val audioDuration = mediaPlayer.duration  / 1000
+                val currentDuration = mediaPlayer.currentPosition / 1000
+                var newCropLeft = cropLeft
+
+                if(currentDuration>=1) {
+                    newCropLeft = (currentDuration.toFloat() - 1f) / audioDuration.toFloat()
+
+
+                    cropLeft = newCropLeft
+                    cropRight = binding.cropWindowTrim.getRightValue()
+                    binding.cropWindowTrim.setCurrentValues(cropLeft, cropRight)
+
+                    val audioDurationMillis = mediaPlayer.duration
+                    val progress = cropLeft * 100
+                    val selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    binding.tvCropWindowLeft.text = selectedPositionMillis.toInt().formatDuration()
+                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
+                }
             }
         }
 
+        binding.ivAddLeft.setOnOneClickListener {
+            if(::mediaPlayer.isInitialized) {
+                val audioDuration = mediaPlayer.duration  / 1000
+                val currentDuration = mediaPlayer.currentPosition / 1000
+                var newCropLeft = cropLeft
+
+                if( cropLeft<cropRight) {
+                    newCropLeft = (currentDuration.toFloat() + 1f) / audioDuration.toFloat()
+
+
+                    cropLeft = newCropLeft
+                    cropRight = binding.cropWindowTrim.getRightValue()
+                    binding.cropWindowTrim.setCurrentValues(cropLeft, cropRight)
+
+                    val audioDurationMillis = mediaPlayer.duration
+                    val progress = cropLeft * 100
+                    val selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    binding.tvCropWindowLeft.text = selectedPositionMillis.toInt().formatDuration()
+                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
+                }
+            }
+
+        }
+
+        binding.ivMinusRight.setOnOneClickListener {
+            if(::mediaPlayer.isInitialized) {
+                val audioDuration = mediaPlayer.duration  / 1000
+                var currentDuration = mediaPlayer.currentPosition / 1000
+                var newCropRight = cropRight
+
+                if(cropLeft<cropRight) {
+                    val audioDurationMillis = mediaPlayer.duration
+                    var progress = (cropRight * 100)
+                    var selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    currentDuration = (selectedPositionMillis / 1000).toInt()
+                    newCropRight = (currentDuration.toFloat() - 1f) / audioDuration.toFloat()
+
+                    cropRight = newCropRight
+                    cropLeft = binding.cropWindowTrim.getLeftValue()
+                    binding.cropWindowTrim.setCurrentValues(cropLeft, cropRight)
+
+                    progress = (cropRight * 100) - 3
+                    val exactProgress = newCropRight*100
+                    selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    val exactMillis=(exactProgress * audioDurationMillis) /100
+                    binding.tvCropWindowRight.text = exactMillis.toInt().formatDuration()
+                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
+                }
+            }
+
+        }
+
+        binding.ivAddRight.setOnOneClickListener {
+            if(::mediaPlayer.isInitialized) {
+                val audioDuration = mediaPlayer.duration  / 1000
+                var currentDuration = mediaPlayer.currentPosition / 1000
+                var newCropRight = cropRight
+
+                if(currentDuration<=audioDuration+1 && cropLeft<cropRight && cropRight<1) {
+                    val audioDurationMillis = mediaPlayer.duration
+                    var progress = (cropRight * 100)
+                    var selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    currentDuration = (selectedPositionMillis / 1000).toInt()
+                    newCropRight = (currentDuration.toFloat() + 1f) / audioDuration.toFloat()
+
+
+                    cropRight = newCropRight
+                    cropLeft = binding.cropWindowTrim.getLeftValue()
+                    binding.cropWindowTrim.setCurrentValues(cropLeft, cropRight)
+
+                    progress = (cropRight * 100) - 3
+                    val exactProgress = newCropRight*100
+                    selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    val exactMillis=(exactProgress * audioDurationMillis) /100
+                    binding.tvCropWindowRight.text = exactMillis.toInt().formatDuration()
+                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
+                }
+            }
+        }
+
+
+    }
+
+    private fun openSpeedBottomSheet() {
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = speedBinding.root.parent as? ViewGroup
+        parent?.removeView(speedBinding.root)
+        bottomSheet.setContentView(speedBinding.root)
+
+        speedBinding.tv05x.setOnOneClickListener {
+            context?.performHapticFeedback()
+            onTextViewClick(speedBinding.tv05x)
+        }
+
+        speedBinding.tv075x.setOnOneClickListener {
+            context?.performHapticFeedback()
+            onTextViewClick(speedBinding.tv075x)
+        }
+
+        speedBinding.tv10x.setOnOneClickListener {
+            context?.performHapticFeedback()
+            onTextViewClick(speedBinding.tv10x)
+        }
+
+        speedBinding.tv125x.setOnOneClickListener {
+            context?.performHapticFeedback()
+            onTextViewClick(speedBinding.tv125x)
+        }
+
+        speedBinding.tv15x.setOnOneClickListener {
+            context?.performHapticFeedback()
+            onTextViewClick(speedBinding.tv15x)
+        }
+
+        speedBinding.tv20x.setOnOneClickListener {
+            context?.performHapticFeedback()
+            onTextViewClick(speedBinding.tv20x)
+        }
+
+        bottomSheet.show()
+    }
+
+    private fun onTextViewClick(clickedTextView: TextView) {
+        // Reset all TextViews to white
+        val allTextViews = listOf(
+            speedBinding.tv05x,
+            speedBinding.tv075x,
+            speedBinding.tv10x,
+            speedBinding.tv125x,
+            speedBinding.tv15x,
+            speedBinding.tv20x
+        )
+        for (textView in allTextViews) {
+
+            context?.let{
+                textView.setBackgroundResource(R.drawable.button_bg_grey)
+                textView.setTextColor(
+                    ContextCompat.getColor(
+                        it,
+                        R.color.textColorDarkGrey
+                    )
+                )
+            }
+        }
+
+//        val text = clickedTextView.text.toString()
+//        selectedOption = text.removeSuffix("x")
+//        Log.d(TAG, "onTextViewClick: $selectedOption")
+        // Change the background color of the clicked TextView to blue
+        clickedTextView.setBackgroundResource(R.drawable.button_bg)
+        context?.let{
+            clickedTextView.setTextColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.white
+                )
+            )
+        }
+    }
+
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun openFadeOutBottomSheet() {
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = fadeOutBinding.root.parent as? ViewGroup
+        parent?.removeView(fadeOutBinding.root)
+        bottomSheet.setContentView(fadeOutBinding.root)
+
+        fadeOutBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
+            override fun onRulerScrolled(value: Float) {
+                fadeOutBinding.tvNewValue.text = "${value}s"
+            }
+        }
+
+        fadeOutBinding.ivValueDecrease.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Start decreasing volume when button is pressed
+                    startFadeOutDecrease()
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Stop decreasing volume when button is released
+                    stopValueUpdate()
+                }
+            }
+            true
+        }
+
+        fadeOutBinding.ivValueIncrease.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Start increasing volume when button is pressed
+                    startFadeOutIncrease()
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Stop increasing volume when button is released
+                    stopValueUpdate()
+                }
+            }
+            true
+        }
+
+        bottomSheet.show()
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun openFadeInBottomSheet() {
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = fadeInBinding.root.parent as? ViewGroup
+        parent?.removeView(fadeInBinding.root)
+        bottomSheet.setContentView(fadeInBinding.root)
+
+        fadeInBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
+            override fun onRulerScrolled(value: Float) {
+                fadeInBinding.tvNewValue.text = "${value}s"
+            }
+        }
+
+        fadeInBinding.ivValueDecrease.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Start decreasing volume when button is pressed
+                    startFadeInDecrease()
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Stop decreasing volume when button is released
+                    stopValueUpdate()
+                }
+            }
+            true
+        }
+
+        fadeInBinding.ivValueIncrease.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Start increasing volume when button is pressed
+                    startFadeInIncrease()
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Stop increasing volume when button is released
+                    stopValueUpdate()
+                }
+            }
+            true
+        }
+
+        bottomSheet.show()
+
+    }
+
+
+    private fun startFadeInIncrease() {
+        valueUpdateRunnable = Runnable {
+            val currentValue = fadeInBinding.scrollRuler.currentPositionValue
+            if (currentValue <= 4.9) {
+                fadeInBinding.scrollRuler.scrollToValue(currentValue + 0.1f)
+                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+            }
+        }
+        valueUpdateHandler.post(valueUpdateRunnable!!)
+    }
+
+    private fun startFadeOutIncrease() {
+        valueUpdateRunnable = Runnable {
+            val currentValue = fadeOutBinding.scrollRuler.currentPositionValue
+            if (currentValue <= 4.9) {
+                fadeOutBinding.scrollRuler.scrollToValue(currentValue + 0.1f)
+                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+            }
+        }
+        valueUpdateHandler.post(valueUpdateRunnable!!)
+    }
+
+    private fun startFadeInDecrease() {
+        valueUpdateRunnable = Runnable {
+            val currentValue = fadeInBinding.scrollRuler.currentPositionValue
+            if (currentValue >= 0.1) {
+                fadeInBinding.scrollRuler.scrollToValue(currentValue - 0.1f)
+                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+            }
+        }
+        valueUpdateHandler.post(valueUpdateRunnable!!)
+    }
+
+    private fun startFadeOutDecrease() {
+        valueUpdateRunnable = Runnable {
+            val currentValue = fadeOutBinding.scrollRuler.currentPositionValue
+            if (currentValue >= 0.1) {
+                fadeOutBinding.scrollRuler.scrollToValue(currentValue - 0.1f)
+                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+            }
+        }
+        valueUpdateHandler.post(valueUpdateRunnable!!)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun openVolumeBottomSheet() {
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = volumeBinding.root.parent as? ViewGroup
+        parent?.removeView(volumeBinding.root)
+        bottomSheet.setContentView(volumeBinding.root)
+
+        volumeBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
+            override fun onRulerScrolled(value: Float) {
+                val formattedValue = if (value % 1 == 0f) {
+                    "${value.toInt()}%"
+                } else {
+                    "${value}%"
+                }
+                volumeBinding.tvNewValue.text = formattedValue.toString()
+            }
+        }
+
+        volumeBinding.ivValueDecrease.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Start decreasing volume when button is pressed
+                    startVolumeDecrease()
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Stop decreasing volume when button is released
+                    stopValueUpdate()
+                }
+            }
+            true
+        }
+
+        volumeBinding.ivValueIncrease.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Start increasing volume when button is pressed
+                    startVolumeIncrease()
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Stop increasing volume when button is released
+                    stopValueUpdate()
+                }
+            }
+            true
+        }
+
+
+        bottomSheet.show()
+
+    }
+
+    private fun startVolumeDecrease() {
+        valueUpdateRunnable = Runnable {
+            val currentValue = volumeBinding.scrollRuler.currentPositionValue
+            if (currentValue >= 1) {
+                volumeBinding.scrollRuler.scrollToValue(currentValue - 1f)
+                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+            }
+            else if(currentValue>0){
+                volumeBinding.scrollRuler.scrollToValue(0f)
+            }
+        }
+        valueUpdateHandler.post(valueUpdateRunnable!!)
+    }
+
+    private fun startVolumeIncrease() {
+        valueUpdateRunnable = Runnable {
+            val currentValue = volumeBinding.scrollRuler.currentPositionValue
+            if (currentValue <= 99) {
+                volumeBinding.scrollRuler.scrollToValue(currentValue + 1f)
+                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+            }
+            else if(currentValue<100){
+                volumeBinding.scrollRuler.scrollToValue(100f)
+            }
+        }
+        valueUpdateHandler.post(valueUpdateRunnable!!)
+    }
+
+    private fun stopValueUpdate() {
+        valueUpdateRunnable?.let {
+            valueUpdateHandler.removeCallbacks(it)
+            valueUpdateRunnable = null
+        }
     }
 
     private val audioFileLauncher = registerForActivityResult(AudioFileContract()) { uri: Uri? ->
@@ -199,6 +661,8 @@ class TrimAudio : Fragment() {
             binding.tvMusicTitle.text = context?.getFileNameFromUri(uri)
         }
     }
+
+
 
     private fun createMediaPlayer(uri: Uri) {
 
