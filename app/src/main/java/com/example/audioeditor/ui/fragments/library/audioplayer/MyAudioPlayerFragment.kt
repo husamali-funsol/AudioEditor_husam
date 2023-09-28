@@ -120,7 +120,7 @@ class MyAudioPlayerFragment : Fragment() {
                         .error(R.drawable.placeholder_image) // Error image
                         .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
                 }
-                binding.ivPlayerLP.setImageResource(R.drawable.play_circle)
+                binding.ivPlayerLP.setImageResource(R.drawable.play_button)
 
 
                 Log.d("get path", libItem!!.path.toString())
@@ -153,7 +153,7 @@ class MyAudioPlayerFragment : Fragment() {
                         .error(R.drawable.placeholder_image) // Error image
                         .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
                 }
-                binding.ivPlayerLP.setImageResource(R.drawable.play_circle)
+                binding.ivPlayerLP.setImageResource(R.drawable.play_button)
 
 
                 Log.d("get path", libItem!!.path.toString())
@@ -166,13 +166,13 @@ class MyAudioPlayerFragment : Fragment() {
             if (!(mediaPlayer.isPlaying)) {
                 if (::mediaPlayer.isInitialized) {
                     mediaPlayer.start()
-                    binding.ivPlayerLP.setImageResource(R.drawable.pause_circle)
+                    binding.ivPlayerLP.setImageResource(R.drawable.pause_button)
                     updateSeekBar()
                 }
             } else {
                 if (::mediaPlayer.isInitialized) {
                     mediaPlayer.pause()
-                    binding.ivPlayerLP.setImageResource(R.drawable.play_circle)
+                    binding.ivPlayerLP.setImageResource(R.drawable.play_button)
                     updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
                 }
             }

@@ -16,7 +16,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.viewbinding.ViewBinding
+import androidx.core.view.isVisible
 import com.example.audioeditor.R
 import com.example.audioeditor.TAG
 import com.example.audioeditor.databinding.BottomSheetFadeinBinding
@@ -27,20 +27,32 @@ import com.example.audioeditor.databinding.FragmentTrimAudioBinding
 import com.example.audioeditor.databinding.QuitDialogBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.databinding.SavingDialogBinding
+import com.example.audioeditor.interfaces.CommandExecutionCallback
 import com.example.audioeditor.lib.darioscrollruler.ScrollRulerListener
 import com.example.audioeditor.lib.rangeview.RangeView
 import com.example.audioeditor.utils.calculateProgress
+import com.example.audioeditor.utils.dismissDialog
+import com.example.audioeditor.utils.executeCommand
 import com.example.audioeditor.utils.formatDuration
+import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getExtensionFromUri
 import com.example.audioeditor.utils.getFileNameFromUri
+import com.example.audioeditor.utils.getInputPath
+import com.example.audioeditor.utils.getOutputFilePath
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.setOnOneClickListener
+import com.example.audioeditor.utils.showSmallLengthToast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 
-class TrimAudio : Fragment() {
+class TrimAudio : Fragment(), CommandExecutionCallback {
 
     private val binding by lazy {
         FragmentTrimAudioBinding.inflate(layoutInflater)
@@ -63,6 +75,19 @@ class TrimAudio : Fragment() {
     }
 
     private var audioUri: Uri? = null
+
+    private var selectedSpeedOption = "-1"
+    private var selectedVolume = "1.00"
+    private var selectedFadeInTime = "0.0"
+    private var selectedFadeOutTime = "0.0"
+
+    private var currentSpeedOption = "1"
+    private var currentVolume = "1.00"
+    private var currentFadeInTime = "0.0"
+    private var currentFadeOutTime = "0.0"
+
+    var startingFadeInTime = 0f
+    var startingFadeOutTime = 0f
 
     private var extension: String? = null
 
@@ -100,6 +125,18 @@ class TrimAudio : Fragment() {
     private val valueUpdateHandler = Handler()
     private var valueUpdateRunnable: Runnable? = null
 
+    private var outputPathSpeed = ""
+    private var outputPathVolume = ""
+    private var outputPathFadeIn = ""
+    private var outputPathFadeOut = ""
+
+    private var speed = false
+    private var volume = false
+    private var fadein = false
+    private var fadeout = false
+
+    private var lastFunctionCalled: String? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -112,13 +149,19 @@ class TrimAudio : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.btnUpload.setOnOneClickListener {
-
-        }
 
         binding.btnUpload.setOnClickListener {
             audioFileLauncher.launch("audio/*")
             context?.performHapticFeedback()
+        }
+
+        binding.btnSave.setOnOneClickListener {
+            trimInAudio()
+            if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
+                mediaPlayer.pause()
+                binding.btnPlayPause.setImageResource(R.drawable.play_button)
+                updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+            }
         }
 
         binding.btnPlayPause.setOnOneClickListener {
@@ -232,19 +275,31 @@ class TrimAudio : Fragment() {
 
 
         binding.viewVolume.setOnOneClickListener {
-            openVolumeBottomSheet()
+            if(::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
+                pauseMediaPlayer()
+                openVolumeBottomSheet()
+            }
         }
 
         binding.viewFadeIn.setOnOneClickListener {
-            openFadeInBottomSheet()
+            if(::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible){
+                pauseMediaPlayer()
+                openFadeInBottomSheet()
+            }
         }
 
         binding.viewFadeOut.setOnOneClickListener {
-            openFadeOutBottomSheet()
+            if(::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
+                pauseMediaPlayer()
+                openFadeOutBottomSheet()
+            }
         }
 
         binding.viewSpeed.setOnOneClickListener {
-            openSpeedBottomSheet()
+            if(::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
+                pauseMediaPlayer()
+                openSpeedBottomSheet()
+            }
         }
 
         binding.ivMinusLeft.setOnOneClickListener {
@@ -353,83 +408,192 @@ class TrimAudio : Fragment() {
 
     }
 
-    private fun openSpeedBottomSheet() {
-        val bottomSheet = BottomSheetDialog(requireContext())
-        val parent = speedBinding.root.parent as? ViewGroup
-        parent?.removeView(speedBinding.root)
-        bottomSheet.setContentView(speedBinding.root)
 
-        speedBinding.tv05x.setOnOneClickListener {
-            context?.performHapticFeedback()
-            onTextViewClick(speedBinding.tv05x)
+    //***************************************** Audio Upload ***********************************************
+
+    private val audioFileLauncher = registerForActivityResult(AudioFileContract()) { uri: Uri? ->
+        if (uri != null) {
+            audioUri = uri
+
+            createMediaPlayer(audioUri!!)
+//            setMetadata(audioUri!!)
+            extension = context?.getExtensionFromUri(uri)
+            binding.tvMusicTitle.text = context?.getFileNameFromUri(uri)
         }
-
-        speedBinding.tv075x.setOnOneClickListener {
-            context?.performHapticFeedback()
-            onTextViewClick(speedBinding.tv075x)
-        }
-
-        speedBinding.tv10x.setOnOneClickListener {
-            context?.performHapticFeedback()
-            onTextViewClick(speedBinding.tv10x)
-        }
-
-        speedBinding.tv125x.setOnOneClickListener {
-            context?.performHapticFeedback()
-            onTextViewClick(speedBinding.tv125x)
-        }
-
-        speedBinding.tv15x.setOnOneClickListener {
-            context?.performHapticFeedback()
-            onTextViewClick(speedBinding.tv15x)
-        }
-
-        speedBinding.tv20x.setOnOneClickListener {
-            context?.performHapticFeedback()
-            onTextViewClick(speedBinding.tv20x)
-        }
-
-        bottomSheet.show()
     }
 
-    private fun onTextViewClick(clickedTextView: TextView) {
-        // Reset all TextViews to white
-        val allTextViews = listOf(
-            speedBinding.tv05x,
-            speedBinding.tv075x,
-            speedBinding.tv10x,
-            speedBinding.tv125x,
-            speedBinding.tv15x,
-            speedBinding.tv20x
-        )
-        for (textView in allTextViews) {
+    //***************************************** Dialogs ***********************************************
 
+    private fun savingDialog(progress: Int = 50) {
+        // Update your progress UI or dialog here
+        Log.d("AudioEditor", "Progress: $progress%")
+
+        savingDialogBinding.progressBar.progress = 50
+        savingDialogBinding.tvSaving.text = "Saving...(50%)"
+
+        val alertDialogBuilder =
             context?.let{
-                textView.setBackgroundResource(R.drawable.button_bg_grey)
-                textView.setTextColor(
-                    ContextCompat.getColor(
-                        it,
-                        R.color.textColorDarkGrey
-                    )
-                )
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+
+        val dialogView = savingDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)?.setCancelable(false)
+        savingAlertDialog = alertDialogBuilder?.create()
+        savingDialogView = dialogView
+
+        savingAlertDialog?.setOnDismissListener {
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }
+
+        savingAlertDialog?.show()
+    }
+
+    private fun dialogDismiss() {
+        Handler().postDelayed({
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }, 1000)
+
+
+    }
+
+    //*****************************************   Media Player and Waveform  ***********************************************
+
+    private fun createMediaPlayer(uri: Uri? = null, path: String? = null) {
+
+        if (::mediaPlayer.isInitialized) {
+            // Release the previous MediaPlayer instance before creating a new one
+
+            mediaPlayer.release()
+        }
+        mediaPlayer = MediaPlayer().apply {
+            context?.let{
+                if (uri != null) {
+                    setDataSource(it, uri)
+                }
+                if(path!=null){
+                    setDataSource(path)
+                }
+
+
+            }
+            prepareAsync()
+
+            setOnPreparedListener { mp ->
+                binding.waveform.visibility = View.VISIBLE
+                if (uri != null) {
+                    binding.waveform.setSampleFrom(uri)
+                }
+                binding.waveform.waveWidth = 4F
+                binding.waveform.maxProgress = 100F
+
+                val durationMillis = mp.duration
+                binding.tvCurrentDuration.text = mp.currentPosition.formatDuration()
+                binding.tvEndDuration.text = durationMillis.formatDuration()
+
+                mp.setOnCompletionListener {
+                    binding.waveform.progress = 0F
+                    mediaPlayer.pause()
+                    binding.btnPlayPause.setImageResource(R.drawable.play_button)
+                }
+
+            }
+        }
+    }
+
+    private fun updateSeekBar() {
+        updateSeekBarHandler.postDelayed(updateSeekBarRunnable, 100)
+    }
+
+    private val updateSeekBarRunnable = object : Runnable {
+        override fun run() {
+            if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
+                val progress = mediaPlayer.calculateProgress()
+                binding.waveform.progress = progress
+                binding.tvCurrentDuration.text = mediaPlayer.currentPosition.formatDuration()
+
+                // Check if progress is at the end
+                if (progress >= mediaPlayer.duration) {
+                    // If at the end, start playing from the beginning
+                    mediaPlayer.seekTo(0)
+                    mediaPlayer.start()
+                }
+
+                // Update the SeekBar position every 100 milliseconds
+                updateSeekBarHandler.postDelayed(this, 100)
+            }
+        }
+    }
+
+    private fun pauseMediaPlayer(){
+        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
+            mediaPlayer.pause()
+            binding.btnPlayPause.setImageResource(R.drawable.play_button)
+        }
+    }
+
+    //*****************************************   Bottom Sheets  ***********************************************
+    @SuppressLint("ClickableViewAccessibility")
+    private fun openVolumeBottomSheet() {
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = volumeBinding.root.parent as? ViewGroup
+        parent?.removeView(volumeBinding.root)
+        bottomSheet.setContentView(volumeBinding.root)
+
+        volumeBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
+            override fun onRulerScrolled(value: Float) {
+                val formattedValue = if (value % 1 == 0f) {
+                    "${value.toInt()}"
+                } else {
+                    "${value}"
+                }
+                volumeBinding.tvNewValue.text = "${formattedValue}%"
+                selectedVolume = String.format("%.2f", (formattedValue.toFloat() / 100f))
             }
         }
 
-//        val text = clickedTextView.text.toString()
-//        selectedOption = text.removeSuffix("x")
-//        Log.d(TAG, "onTextViewClick: $selectedOption")
-        // Change the background color of the clicked TextView to blue
-        clickedTextView.setBackgroundResource(R.drawable.button_bg)
-        context?.let{
-            clickedTextView.setTextColor(
-                ContextCompat.getColor(
-                    it,
-                    R.color.white
-                )
-            )
+        volumeBinding.ivValueDecrease.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Start decreasing volume when button is pressed
+                    startVolumeDecrease()
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Stop decreasing volume when button is released
+                    stopValueUpdate()
+                }
+            }
+            true
         }
-    }
 
+        volumeBinding.ivValueIncrease.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Start increasing volume when button is pressed
+                    startVolumeIncrease()
+                }
+                MotionEvent.ACTION_UP -> {
+                    // Stop increasing volume when button is released
+                    stopValueUpdate()
+                }
+            }
+            true
+        }
+
+        volumeBinding.btnDone.setOnOneClickListener {
+            if(currentVolume!=selectedVolume){
+                bottomSheet.dismiss()
+                changeVolume()
+
+                savingDialog(50)
+            }
+            else{
+                context?.showSmallLengthToast("Selected volume is same as current volume")
+            }
+        }
+
+        bottomSheet.show()
+
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun openFadeOutBottomSheet() {
@@ -441,6 +605,7 @@ class TrimAudio : Fragment() {
         fadeOutBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
             override fun onRulerScrolled(value: Float) {
                 fadeOutBinding.tvNewValue.text = "${value}s"
+                selectedFadeOutTime = value.toString()
             }
         }
 
@@ -472,6 +637,27 @@ class TrimAudio : Fragment() {
             true
         }
 
+        fadeOutBinding.btnDone.setOnOneClickListener {
+
+            val durationInSeconds = mediaPlayer.duration / 1000
+
+            if(selectedFadeOutTime.toFloat().toInt() <= durationInSeconds){
+                if(currentFadeOutTime != selectedFadeOutTime){
+                    bottomSheet.dismiss()
+                    changeFadeOutTime()
+                    savingDialog()
+                }
+                else {
+                    context?.showSmallLengthToast("Selected fade out time is same as current fade out time")
+                }
+            }
+            else{
+                context?.showSmallLengthToast("Selected Fade out time is larger than audio duration")
+            }
+
+        }
+
+
         bottomSheet.show()
     }
 
@@ -485,6 +671,7 @@ class TrimAudio : Fragment() {
         fadeInBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
             override fun onRulerScrolled(value: Float) {
                 fadeInBinding.tvNewValue.text = "${value}s"
+                selectedFadeInTime = value.toString()
             }
         }
 
@@ -516,11 +703,73 @@ class TrimAudio : Fragment() {
             true
         }
 
+        fadeInBinding.btnDone.setOnOneClickListener {
+            val durationInSeconds = mediaPlayer.duration / 1000
+
+            if(selectedFadeInTime.toFloat().toInt() <= durationInSeconds){
+                if(currentFadeInTime != selectedFadeInTime){
+                    bottomSheet.dismiss()
+                    changeFadeInTime()
+                    savingDialog()
+                }
+                else{
+                    context?.showSmallLengthToast("Selected fade in time is same as current fade in time")
+                }
+            }
+            else{
+                context?.showSmallLengthToast("Selected Fade in time is larger than audio duration")
+            }
+        }
+
         bottomSheet.show()
 
     }
 
+    private fun openSpeedBottomSheet() {
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = speedBinding.root.parent as? ViewGroup
+        parent?.removeView(speedBinding.root)
+        bottomSheet.setContentView(speedBinding.root)
 
+        speedBinding.tv05x.setOnOneClickListener {
+            onTextViewClick(speedBinding.tv05x)
+        }
+
+        speedBinding.tv075x.setOnOneClickListener {
+            onTextViewClick(speedBinding.tv075x)
+        }
+
+        speedBinding.tv10x.setOnOneClickListener {
+            onTextViewClick(speedBinding.tv10x)
+        }
+
+        speedBinding.tv125x.setOnOneClickListener {
+            onTextViewClick(speedBinding.tv125x)
+        }
+
+        speedBinding.tv15x.setOnOneClickListener {
+            onTextViewClick(speedBinding.tv15x)
+        }
+
+        speedBinding.tv20x.setOnOneClickListener {
+            onTextViewClick(speedBinding.tv20x)
+        }
+
+        speedBinding.btnDone.setOnOneClickListener {
+            if(selectedSpeedOption!="-1" && currentSpeedOption!=selectedSpeedOption){
+                 changeSpeed()
+                bottomSheet.dismiss()
+                savingDialog(50)
+            }
+            else {
+                context?.showSmallLengthToast("Selected speed is same as current speed")
+            }
+        }
+
+        bottomSheet.show()
+    }
+
+    //*****************************************   Bottom Sheet Functions  ***********************************************
     private fun startFadeInIncrease() {
         valueUpdateRunnable = Runnable {
             val currentValue = fadeInBinding.scrollRuler.currentPositionValue
@@ -565,65 +814,14 @@ class TrimAudio : Fragment() {
         valueUpdateHandler.post(valueUpdateRunnable!!)
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private fun openVolumeBottomSheet() {
-        val bottomSheet = BottomSheetDialog(requireContext())
-        val parent = volumeBinding.root.parent as? ViewGroup
-        parent?.removeView(volumeBinding.root)
-        bottomSheet.setContentView(volumeBinding.root)
-
-        volumeBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
-            override fun onRulerScrolled(value: Float) {
-                val formattedValue = if (value % 1 == 0f) {
-                    "${value.toInt()}%"
-                } else {
-                    "${value}%"
-                }
-                volumeBinding.tvNewValue.text = formattedValue.toString()
-            }
-        }
-
-        volumeBinding.ivValueDecrease.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    // Start decreasing volume when button is pressed
-                    startVolumeDecrease()
-                }
-                MotionEvent.ACTION_UP -> {
-                    // Stop decreasing volume when button is released
-                    stopValueUpdate()
-                }
-            }
-            true
-        }
-
-        volumeBinding.ivValueIncrease.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    // Start increasing volume when button is pressed
-                    startVolumeIncrease()
-                }
-                MotionEvent.ACTION_UP -> {
-                    // Stop increasing volume when button is released
-                    stopValueUpdate()
-                }
-            }
-            true
-        }
-
-
-        bottomSheet.show()
-
-    }
-
     private fun startVolumeDecrease() {
         valueUpdateRunnable = Runnable {
             val currentValue = volumeBinding.scrollRuler.currentPositionValue
-            if (currentValue >= 1) {
+            if (currentValue >= 51) {
                 volumeBinding.scrollRuler.scrollToValue(currentValue - 1f)
                 valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
             }
-            else if(currentValue>0){
+            else if(currentValue>50){
                 volumeBinding.scrollRuler.scrollToValue(0f)
             }
         }
@@ -633,11 +831,11 @@ class TrimAudio : Fragment() {
     private fun startVolumeIncrease() {
         valueUpdateRunnable = Runnable {
             val currentValue = volumeBinding.scrollRuler.currentPositionValue
-            if (currentValue <= 99) {
+            if (currentValue <= 199) {
                 volumeBinding.scrollRuler.scrollToValue(currentValue + 1f)
                 valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
             }
-            else if(currentValue<100){
+            else if(currentValue<200){
                 volumeBinding.scrollRuler.scrollToValue(100f)
             }
         }
@@ -651,74 +849,333 @@ class TrimAudio : Fragment() {
         }
     }
 
-    private val audioFileLauncher = registerForActivityResult(AudioFileContract()) { uri: Uri? ->
-        if (uri != null) {
-            audioUri = uri
+    private fun onTextViewClick(clickedTextView: TextView) {
+        // Reset all TextViews to white
+        val allTextViews = listOf(
+            speedBinding.tv05x,
+            speedBinding.tv075x,
+            speedBinding.tv10x,
+            speedBinding.tv125x,
+            speedBinding.tv15x,
+            speedBinding.tv20x
+        )
+        for (textView in allTextViews) {
 
-            createMediaPlayer(audioUri!!)
-//            setMetadata(audioUri!!)
-            extension = context?.getExtensionFromUri(uri)
-            binding.tvMusicTitle.text = context?.getFileNameFromUri(uri)
-        }
-    }
-
-
-
-    private fun createMediaPlayer(uri: Uri) {
-
-        if (::mediaPlayer.isInitialized) {
-            // Release the previous MediaPlayer instance before creating a new one
-
-            mediaPlayer.release()
-        }
-        mediaPlayer = MediaPlayer().apply {
             context?.let{
-                setDataSource(it, uri)
+                textView.setBackgroundResource(R.drawable.button_bg_grey_rounded)
+                textView.setTextColor(
+                    ContextCompat.getColor(
+                        it,
+                        R.color.textColorDarkGrey
+                    )
+                )
             }
-            prepareAsync()
+        }
 
-            setOnPreparedListener { mp ->
-                binding.waveform.visibility = View.VISIBLE
-                binding.waveform.setSampleFrom(uri)
-                binding.waveform.waveWidth = 4F
-                binding.waveform.maxProgress = 100F
+        val text = clickedTextView.text.toString()
+        selectedSpeedOption = text.removeSuffix("x")
+        Log.d(TAG, "onTextViewClick: $selectedSpeedOption")
+        // Change the background color of the clicked TextView to blue
+        clickedTextView.setBackgroundResource(R.drawable.button_bg_rounded)
+        context?.let{
+            clickedTextView.setTextColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.white
+                )
+            )
+        }
+    }
 
-                val durationMillis = mp.duration
-                binding.tvCurrentDuration.text = mp.currentPosition.formatDuration()
-                binding.tvEndDuration.text = durationMillis.formatDuration()
+    //*****************************************   FFmpeg Functions  ***********************************************
 
-                mp.setOnCompletionListener {
-                    binding.waveform.progress = 0F
-                    mediaPlayer.start()
-                    // Reset progress to 0 when audio completes
+    private fun trimInAudio(){
+        var durationInMillis = ((cropLeft) * (mediaPlayer.duration).toFloat()).toInt()
+        val formattedDurationStart = durationInMillis.formatDuration()
+
+        durationInMillis = ((cropRight) * (mediaPlayer.duration).toFloat()).toInt()
+        val formattedDurationEnd =  durationInMillis.formatDuration()
+
+        context?.let{
+            var inputAudioPath: String = ""
+            if (lastFunctionCalled == null) {
+               inputAudioPath = it.getInputPath(audioUri!!)
+
+            }
+            else{
+                when(lastFunctionCalled){
+                    "speed" -> inputAudioPath = outputPathSpeed
+                    "volume" -> inputAudioPath = outputPathVolume
+                    "fadein" -> inputAudioPath = outputPathFadeIn
+                    "fadeout" -> inputAudioPath = outputPathFadeOut
                 }
+            }
 
+            val outputFile = extension?.let {
+                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+            }
+            outputPath = outputFile!!.path
+
+            val cmd = arrayOf(
+                "-y",//overwrite if exists
+                "-i",
+                inputAudioPath,
+                "-ss",
+                formattedDurationStart,
+                "-to",
+                formattedDurationEnd,
+                outputPath
+            )
+
+            cmd.executeCommand(this)
+
+        }
+    }
+
+    private fun changeVolume() {
+        //ffmpeg -i input.mp3 -af "volume=2.0" output.mp3
+
+        context?.let{
+            var inputAudioPath: String = ""
+            if (lastFunctionCalled == null) {
+                inputAudioPath = it.getInputPath(audioUri!!)
+            }
+            else{
+                when(lastFunctionCalled){
+                    "speed" -> inputAudioPath = outputPathSpeed
+                    "volume" -> inputAudioPath = outputPathVolume
+                    "fadein" -> inputAudioPath = outputPathFadeIn
+                    "fadeout" -> inputAudioPath = outputPathFadeOut
+                }
+            }
+
+            val outputFile = extension?.let {
+                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+            }
+            outputPathVolume = outputFile!!.path
+
+            val cmd = arrayOf(
+                "-y",
+                "-i", inputAudioPath,
+                "-af", "volume=$selectedVolume",
+                outputPathVolume
+            )
+
+            Log.d(TAG, "changeVolume: ${cmd.joinToString(" ")}")
+            volume=true
+            speed=false
+            fadein=false
+            fadeout=false
+
+            cmd.executeCommand(this)
+
+        }
+    }
+
+    private fun changeFadeInTime() {
+        //ffmpeg -i input.mp3 -af "afade=t=in:ss=0:d=5" output.mp3
+
+        val progress = cropLeft * 100
+        val audioDurationMillis = mediaPlayer.duration
+        val selectedPositionMillis = (progress * audioDurationMillis) / 100
+        startingFadeInTime = (selectedPositionMillis / 1000)
+
+        context?.let{
+            var inputAudioPath: String = ""
+            if (lastFunctionCalled == null) {
+                inputAudioPath = it.getInputPath(audioUri!!)
+            }
+            else{
+                when(lastFunctionCalled){
+                    "speed" -> inputAudioPath = outputPathSpeed
+                    "volume" -> inputAudioPath = outputPathVolume
+                    "fadein" -> inputAudioPath = outputPathFadeIn
+                    "fadeout" -> inputAudioPath = outputPathFadeOut
+                }
+            }
+
+            val outputFile = extension?.let {
+                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+            }
+            outputPathFadeIn = outputFile!!.path
+
+
+            val cmd = arrayOf(
+                "-y",
+                "-i", inputAudioPath,
+                "-af", "afade=t=in:ss=${startingFadeInTime}:d=${selectedFadeInTime}",
+                outputPathFadeIn
+            )
+
+            Log.d(TAG, "audioSpeed: ${cmd.joinToString(" ")}")
+
+            speed = false
+            volume = false
+            fadein = true
+            fadeout = false
+
+            cmd.executeCommand(this)
+
+        }
+    }
+
+    private fun changeFadeOutTime() {
+        //ffmpeg -i input.mp3 -af "afade=t=in:ss=0:d=5" output.mp3
+
+        val progress = cropRight * 100
+        val audioDurationMillis = mediaPlayer.duration
+        val selectedPositionMillis = (progress * audioDurationMillis) / 100
+        startingFadeOutTime = (selectedPositionMillis / 1000)
+
+        context?.let{
+            var inputAudioPath: String = ""
+            if (lastFunctionCalled == null) {
+                inputAudioPath = it.getInputPath(audioUri!!)
+            }
+            else{
+                when(lastFunctionCalled){
+                    "speed" -> inputAudioPath = outputPathSpeed
+                    "volume" -> inputAudioPath = outputPathVolume
+                    "fadein" -> inputAudioPath = outputPathFadeIn
+                    "fadeout" -> inputAudioPath = outputPathFadeOut
+                }
+            }
+
+            val outputFile = extension?.let {
+                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+            }
+            outputPathFadeOut = outputFile!!.path
+
+            val durationInSeconds = mediaPlayer.duration / 1000
+            val startingTime = durationInSeconds - selectedFadeOutTime.toFloat().toInt()
+            startingFadeOutTime -= selectedFadeOutTime.toFloat()
+
+            val cmd = arrayOf(
+                "-y",
+                "-i", inputAudioPath,
+                "-af", "afade=t=out:st=${startingFadeOutTime}:d=${selectedFadeOutTime}",
+                outputPathFadeOut
+            )
+
+            Log.d(TAG, "audioSpeed: ${cmd.joinToString(" ")}")
+
+            speed = false
+            volume = false
+            fadein = false
+            fadeout = true
+
+            cmd.executeCommand(this)
+
+        }
+    }
+
+    private fun changeSpeed() {
+
+        context?.let{
+            var inputAudioPath: String = ""
+            if (lastFunctionCalled == null) {
+                inputAudioPath = it.getInputPath(audioUri!!)
+            }
+            else{
+                when(lastFunctionCalled){
+                    "speed" -> inputAudioPath = outputPathSpeed
+                    "volume" -> inputAudioPath = outputPathVolume
+                    "fadein" -> inputAudioPath = outputPathFadeIn
+                    "fadeout" -> inputAudioPath = outputPathFadeOut
+                }
+            }
+
+            val outputFile = extension?.let {
+                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+            }
+            outputPathSpeed = outputFile!!.path
+
+            val cmd = arrayOf(
+                "-y",
+                "-i", inputAudioPath,
+                "-filter_complex", "\"atempo=$selectedSpeedOption[aout]\"",
+                "-map", "[aout]",
+                outputPathSpeed
+            )
+
+            Log.d(TAG, "audioSpeed: ${cmd.joinToString(" ")}")
+
+            speed = true
+            volume = false
+            fadein = false
+            fadeout = false
+
+            Log.d(TAG, "changeSpeed: $lastFunctionCalled")
+            Log.d(TAG, "changeSpeed: ${cmd.joinToString(" ")}")
+
+
+            cmd.executeCommand(this)
+
+        }
+
+
+    }
+
+
+    //*****************************************   FFmpeg Execution Results  ***********************************************
+    override fun onCommandExecutionSuccess() {
+        savingDialogBinding.progressBar.progress = 100
+        savingDialogBinding.tvSaving.text = "File Saved!"
+        dialogDismiss()
+
+        CoroutineScope(Dispatchers.IO).launch{
+            if (speed) {
+                currentSpeedOption = selectedSpeedOption
+                audioUri = Uri.fromFile(File(outputPathSpeed))
+                lastFunctionCalled = "speed"
+            } else if (volume) {
+                currentVolume = selectedVolume
+                audioUri = Uri.fromFile(File(outputPathVolume))
+                lastFunctionCalled = "volume"
+
+            } else if (fadein) {
+                currentFadeInTime = selectedFadeInTime
+                audioUri = Uri.fromFile(File(outputPathFadeIn))
+                lastFunctionCalled = "fadein"
+
+            } else if (fadeout) {
+                currentFadeOutTime = selectedFadeOutTime
+                audioUri = Uri.fromFile(File(outputPathFadeOut))
+                lastFunctionCalled = "fadeout"
+
+
+            }
+
+
+            withContext(Dispatchers.Main) {
+                createMediaPlayer(audioUri)
+                if(::mediaPlayer.isInitialized && !mediaPlayer.isPlaying){
+                    if (fadein) {
+                        if(::mediaPlayer.isInitialized && !mediaPlayer.isPlaying){
+                            mediaPlayer.seekTo((startingFadeInTime * 1000).toInt())
+                            Log.d(TAG, "onCommandExecutionSuccess: $startingFadeInTime")
+                            mediaPlayer.start()
+                            binding.btnPlayPause.setImageResource(R.drawable.pause_button)
+                            updateSeekBar()
+                        }
+                    } else if (fadeout) {
+
+                        mediaPlayer.seekTo((startingFadeOutTime * 1000).toInt())
+                        Log.d(TAG, "onCommandExecutionSuccess: $startingFadeOutTime")
+                        mediaPlayer.start()
+                        binding.btnPlayPause.setImageResource(R.drawable.pause_button)
+                        updateSeekBar()
+                    }
+                }
             }
         }
     }
 
-    private fun updateSeekBar() {
-        updateSeekBarHandler.postDelayed(updateSeekBarRunnable, 100)
+    override fun onCommandExecutionFailure(errorMessage: String) {
+        savingDialogBinding.progressBar.progress = 0
+        savingDialogBinding.tvSaving.text = "File Saving Failed!"
+        dialogDismiss()
     }
 
-    private val updateSeekBarRunnable = object : Runnable {
-        override fun run() {
-            if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
-                val progress = mediaPlayer.calculateProgress()
-                binding.waveform.progress = progress
-                binding.tvCurrentDuration.text = mediaPlayer.currentPosition.formatDuration()
-
-                // Check if progress is at the end
-                if (progress >= mediaPlayer.duration) {
-                    // If at the end, start playing from the beginning
-                    mediaPlayer.seekTo(0)
-                    mediaPlayer.start()
-                }
-
-                // Update the SeekBar position every 100 milliseconds
-                updateSeekBarHandler.postDelayed(this, 100)
-            }
-        }
-    }
 
 }

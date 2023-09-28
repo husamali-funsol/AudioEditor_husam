@@ -80,7 +80,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/ivSkipPrevLP"
         app:layout_constraintTop_toBottomOf="@+id/sbLP"
-        app:srcCompat="@drawable/play_circle" />
+        app:srcCompat="@drawable/play_button" />
 
     <ImageView
         android:id="@+id/ivSkipPrevLP"

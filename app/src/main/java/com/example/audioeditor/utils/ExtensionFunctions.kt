@@ -173,8 +173,6 @@ fun Array<String>.executeCommand(callback: CommandExecutionCallback) {
     }
 }
 
-
-
 fun Context.getInputPath(audioUri: Uri): String {
     val audioInputStream = contentResolver.openInputStream(audioUri)
     var audioFilePath = ""
@@ -362,6 +360,48 @@ fun String.getUriFromPath(): Uri? {
     return Uri.parse(this)
 
 }
+
+fun Array<String>.executeCommand( callback: (Boolean) -> Unit) {
+    try {
+        FFmpegKit.executeAsync(
+            this.joinToString(" ")
+        ) { session ->
+            val state = session.state
+            val returnCode = session.returnCode
+
+            if (ReturnCode.isSuccess(returnCode)) {
+                Log.d("AudioEditor", "FFmpeg Successful")
+
+                val outputText = session.output
+                Log.d("AudioEditor", "Output: $outputText")
+                // Call the callback with success
+                callback(true)
+            } else {
+                // FFmpeg command execution failed
+                Log.d(
+                    "AudioEditor",
+                    String.format(
+                        "Command failed with state %s and rc %s.%s",
+                        state,
+                        returnCode,
+                        session.failStackTrace
+                    )
+                )
+                val outputText = session.output
+                Log.d("AudioEditor", "Output: $outputText")
+                // Call the callback with failure
+                callback(false)
+            }
+        }
+    } catch (e: Exception) {
+        Log.d("AudioEditor", "exception: ${e.toString()}")
+        // Call the callback with failure
+        callback(false)
+    }
+}
+
+
+
 
 
 

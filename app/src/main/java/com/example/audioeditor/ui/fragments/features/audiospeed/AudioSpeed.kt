@@ -357,6 +357,7 @@ class AudioSpeed : Fragment(), CommandExecutionCallback {
         val text = clickedTextView.text.toString()
         selectedOption = text.removeSuffix("x")
         Log.d(TAG, "onTextViewClick: $selectedOption")
+
         // Change the background color of the clicked TextView to blue
         clickedTextView.setBackgroundResource(R.drawable.button_bg)
         context?.let{
