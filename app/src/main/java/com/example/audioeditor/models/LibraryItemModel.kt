@@ -1,4 +1,4 @@
-package com.example.audioeditor.ui.fragments.library
+package com.example.audioeditor.models
 
 import android.graphics.Bitmap
 import android.net.Uri

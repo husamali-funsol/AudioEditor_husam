@@ -29,14 +29,14 @@ import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getExtensionFromUri
 import com.example.audioeditor.utils.getFileNameFromUri
 import com.example.audioeditor.utils.getInputPath
-import com.example.audioeditor.utils.getOutputFilePath
+import com.example.audioeditor.utils.getOutputFile
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 
-class AudioSpeed : Fragment(), CommandExecutionCallback {
+class AudioSpeedFragment : Fragment(), CommandExecutionCallback {
 
     private val binding by lazy {
         FragmentAudioSpeedBinding.inflate(layoutInflater)
@@ -154,6 +154,16 @@ class AudioSpeed : Fragment(), CommandExecutionCallback {
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
                 }
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        if(::mediaPlayer.isInitialized){
+            mediaPlayer.release()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+
         }
     }
 
@@ -400,7 +410,7 @@ class AudioSpeed : Fragment(), CommandExecutionCallback {
 
         context?.let{
             val inputAudioPath = it.getInputPath(audioUri)
-            val outputFile = extension?.let {filename.getOutputFilePath(it)}
+            val outputFile = extension?.let {filename.getOutputFile(it)}
             val outputPath = outputFile!!.path
 
             val cmd = arrayOf(
@@ -416,5 +426,16 @@ class AudioSpeed : Fragment(), CommandExecutionCallback {
 
 
     }
+
+    override fun onPause() {
+        super.onPause()
+
+        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
+            mediaPlayer.pause()
+            binding.btnPlayPause.setImageResource(R.drawable.ic_play)
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+        }
+    }
+
 
 }

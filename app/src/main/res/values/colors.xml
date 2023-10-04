@@ -18,6 +18,9 @@
     <color name="textColorDarkGrey">#666666</color>
     <color name="textColorBlack">#333333</color>
     <color name="textColorlightGrey">#999999</color>
+    <color name="textColorRed">#A11414</color>
+    <color name="textColorBlue">#1A77E5</color>
+
 
 
     //wave background color
@@ -33,7 +36,7 @@
     //rangeview
     <color name="rangeView_colorMask">#00FFFFFF</color>
     <color name="rangeView_colorStroke">#FFFFFF</color>
-    <color name="rangeView_colorBackground">#ff13a5 </color>
+    <color name="rangeView_colorBackground">#00FFFFFF</color>
 
     //scroll ruler
     <color name="ruler_marker_small_medium">#D3D3D3</color>

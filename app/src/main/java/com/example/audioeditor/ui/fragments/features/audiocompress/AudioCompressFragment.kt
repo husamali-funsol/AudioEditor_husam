@@ -30,7 +30,7 @@ import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getExtensionFromUri
 import com.example.audioeditor.utils.getFileNameFromUri
 import com.example.audioeditor.utils.getInputPath
-import com.example.audioeditor.utils.getOutputFilePath
+import com.example.audioeditor.utils.getOutputFile
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
@@ -43,7 +43,7 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 
 
-class AudioCompress : Fragment(), CommandExecutionCallback {
+class AudioCompressFragment : Fragment(), CommandExecutionCallback {
 
     private val binding by lazy {
         FragmentAudioCompressBinding.inflate(layoutInflater)
@@ -82,6 +82,8 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
     private var updatedText = ""
 
     private var extension: String? = null
+
+    private var pathsList = listOf<String>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -342,6 +344,7 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         }
     }
 
+    //***************************************** Upload Audio ***********************************************
     private val audioFileLauncher = registerForActivityResult(AudioFileContract()) { uri: Uri? ->
         if (uri != null) {
             audioUri = uri
@@ -356,24 +359,7 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         }
     }
 
-    private fun updateEstimatedFilesizeText(uri: Uri) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val duration = getAudioFileDuration(uri) / 1000L
-            val bitrate = selectedBitrate.toLong() * 1000
-            val filesize = estimateFileSizeAfterCompression(duration, bitrate).formatSizeToMB()
-
-            // Switch to the main thread to update the UI
-            withContext(Dispatchers.Main) {
-                // Update the UI
-                Log.d(TAG, "duration: $duration \n bitrate: $bitrate \n filesize: $filesize ")
-                updatedText = "Size will be about $filesize MB after compression"
-                binding.tvEstimateSize.text = updatedText
-                binding.tvEstimateSize.visibility = View.VISIBLE
-            }
-        }
-    }
-
-
+    //***************************************** MediaPlayer Functions ***********************************************
     private fun createMediaPlayer(uri: Uri) {
 
         if (::mediaPlayer.isInitialized) {
@@ -423,6 +409,223 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         }
     }
 
+    //***************************************** FFmpeg Command ***********************************************
+    private fun audioCompress(filename: String, audioUri: Uri){
+        context?.let{
+            val inputAudioPath = it.getInputPath(audioUri)
+            val outputFile = extension?.let { filename.getOutputFile(it) }
+            val outputPath = outputFile!!.path
+
+            val cmd = arrayOf(
+                "-y",
+                "-i",
+                inputAudioPath,
+                "-b:a",
+                "${selectedBitrate}k",
+                "-ar", selectedSampleRate,
+                "-map",
+                "a",
+                outputPath
+            )
+
+            Log.d(TAG, "audioCompress: ${cmd.joinToString(" ")}")
+
+            cmd.executeCommand(this)
+        }
+    }
+
+
+    //***************************************** FFmpeg Callback Functions ***********************************************
+    override fun onCommandExecutionSuccess() {
+
+        savingDialogBinding.progressBar.progress = 100
+        savingDialogBinding.tvSaving.text = "File Saved!"
+        dialogDismiss()
+
+        val bundle = Bundle().apply {
+            putString("AUDIO_URI", audioUri.toString())
+        }
+
+        findNavController().apply {
+            if(currentDestination?.id == R.id.audioCompress){
+                navigate(R.id.action_audioCompress_to_savedScreenFragment, bundle)
+            }
+        }
+
+    }
+
+    override fun onCommandExecutionFailure(errorMessage: String) {
+        savingDialogBinding.progressBar.progress = 0
+        savingDialogBinding.tvSaving.text = "File Saving Failed!"
+        dialogDismiss()
+
+    }
+
+
+    //***************************************** Utility Functions ***********************************************
+    private fun getAudioFileDuration(uri: Uri): Long {
+        val mediaPlayer = MediaPlayer()
+
+
+        return try {
+            context?.let{ mediaPlayer.setDataSource(it, uri) }
+            mediaPlayer.prepare()
+            val duration = mediaPlayer.duration.toLong()
+            mediaPlayer.release()  // Release MediaPlayer after obtaining duration
+            duration
+        } catch (e: IOException) {
+            // Log the error or handle it as needed
+            mediaPlayer.release()  // Make sure to release the MediaPlayer on error
+            0
+        }
+    }
+
+    private fun dialogDismiss() {
+        Handler().postDelayed({
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }, 1000)
+    }
+
+    private fun onTextViewClick(clickedTextView: TextView, cardName: String) {
+        // Reset all TextViews to white
+        var allTextViews: List<TextView> = listOf()
+        when(cardName){
+            "AudioQuality" -> {
+                allTextViews = listOf(
+                    binding.tvLowQuality,
+                    binding.tvMidQuality,
+                    binding.tvHighQuality
+                )
+            }
+            "SampleRate" -> {
+                allTextViews = listOf(
+                    binding.tv48khz,
+                    binding.tv44khz,
+                    binding.tv32khz,
+                    binding.tv22khz,
+                    binding.tv16khz,
+                    binding.tv11khz,
+                    binding.tv8khz
+                )
+            }
+            "Bitrate" -> {
+                allTextViews = listOf(
+                    binding.tv320kbs,
+                    binding.tv256kbs,
+                    binding.tv192kbs,
+                    binding.tv128kbs,
+                    binding.tv96kbs,
+                    binding.tv64kbs
+                )
+            }
+
+        }
+
+        for (textView in allTextViews) {
+            if(cardName=="AudioQuality"){
+                textView.setBackgroundResource(R.drawable.button_outlined)
+                context?.let{
+                    textView.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.appBlue
+                        )
+                    )
+                }
+            }
+            else{
+                context?.let{
+                    textView.setBackgroundColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.transparent
+                        )
+                    )
+                    textView.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.textColorlightGrey
+                        )
+                    )
+                }
+            }
+        }
+        clickedTextView.setBackgroundResource(R.drawable.button_bg)
+        context?.let{
+            clickedTextView.setTextColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.white
+                )
+            )
+        }
+
+    }
+
+    private fun unselectAudioQuality(){
+        when(selectedAudioQuality.lowercase()){
+            "low" -> {
+                binding.tvLowQuality.setBackgroundResource(R.drawable.button_outlined)
+                context?.let{
+                    binding.tvLowQuality.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.appBlue
+                        )
+                    )
+                }
+            }
+            "mid" -> {
+                binding.tvMidQuality.setBackgroundResource(R.drawable.button_outlined)
+                context?.let{
+                    binding.tvMidQuality.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.appBlue
+                        )
+                    )
+                }
+            }
+            "high" -> {
+                binding.tvHighQuality.setBackgroundResource(R.drawable.button_outlined)
+                context?.let{
+                    binding.tvHighQuality.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.appBlue
+                        )
+                    )
+                }
+            }
+        }
+
+    }
+
+    private fun updateEstimatedFilesizeText(uri: Uri) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val duration = getAudioFileDuration(uri) / 1000L
+            val bitrate = selectedBitrate.toLong() * 1000
+            val filesize = estimateFileSizeAfterCompression(duration, bitrate).formatSizeToMB()
+
+            // Switch to the main thread to update the UI
+            withContext(Dispatchers.Main) {
+                // Update the UI
+                Log.d(TAG, "duration: $duration \n bitrate: $bitrate \n filesize: $filesize ")
+                updatedText = "Size will be about $filesize MB after compression"
+                binding.tvEstimateSize.text = updatedText
+                binding.tvEstimateSize.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun estimateFileSizeAfterCompression(audioDuration: Long, targetBitrate: Long): Long{
+        //Estimated Compressed File Size = (Target Bitrate * Audio Duration in Seconds) / 8
+        //file size will be in bytes
+        return (targetBitrate * audioDuration) / 8
+    }
+
+
+    //***************************************** Dialogs ***********************************************
     private fun showQuitDialog() {
         val alertDialogBuilder =
             context?.let{
@@ -498,7 +701,7 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
             context?.performHapticFeedback()
             // Handle the negative button click event here
             // This is where you can cancel the dialog if needed
-           dismissDialog(renameAlertDialog, renameDialogView)
+            dismissDialog(renameAlertDialog, renameDialogView)
         }
 
         renameAlertDialog?.setOnDismissListener {
@@ -533,200 +736,26 @@ class AudioCompress : Fragment(), CommandExecutionCallback {
         savingAlertDialog?.show()
     }
 
+    //***************************************** Override Functions ***********************************************
+    override fun onPause() {
+        super.onPause()
 
-
-    private fun unselectAudioQuality(){
-        when(selectedAudioQuality.lowercase()){
-            "low" -> {
-                binding.tvLowQuality.setBackgroundResource(R.drawable.button_outlined)
-                context?.let{
-                    binding.tvLowQuality.setTextColor(
-                        ContextCompat.getColor(
-                            it,
-                            R.color.appBlue
-                        )
-                    )
-                }
-            }
-            "mid" -> {
-                binding.tvMidQuality.setBackgroundResource(R.drawable.button_outlined)
-                context?.let{
-                    binding.tvMidQuality.setTextColor(
-                        ContextCompat.getColor(
-                            it,
-                            R.color.appBlue
-                        )
-                    )
-                }
-            }
-            "high" -> {
-                binding.tvHighQuality.setBackgroundResource(R.drawable.button_outlined)
-                context?.let{
-                    binding.tvHighQuality.setTextColor(
-                        ContextCompat.getColor(
-                            it,
-                            R.color.appBlue
-                        )
-                    )
-                }
-            }
-        }
-
-    }
-
-
-    private fun onTextViewClick(clickedTextView: TextView, cardName: String) {
-        // Reset all TextViews to white
-        var allTextViews: List<TextView> = listOf()
-        when(cardName){
-            "AudioQuality" -> {
-                 allTextViews = listOf(
-                    binding.tvLowQuality,
-                    binding.tvMidQuality,
-                    binding.tvHighQuality
-                )
-            }
-            "SampleRate" -> {
-                allTextViews = listOf(
-                    binding.tv48khz,
-                    binding.tv44khz,
-                    binding.tv32khz,
-                    binding.tv22khz,
-                    binding.tv16khz,
-                    binding.tv11khz,
-                    binding.tv8khz
-                )
-            }
-            "Bitrate" -> {
-                allTextViews = listOf(
-                    binding.tv320kbs,
-                    binding.tv256kbs,
-                    binding.tv192kbs,
-                    binding.tv128kbs,
-                    binding.tv96kbs,
-                    binding.tv64kbs
-                )
-            }
-
-        }
-
-        for (textView in allTextViews) {
-            if(cardName=="AudioQuality"){
-                textView.setBackgroundResource(R.drawable.button_outlined)
-                context?.let{
-                    textView.setTextColor(
-                        ContextCompat.getColor(
-                            it,
-                            R.color.appBlue
-                        )
-                    )
-                }
-            }
-            else{
-                context?.let{
-                    textView.setBackgroundColor(
-                        ContextCompat.getColor(
-                            it,
-                            R.color.transparent
-                        )
-                    )
-                    textView.setTextColor(
-                        ContextCompat.getColor(
-                            it,
-                            R.color.textColorlightGrey
-                        )
-                    )
-                }
-            }
-        }
-        clickedTextView.setBackgroundResource(R.drawable.button_bg)
-        context?.let{
-            clickedTextView.setTextColor(
-                ContextCompat.getColor(
-                    it,
-                    R.color.white
-                )
-            )
-        }
-
-    }
-
-    private fun audioCompress(filename: String, audioUri: Uri){
-        context?.let{
-            val inputAudioPath = it.getInputPath(audioUri)
-            val outputFile = extension?.let { filename.getOutputFilePath(it) }
-            val outputPath = outputFile!!.path
-
-            val cmd = arrayOf(
-                "-y",
-                "-i",
-                inputAudioPath,
-                "-b:a",
-                "${selectedBitrate}k",
-                "-ar", selectedSampleRate,
-                "-map",
-                "a",
-                outputPath
-            )
-
-            Log.d(TAG, "audioCompress: ${cmd.joinToString(" ")}")
-
-            cmd.executeCommand(this)
+        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
+            mediaPlayer.pause()
+            binding.btnPlayPause.setImageResource(R.drawable.ic_play)
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
         }
     }
 
-    private fun dialogDismiss() {
-        Handler().postDelayed({
-            dismissDialog(savingAlertDialog, savingDialogView)
-        }, 1000)
-    }
+    override fun onDestroy() {
+        super.onDestroy()
 
-    override fun onCommandExecutionSuccess() {
+        if(::mediaPlayer.isInitialized){
+            mediaPlayer.release()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
 
-        savingDialogBinding.progressBar.progress = 100
-        savingDialogBinding.tvSaving.text = "File Saved!"
-        dialogDismiss()
-
-        val bundle = Bundle().apply {
-            putString("AUDIO_URI", audioUri.toString())
-        }
-
-        findNavController().apply {
-            if(currentDestination?.id == R.id.audioCompress){
-                navigate(R.id.action_audioCompress_to_savedScreenFragment, bundle)
-            }
-        }
-
-    }
-
-    override fun onCommandExecutionFailure(errorMessage: String) {
-        savingDialogBinding.progressBar.progress = 0
-        savingDialogBinding.tvSaving.text = "File Saving Failed!"
-        dialogDismiss()
-
-    }
-
-    private fun estimateFileSizeAfterCompression(audioDuration: Long, targetBitrate: Long): Long{
-        //Estimated Compressed File Size = (Target Bitrate * Audio Duration in Seconds) / 8
-        //file size will be in bytes
-        return (targetBitrate * audioDuration) / 8
-    }
-
-    private fun getAudioFileDuration(uri: Uri): Long {
-        val mediaPlayer = MediaPlayer()
-
-
-        return try {
-            context?.let{ mediaPlayer.setDataSource(it, uri) }
-            mediaPlayer.prepare()
-            val duration = mediaPlayer.duration.toLong()
-            mediaPlayer.release()  // Release MediaPlayer after obtaining duration
-            duration
-        } catch (e: IOException) {
-            // Log the error or handle it as needed
-            mediaPlayer.release()  // Make sure to release the MediaPlayer on error
-            0
         }
     }
+
 
 }

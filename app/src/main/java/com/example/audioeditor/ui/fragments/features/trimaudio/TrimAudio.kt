@@ -4,8 +4,10 @@ import AudioFileContract
 import android.annotation.SuppressLint
 import android.media.MediaPlayer
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -13,10 +15,12 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.navigation.fragment.findNavController
 import com.example.audioeditor.R
 import com.example.audioeditor.TAG
 import com.example.audioeditor.databinding.BottomSheetFadeinBinding
@@ -31,24 +35,29 @@ import com.example.audioeditor.interfaces.CommandExecutionCallback
 import com.example.audioeditor.lib.darioscrollruler.ScrollRulerListener
 import com.example.audioeditor.lib.rangeview.RangeView
 import com.example.audioeditor.utils.calculateProgress
+import com.example.audioeditor.utils.deleteFile
 import com.example.audioeditor.utils.dismissDialog
 import com.example.audioeditor.utils.executeCommand
+import com.example.audioeditor.utils.executeCommandInSeries
 import com.example.audioeditor.utils.formatDuration
 import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getExtensionFromUri
 import com.example.audioeditor.utils.getFileNameFromUri
 import com.example.audioeditor.utils.getInputPath
-import com.example.audioeditor.utils.getOutputFilePath
+import com.example.audioeditor.utils.getOutputFile
+import com.example.audioeditor.utils.getUriFromPath
 import com.example.audioeditor.utils.performHapticFeedback
+import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
 import com.example.audioeditor.utils.showSmallLengthToast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 
 
@@ -110,7 +119,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
 
 
     private var quitAlertDialog: AlertDialog? = null
-    private val quitDialogBinding by lazy{
+    private val quitDialogBinding by lazy {
         QuitDialogBinding.inflate(layoutInflater)
     }
     private var quitDialogView: ConstraintLayout? = null
@@ -137,6 +146,13 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
 
     private var lastFunctionCalled: String? = null
 
+    private var pathsList = mutableListOf<String>()
+
+//    private var pathsListMutableLiveData = MutableLiveData<List<String>>()
+
+    private var currentIndex = -1
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -145,10 +161,27 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         return binding.root
     }
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.btnRedo.isClickable=false
+        binding.btnUndo.isClickable=false
+        binding.btnUndo.isFocusable = false
+        binding.btnRedo.isFocusable = false
+
+
+
+//        pathsListMutableLiveData.observe(viewLifecycleOwner){
+//            if(it.size > 1){
+//                enableRedo()
+//                enableUndo()
+//            }
+//            else{
+//                disableRedo()
+//                disableRedo()
+//            }
+//
+//        }
 
         binding.btnUpload.setOnClickListener {
             audioFileLauncher.launch("audio/*")
@@ -156,12 +189,13 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         }
 
         binding.btnSave.setOnOneClickListener {
-            trimInAudio()
-            if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
-                mediaPlayer.pause()
-                binding.btnPlayPause.setImageResource(R.drawable.play_button)
-                updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+            if((trimIn || trimOut) && ::mediaPlayer.isInitialized){
+                showRenameDialog()
             }
+            else{
+                context?.showSmallLengthToast("Please select Trimming type")
+            }
+
         }
 
         binding.btnPlayPause.setOnOneClickListener {
@@ -202,6 +236,10 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     binding.tvCropWindowLeft.text = selectedPositionMillis.toInt().formatDuration()
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
 
+                    removePreviousEdits()
+
+                    Log.d(TAG, "rightTogglePositionChanged: paths list $pathsList")
+
 
                 }
 
@@ -209,16 +247,20 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     cropRight = value
                     val audioDurationMillis = mediaPlayer.duration
                     val progress = (value * 100) - 3
-                    val exactProgress = value*100
+                    val exactProgress = value * 100
                     val selectedPositionMillis = (progress * audioDurationMillis) / 100
-                    val exactMillis = (exactProgress * audioDurationMillis) /100
+                    val exactMillis = (exactProgress * audioDurationMillis) / 100
                     binding.tvCropWindowRight.text = exactMillis.toInt().formatDuration()
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
+
+                   removePreviousEdits()
+
+                    Log.d(TAG, "rightTogglePositionChanged: paths list $pathsList")
                 }
             }
 
         binding.cardTrimIn.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized){
+            if (::mediaPlayer.isInitialized) {
                 if (!trimIn) {
                     binding.cardTrimOut.setBackgroundResource(R.drawable.button_bg_unselected)
                     binding.cardTrimIn.setBackgroundResource(R.drawable.button_bg_selected)
@@ -229,6 +271,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     binding.cropWindowTrim.visibility = View.VISIBLE
                     binding.tvCropWindowRight.text = mediaPlayer.duration.formatDuration()
                     binding.tvCropWindowLeft.text = 0.formatDuration()
+
 
                     trimIn = true
                     trimOut = false
@@ -244,72 +287,78 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         }
 
         binding.cardTrimOut.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized){
+            if (::mediaPlayer.isInitialized) {
 
-                if(!trimOut)
-            {
-                binding.cardTrimIn.setBackgroundResource(R.drawable.button_bg_unselected)
-                binding.cardTrimOut.setBackgroundResource(R.drawable.button_bg_selected)
-                binding.ivTrimInIcon.setImageResource(R.drawable.ic_trim_in_unselected)
-                binding.ivTrimOutIcon.setImageResource(R.drawable.ic_trim_out_selected)
-                binding.tvTrimOut.setTextColor(resources.getColor(R.color.white))
-                binding.tvTrimIn.setTextColor(resources.getColor(R.color.textColorlightGrey))
-                binding.cropWindowTrim.visibility = View.VISIBLE
+                if (!trimOut) {
+                    binding.cardTrimIn.setBackgroundResource(R.drawable.button_bg_unselected)
+                    binding.cardTrimOut.setBackgroundResource(R.drawable.button_bg_selected)
+                    binding.ivTrimInIcon.setImageResource(R.drawable.ic_trim_in_unselected)
+                    binding.ivTrimOutIcon.setImageResource(R.drawable.ic_trim_out_selected)
+                    binding.tvTrimOut.setTextColor(resources.getColor(R.color.white))
+                    binding.tvTrimIn.setTextColor(resources.getColor(R.color.textColorlightGrey))
+                    cropLeft=0f
+                    cropRight=1f
+                    binding.cropWindowTrim.setCurrentValues(cropLeft, cropRight)
+                    binding.cropWindowTrim.visibility = View.VISIBLE
 
-                binding.tvCropWindowRight.text = mediaPlayer.duration.formatDuration()
-                binding.tvCropWindowLeft.text = 0.formatDuration()
 
-                trimOut = true
-                trimIn = false
+                    binding.tvCropWindowRight.text = mediaPlayer.duration.formatDuration()
+                    binding.tvCropWindowLeft.text = 0.formatDuration()
+
+                    trimOut = true
+                    trimIn = false
 //                binding.cropWindowTrim.trimOutRangeView()
+                } else {
+                    binding.cardTrimOut.setBackgroundResource(R.drawable.button_bg_unselected)
+                    binding.ivTrimOutIcon.setImageResource(R.drawable.ic_trim_out_unselected)
+                    binding.tvTrimOut.setTextColor(resources.getColor(R.color.textColorlightGrey))
+                    binding.cropWindowTrim.visibility = View.GONE
+                    trimIn = false
+                    trimOut = false
+                }
             }
-            else{
-                binding.cardTrimOut.setBackgroundResource(R.drawable.button_bg_unselected)
-                binding.ivTrimOutIcon.setImageResource(R.drawable.ic_trim_out_unselected)
-                binding.tvTrimOut.setTextColor(resources.getColor(R.color.textColorlightGrey))
-                binding.cropWindowTrim.visibility = View.GONE
-                trimIn = false
-                trimOut = false
-            }}
         }
 
-
         binding.viewVolume.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
+            if (::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
                 pauseMediaPlayer()
                 openVolumeBottomSheet()
             }
         }
 
         binding.viewFadeIn.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible){
+            if (::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
                 pauseMediaPlayer()
                 openFadeInBottomSheet()
             }
         }
 
         binding.viewFadeOut.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
+            if (::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
                 pauseMediaPlayer()
                 openFadeOutBottomSheet()
             }
         }
 
         binding.viewSpeed.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
+            if (::mediaPlayer.isInitialized && binding.waveform.isVisible && binding.cropWindowTrim.isVisible) {
                 pauseMediaPlayer()
                 openSpeedBottomSheet()
             }
         }
 
-        binding.ivMinusLeft.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized) {
-                val audioDuration = mediaPlayer.duration  / 1000
+        binding.ivMinusLeft.setOnClickListener {
+            if (::mediaPlayer.isInitialized) {
+                val audioDuration = mediaPlayer.duration / 1000
                 val currentDuration = mediaPlayer.currentPosition / 1000
-                var newCropLeft = cropLeft
+                val cropLeftProgress = cropLeft * 100
+                val currentPosition = ((cropLeftProgress * (audioDuration*1000)) / 100)/1000
+                var newCropLeft = (currentPosition.toFloat() - 1f) / audioDuration.toFloat()
 
-                if(currentDuration>=1) {
-                    newCropLeft = (currentDuration.toFloat() - 1f) / audioDuration.toFloat()
+
+
+
+                if (newCropLeft>0) {
 
 
                     cropLeft = newCropLeft
@@ -321,18 +370,22 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     val selectedPositionMillis = (progress * audioDurationMillis) / 100
                     binding.tvCropWindowLeft.text = selectedPositionMillis.toInt().formatDuration()
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
+
+                    removePreviousEdits()
                 }
             }
         }
 
-        binding.ivAddLeft.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized) {
-                val audioDuration = mediaPlayer.duration  / 1000
+        binding.ivAddLeft.setOnClickListener {
+            if (::mediaPlayer.isInitialized) {
+                val audioDuration = mediaPlayer.duration / 1000
                 val currentDuration = mediaPlayer.currentPosition / 1000
-                var newCropLeft = cropLeft
+                val cropLeftProgress = cropLeft * 100
+                val currentPosition = ((cropLeftProgress * (audioDuration*1000)) / 100)/1000
+                var newCropLeft = (currentPosition.toFloat() + 1f) / audioDuration.toFloat()
 
-                if( cropLeft<cropRight) {
-                    newCropLeft = (currentDuration.toFloat() + 1f) / audioDuration.toFloat()
+
+                if ( newCropLeft<cropRight) {
 
 
                     cropLeft = newCropLeft
@@ -344,18 +397,21 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     val selectedPositionMillis = (progress * audioDurationMillis) / 100
                     binding.tvCropWindowLeft.text = selectedPositionMillis.toInt().formatDuration()
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
+
+                    removePreviousEdits()
+
                 }
             }
 
         }
 
-        binding.ivMinusRight.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized) {
-                val audioDuration = mediaPlayer.duration  / 1000
+        binding.ivMinusRight.setOnClickListener {
+            if (::mediaPlayer.isInitialized) {
+                val audioDuration = mediaPlayer.duration / 1000
                 var currentDuration = mediaPlayer.currentPosition / 1000
                 var newCropRight = cropRight
 
-                if(cropLeft<cropRight) {
+                if (cropLeft < cropRight) {
                     val audioDurationMillis = mediaPlayer.duration
                     var progress = (cropRight * 100)
                     var selectedPositionMillis = (progress * audioDurationMillis) / 100
@@ -367,23 +423,26 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     binding.cropWindowTrim.setCurrentValues(cropLeft, cropRight)
 
                     progress = (cropRight * 100) - 3
-                    val exactProgress = newCropRight*100
+                    val exactProgress = newCropRight * 100
                     selectedPositionMillis = (progress * audioDurationMillis) / 100
-                    val exactMillis=(exactProgress * audioDurationMillis) /100
+                    val exactMillis = (exactProgress * audioDurationMillis) / 100
                     binding.tvCropWindowRight.text = exactMillis.toInt().formatDuration()
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
+
+                    removePreviousEdits()
+
                 }
             }
 
         }
 
-        binding.ivAddRight.setOnOneClickListener {
-            if(::mediaPlayer.isInitialized) {
-                val audioDuration = mediaPlayer.duration  / 1000
+        binding.ivAddRight.setOnClickListener {
+            if (::mediaPlayer.isInitialized) {
+                val audioDuration = mediaPlayer.duration / 1000
                 var currentDuration = mediaPlayer.currentPosition / 1000
                 var newCropRight = cropRight
 
-                if(currentDuration<=audioDuration+1 && cropLeft<cropRight && cropRight<1) {
+                if (currentDuration <= audioDuration + 1 && cropRight < 1) {
                     val audioDurationMillis = mediaPlayer.duration
                     var progress = (cropRight * 100)
                     var selectedPositionMillis = (progress * audioDurationMillis) / 100
@@ -396,17 +455,94 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     binding.cropWindowTrim.setCurrentValues(cropLeft, cropRight)
 
                     progress = (cropRight * 100) - 3
-                    val exactProgress = newCropRight*100
+                    val exactProgress = newCropRight * 100
                     selectedPositionMillis = (progress * audioDurationMillis) / 100
-                    val exactMillis=(exactProgress * audioDurationMillis) /100
+                    val exactMillis = (exactProgress * audioDurationMillis) / 100
                     binding.tvCropWindowRight.text = exactMillis.toInt().formatDuration()
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
+
+                    removePreviousEdits()
+
+                }
+            }
+        }
+
+        binding.btnBack.setOnOneClickListener {
+            context?.performHapticFeedback()
+            showQuitDialog()
+        }
+
+        binding.btnUndo.setOnOneClickListener{
+            Log.d(TAG, "onViewCreated: undo ${binding.btnUndo.isClickable}")
+            Log.d(TAG, "onViewCreated: undo ${currentIndex}")
+
+            if(currentIndex>0 && pathsList.size>0){
+                Log.d(TAG, "onViewCreated: undo if")
+
+                audioUri = pathsList[currentIndex-1].getUriFromPath()
+                audioUri?.let { createMediaPlayer(it) }
+                currentIndex -= 1
+
+                if(currentIndex<1){
+                    disableUndo()
+                }
+                if(currentIndex<pathsList.size-1){
+                    enableRedo()
+                }
+            }
+        }
+        binding.btnRedo.setOnOneClickListener{
+            Log.d(TAG, "onViewCreated: redo ${binding.btnRedo.isClickable}")
+            Log.d(TAG, "onViewCreated: redo ${currentIndex}")
+
+            if(currentIndex<pathsList.size-1){
+                Log.d(TAG, "onViewCreated: redo if")
+
+                audioUri = pathsList[currentIndex+1].getUriFromPath()
+                audioUri?.let { createMediaPlayer(it) }
+                currentIndex += 1
+                if(currentIndex>0){
+                    enableUndo()
+                }
+                if(currentIndex==pathsList.size-1){
+                    disableRedo()
                 }
             }
         }
 
 
+
     }
+
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        if(::mediaPlayer.isInitialized){
+            mediaPlayer.release()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
+            mediaPlayer.pause()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if(::mediaPlayer.isInitialized){
+            mediaPlayer.start()
+            updateSeekBar()
+        }
+    }
+
 
 
     //***************************************** Audio Upload ***********************************************
@@ -415,7 +551,14 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         if (uri != null) {
             audioUri = uri
 
-            createMediaPlayer(audioUri!!)
+//            createMediaPlayer(audioUri!!)
+
+
+            context?.getInputPath(audioUri!!)?.let {
+                currentIndex = 0
+                updatePathsList(it)
+
+            }
 //            setMetadata(audioUri!!)
             extension = context?.getExtensionFromUri(uri)
             binding.tvMusicTitle.text = context?.getFileNameFromUri(uri)
@@ -432,7 +575,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         savingDialogBinding.tvSaving.text = "Saving...(50%)"
 
         val alertDialogBuilder =
-            context?.let{
+            context?.let {
                 AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
             }
 
@@ -447,6 +590,98 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
 
         savingAlertDialog?.show()
     }
+
+    private fun showQuitDialog() {
+        val alertDialogBuilder =
+            context?.let {
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+
+        val dialogView = quitDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+        quitAlertDialog = alertDialogBuilder?.create()
+
+        quitDialogView = dialogView
+
+
+        quitDialogBinding.tvNo.setOnClickListener {
+            context?.performHapticFeedback()
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitDialogBinding.tvYes.setOnClickListener {
+            context?.performHapticFeedback()
+            // Clear the back stack and navigate to the home fragment
+            findNavController().apply {
+                if (currentDestination?.id == R.id.trimAudio) {
+                    popBackStack()
+                    navigate(R.id.homeFragment)
+                }
+            }
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitAlertDialog?.setOnDismissListener {
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitAlertDialog!!.show()
+    }
+
+    private fun showRenameDialog() {
+        val alertDialogBuilder =
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+
+        val dialogView = renameDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+        renameAlertDialog = alertDialogBuilder?.create()
+
+        renameDialogView = dialogView
+
+
+        val filename = "audio_editor_${getCurrentTimestampString()}"
+
+        renameDialogBinding.etRenameRD.setText(filename)
+        renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
+
+        renameDialogBinding.tvConfirmRD.setOnClickListener {
+            context?.performHapticFeedback()
+            // Handle the positive button click event here
+            // You can retrieve the text entered in the EditText like this:
+            val enteredText = renameDialogBinding.etRenameRD.text.toString()
+            val name = enteredText.replaceSpaceWithUnderscore()
+
+            if(trimIn){
+                pauseMediaPlayer()
+                trimInAudio()
+            }
+            else if (trimOut){
+                pauseMediaPlayer()
+                trimOutAudio()
+            }
+            dismissDialog(renameAlertDialog, renameDialogView)
+
+            savingDialog(50)
+        }
+
+        renameDialogBinding.tvCancelRD.setOnClickListener {
+            context?.performHapticFeedback()
+            // Handle the negative button click event here
+            // This is where you can cancel the dialog if needed
+            dismissDialog(renameAlertDialog, renameDialogView)
+
+        }
+
+        renameAlertDialog?.setOnDismissListener {
+            dismissDialog(renameAlertDialog, renameDialogView)
+        }
+
+        renameAlertDialog!!.show()
+
+    }
+
 
     private fun dialogDismiss() {
         Handler().postDelayed({
@@ -466,11 +701,11 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             mediaPlayer.release()
         }
         mediaPlayer = MediaPlayer().apply {
-            context?.let{
+            context?.let {
                 if (uri != null) {
                     setDataSource(it, uri)
                 }
-                if(path!=null){
+                if (path != null) {
                     setDataSource(path)
                 }
 
@@ -489,6 +724,8 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                 val durationMillis = mp.duration
                 binding.tvCurrentDuration.text = mp.currentPosition.formatDuration()
                 binding.tvEndDuration.text = durationMillis.formatDuration()
+                binding.tvCropWindowLeft.text = mp.currentPosition.formatDuration()
+                binding.tvCropWindowRight.text = durationMillis.formatDuration()
 
                 mp.setOnCompletionListener {
                     binding.waveform.progress = 0F
@@ -524,9 +761,10 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         }
     }
 
-    private fun pauseMediaPlayer(){
-        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
+    private fun pauseMediaPlayer() {
+        if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
             mediaPlayer.pause()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
             binding.btnPlayPause.setImageResource(R.drawable.play_button)
         }
     }
@@ -539,7 +777,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         parent?.removeView(volumeBinding.root)
         bottomSheet.setContentView(volumeBinding.root)
 
-        volumeBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
+        volumeBinding.scrollRuler.scrollListener = object : ScrollRulerListener {
             override fun onRulerScrolled(value: Float) {
                 val formattedValue = if (value % 1 == 0f) {
                     "${value.toInt()}"
@@ -557,6 +795,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     // Start decreasing volume when button is pressed
                     startVolumeDecrease()
                 }
+
                 MotionEvent.ACTION_UP -> {
                     // Stop decreasing volume when button is released
                     stopValueUpdate()
@@ -571,6 +810,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     // Start increasing volume when button is pressed
                     startVolumeIncrease()
                 }
+
                 MotionEvent.ACTION_UP -> {
                     // Stop increasing volume when button is released
                     stopValueUpdate()
@@ -580,13 +820,12 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         }
 
         volumeBinding.btnDone.setOnOneClickListener {
-            if(currentVolume!=selectedVolume){
+            if (currentVolume != selectedVolume) {
                 bottomSheet.dismiss()
                 changeVolume()
 
                 savingDialog(50)
-            }
-            else{
+            } else {
                 context?.showSmallLengthToast("Selected volume is same as current volume")
             }
         }
@@ -602,7 +841,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         parent?.removeView(fadeOutBinding.root)
         bottomSheet.setContentView(fadeOutBinding.root)
 
-        fadeOutBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
+        fadeOutBinding.scrollRuler.scrollListener = object : ScrollRulerListener {
             override fun onRulerScrolled(value: Float) {
                 fadeOutBinding.tvNewValue.text = "${value}s"
                 selectedFadeOutTime = value.toString()
@@ -615,6 +854,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     // Start decreasing volume when button is pressed
                     startFadeOutDecrease()
                 }
+
                 MotionEvent.ACTION_UP -> {
                     // Stop decreasing volume when button is released
                     stopValueUpdate()
@@ -629,6 +869,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     // Start increasing volume when button is pressed
                     startFadeOutIncrease()
                 }
+
                 MotionEvent.ACTION_UP -> {
                     // Stop increasing volume when button is released
                     stopValueUpdate()
@@ -641,17 +882,15 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
 
             val durationInSeconds = mediaPlayer.duration / 1000
 
-            if(selectedFadeOutTime.toFloat().toInt() <= durationInSeconds){
-                if(currentFadeOutTime != selectedFadeOutTime){
+            if (selectedFadeOutTime.toFloat().toInt() <= durationInSeconds) {
+                if (currentFadeOutTime != selectedFadeOutTime) {
                     bottomSheet.dismiss()
                     changeFadeOutTime()
                     savingDialog()
-                }
-                else {
+                } else {
                     context?.showSmallLengthToast("Selected fade out time is same as current fade out time")
                 }
-            }
-            else{
+            } else {
                 context?.showSmallLengthToast("Selected Fade out time is larger than audio duration")
             }
 
@@ -668,7 +907,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         parent?.removeView(fadeInBinding.root)
         bottomSheet.setContentView(fadeInBinding.root)
 
-        fadeInBinding.scrollRuler.scrollListener = object : ScrollRulerListener{
+        fadeInBinding.scrollRuler.scrollListener = object : ScrollRulerListener {
             override fun onRulerScrolled(value: Float) {
                 fadeInBinding.tvNewValue.text = "${value}s"
                 selectedFadeInTime = value.toString()
@@ -681,6 +920,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     // Start decreasing volume when button is pressed
                     startFadeInDecrease()
                 }
+
                 MotionEvent.ACTION_UP -> {
                     // Stop decreasing volume when button is released
                     stopValueUpdate()
@@ -695,6 +935,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                     // Start increasing volume when button is pressed
                     startFadeInIncrease()
                 }
+
                 MotionEvent.ACTION_UP -> {
                     // Stop increasing volume when button is released
                     stopValueUpdate()
@@ -706,17 +947,15 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         fadeInBinding.btnDone.setOnOneClickListener {
             val durationInSeconds = mediaPlayer.duration / 1000
 
-            if(selectedFadeInTime.toFloat().toInt() <= durationInSeconds){
-                if(currentFadeInTime != selectedFadeInTime){
+            if (selectedFadeInTime.toFloat().toInt() <= durationInSeconds) {
+                if (currentFadeInTime != selectedFadeInTime) {
                     bottomSheet.dismiss()
                     changeFadeInTime()
                     savingDialog()
-                }
-                else{
+                } else {
                     context?.showSmallLengthToast("Selected fade in time is same as current fade in time")
                 }
-            }
-            else{
+            } else {
                 context?.showSmallLengthToast("Selected Fade in time is larger than audio duration")
             }
         }
@@ -730,42 +969,42 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         val parent = speedBinding.root.parent as? ViewGroup
         parent?.removeView(speedBinding.root)
         bottomSheet.setContentView(speedBinding.root)
+        with(speedBinding) {
 
-        speedBinding.tv05x.setOnOneClickListener {
-            onTextViewClick(speedBinding.tv05x)
-        }
-
-        speedBinding.tv075x.setOnOneClickListener {
-            onTextViewClick(speedBinding.tv075x)
-        }
-
-        speedBinding.tv10x.setOnOneClickListener {
-            onTextViewClick(speedBinding.tv10x)
-        }
-
-        speedBinding.tv125x.setOnOneClickListener {
-            onTextViewClick(speedBinding.tv125x)
-        }
-
-        speedBinding.tv15x.setOnOneClickListener {
-            onTextViewClick(speedBinding.tv15x)
-        }
-
-        speedBinding.tv20x.setOnOneClickListener {
-            onTextViewClick(speedBinding.tv20x)
-        }
-
-        speedBinding.btnDone.setOnOneClickListener {
-            if(selectedSpeedOption!="-1" && currentSpeedOption!=selectedSpeedOption){
-                 changeSpeed()
-                bottomSheet.dismiss()
-                savingDialog(50)
+            tv05x.setOnOneClickListener {
+                onTextViewClick(tv05x)
             }
-            else {
-                context?.showSmallLengthToast("Selected speed is same as current speed")
+
+            tv075x.setOnOneClickListener {
+                onTextViewClick(tv075x)
+            }
+
+            tv10x.setOnOneClickListener {
+                onTextViewClick(tv10x)
+            }
+
+            tv125x.setOnOneClickListener {
+                onTextViewClick(tv125x)
+            }
+
+            tv15x.setOnOneClickListener {
+                onTextViewClick(tv15x)
+            }
+
+            tv20x.setOnOneClickListener {
+                onTextViewClick(tv20x)
+            }
+
+            btnDone.setOnOneClickListener {
+                if (selectedSpeedOption != "-1" && currentSpeedOption != selectedSpeedOption) {
+                    changeSpeed()
+                    bottomSheet.dismiss()
+                    savingDialog(50)
+                } else {
+                    context?.showSmallLengthToast("Selected speed is same as current speed")
+                }
             }
         }
-
         bottomSheet.show()
     }
 
@@ -775,7 +1014,12 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             val currentValue = fadeInBinding.scrollRuler.currentPositionValue
             if (currentValue <= 4.9) {
                 fadeInBinding.scrollRuler.scrollToValue(currentValue + 0.1f)
-                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+                valueUpdateRunnable?.let {
+                    valueUpdateHandler.postDelayed(
+                        it,
+                        100
+                    )
+                } // Adjust the delay as needed
             }
         }
         valueUpdateHandler.post(valueUpdateRunnable!!)
@@ -786,7 +1030,12 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             val currentValue = fadeOutBinding.scrollRuler.currentPositionValue
             if (currentValue <= 4.9) {
                 fadeOutBinding.scrollRuler.scrollToValue(currentValue + 0.1f)
-                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+                valueUpdateRunnable?.let {
+                    valueUpdateHandler.postDelayed(
+                        it,
+                        100
+                    )
+                } // Adjust the delay as needed
             }
         }
         valueUpdateHandler.post(valueUpdateRunnable!!)
@@ -797,7 +1046,12 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             val currentValue = fadeInBinding.scrollRuler.currentPositionValue
             if (currentValue >= 0.1) {
                 fadeInBinding.scrollRuler.scrollToValue(currentValue - 0.1f)
-                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+                valueUpdateRunnable?.let {
+                    valueUpdateHandler.postDelayed(
+                        it,
+                        100
+                    )
+                } // Adjust the delay as needed
             }
         }
         valueUpdateHandler.post(valueUpdateRunnable!!)
@@ -808,7 +1062,12 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             val currentValue = fadeOutBinding.scrollRuler.currentPositionValue
             if (currentValue >= 0.1) {
                 fadeOutBinding.scrollRuler.scrollToValue(currentValue - 0.1f)
-                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
+                valueUpdateRunnable?.let {
+                    valueUpdateHandler.postDelayed(
+                        it,
+                        100
+                    )
+                } // Adjust the delay as needed
             }
         }
         valueUpdateHandler.post(valueUpdateRunnable!!)
@@ -819,9 +1078,13 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             val currentValue = volumeBinding.scrollRuler.currentPositionValue
             if (currentValue >= 51) {
                 volumeBinding.scrollRuler.scrollToValue(currentValue - 1f)
-                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
-            }
-            else if(currentValue>50){
+                valueUpdateRunnable?.let {
+                    valueUpdateHandler.postDelayed(
+                        it,
+                        100
+                    )
+                } // Adjust the delay as needed
+            } else if (currentValue > 50) {
                 volumeBinding.scrollRuler.scrollToValue(0f)
             }
         }
@@ -833,9 +1096,13 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             val currentValue = volumeBinding.scrollRuler.currentPositionValue
             if (currentValue <= 199) {
                 volumeBinding.scrollRuler.scrollToValue(currentValue + 1f)
-                valueUpdateRunnable?.let { valueUpdateHandler.postDelayed(it, 100) } // Adjust the delay as needed
-            }
-            else if(currentValue<200){
+                valueUpdateRunnable?.let {
+                    valueUpdateHandler.postDelayed(
+                        it,
+                        100
+                    )
+                } // Adjust the delay as needed
+            } else if (currentValue < 200) {
                 volumeBinding.scrollRuler.scrollToValue(100f)
             }
         }
@@ -849,61 +1116,23 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         }
     }
 
-    private fun onTextViewClick(clickedTextView: TextView) {
-        // Reset all TextViews to white
-        val allTextViews = listOf(
-            speedBinding.tv05x,
-            speedBinding.tv075x,
-            speedBinding.tv10x,
-            speedBinding.tv125x,
-            speedBinding.tv15x,
-            speedBinding.tv20x
-        )
-        for (textView in allTextViews) {
-
-            context?.let{
-                textView.setBackgroundResource(R.drawable.button_bg_grey_rounded)
-                textView.setTextColor(
-                    ContextCompat.getColor(
-                        it,
-                        R.color.textColorDarkGrey
-                    )
-                )
-            }
-        }
-
-        val text = clickedTextView.text.toString()
-        selectedSpeedOption = text.removeSuffix("x")
-        Log.d(TAG, "onTextViewClick: $selectedSpeedOption")
-        // Change the background color of the clicked TextView to blue
-        clickedTextView.setBackgroundResource(R.drawable.button_bg_rounded)
-        context?.let{
-            clickedTextView.setTextColor(
-                ContextCompat.getColor(
-                    it,
-                    R.color.white
-                )
-            )
-        }
-    }
 
     //*****************************************   FFmpeg Functions  ***********************************************
 
-    private fun trimInAudio(){
+    private fun trimInAudio() {
         var durationInMillis = ((cropLeft) * (mediaPlayer.duration).toFloat()).toInt()
         val formattedDurationStart = durationInMillis.formatDuration()
 
         durationInMillis = ((cropRight) * (mediaPlayer.duration).toFloat()).toInt()
-        val formattedDurationEnd =  durationInMillis.formatDuration()
+        val formattedDurationEnd = durationInMillis.formatDuration()
 
-        context?.let{
+        context?.let {
             var inputAudioPath: String = ""
             if (lastFunctionCalled == null) {
-               inputAudioPath = it.getInputPath(audioUri!!)
+                inputAudioPath = it.getInputPath(audioUri!!)
 
-            }
-            else{
-                when(lastFunctionCalled){
+            } else {
+                when (lastFunctionCalled) {
                     "speed" -> inputAudioPath = outputPathSpeed
                     "volume" -> inputAudioPath = outputPathVolume
                     "fadein" -> inputAudioPath = outputPathFadeIn
@@ -912,14 +1141,14 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             }
 
             val outputFile = extension?.let {
-                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
             }
             outputPath = outputFile!!.path
 
             val cmd = arrayOf(
                 "-y",//overwrite if exists
                 "-i",
-                inputAudioPath,
+                pathsList[currentIndex],
                 "-ss",
                 formattedDurationStart,
                 "-to",
@@ -929,6 +1158,105 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
 
             cmd.executeCommand(this)
 
+        }
+    }
+
+    private fun trimOutAudio() {
+
+        var durationInMillis = ((cropLeft) * (mediaPlayer.duration).toFloat()).toInt()
+        val formattedDurationStart = durationInMillis.formatDuration()
+
+        durationInMillis = ((cropRight) * (mediaPlayer.duration).toFloat()).toInt()
+        val formattedDurationEnd = durationInMillis.formatDuration()
+
+        val formattedStartPointAudio = 0.formatDuration() //start of audio
+        val formattedAudioDuration = (mediaPlayer.duration).formatDuration() //total audio duration
+
+
+        context?.let {
+            var inputAudioPath: String = ""
+            if (lastFunctionCalled == null) {
+                inputAudioPath = it.getInputPath(audioUri!!)
+
+            } else {
+                when (lastFunctionCalled) {
+                    "speed" -> inputAudioPath = outputPathSpeed
+                    "volume" -> inputAudioPath = outputPathVolume
+                    "fadein" -> inputAudioPath = outputPathFadeIn
+                    "fadeout" -> inputAudioPath = outputPathFadeOut
+                }
+            }
+
+            val outputFile1 = extension?.let {
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
+            }
+            val outputPath1 = outputFile1!!.path
+
+            val outputFile2 = extension?.let {
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
+            }
+            val outputPath2 = outputFile2!!.path
+
+            val outputFile = extension?.let {
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
+            }
+            outputPath = outputFile!!.path
+
+            val cmd1 = arrayOf(
+                "-y",//overwrite if exists
+                "-i",
+                pathsList[currentIndex],
+                "-ss",
+                formattedStartPointAudio,
+                "-to",
+                formattedDurationStart,
+                outputPath1
+            )
+
+            val cmd2 = arrayOf(
+                "-y",//overwrite if exists
+                "-i",
+                pathsList[currentIndex],
+                "-ss",
+                formattedDurationEnd,
+                "-to",
+                formattedAudioDuration,
+                outputFile2.path
+            )
+
+            val cmd3 = arrayOf(
+                "-y",
+                "-i", outputPath1,
+                "-i", outputPath2,
+                "-filter_complex",
+                "[0:a][1:a]concat=n=2:v=0:a=1[out]",
+                "-map", "[out]",
+                outputPath
+            )
+
+            cmd1.executeCommandInSeries() { success1 ->
+                if (success1) {
+                    // cmd1 was successful, proceed to cmd2
+                    cmd2.executeCommandInSeries() { success2 ->
+                        if (success2) {
+                            // cmd2 was successful, proceed to cmd3
+                            cmd3.executeCommandInSeries() { success3 ->
+                                if (success3) {
+                                    // cmd3 was successful
+                                    deleteFile(outputFile1)
+                                    deleteFile(outputFile2)
+                                } else {
+                                    Log.d("Audiotrim", "cmd3 failed")
+                                }
+                            }
+                        } else {
+                            Log.d("Audiotrim", "cmd2 failed")
+                        }
+                    }
+                } else {
+                    Log.d("Audiotrim", "cmd1 failed")
+                }
+            }
         }
     }
 
@@ -950,13 +1278,13 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             }
 
             val outputFile = extension?.let {
-                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
             }
             outputPathVolume = outputFile!!.path
 
             val cmd = arrayOf(
                 "-y",
-                "-i", inputAudioPath,
+                "-i", pathsList[currentIndex],
                 "-af", "volume=$selectedVolume",
                 outputPathVolume
             )
@@ -995,14 +1323,14 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             }
 
             val outputFile = extension?.let {
-                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
             }
             outputPathFadeIn = outputFile!!.path
 
 
             val cmd = arrayOf(
                 "-y",
-                "-i", inputAudioPath,
+                "-i", pathsList[currentIndex],
                 "-af", "afade=t=in:ss=${startingFadeInTime}:d=${selectedFadeInTime}",
                 outputPathFadeIn
             )
@@ -1042,7 +1370,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             }
 
             val outputFile = extension?.let {
-                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
             }
             outputPathFadeOut = outputFile!!.path
 
@@ -1052,7 +1380,7 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
 
             val cmd = arrayOf(
                 "-y",
-                "-i", inputAudioPath,
+                "-i", pathsList[currentIndex],
                 "-af", "afade=t=out:st=${startingFadeOutTime}:d=${selectedFadeOutTime}",
                 outputPathFadeOut
             )
@@ -1086,13 +1414,13 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
             }
 
             val outputFile = extension?.let {
-                "temp_audio_${getCurrentTimestampString()}".getOutputFilePath(it)
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
             }
             outputPathSpeed = outputFile!!.path
 
             val cmd = arrayOf(
                 "-y",
-                "-i", inputAudioPath,
+                "-i", pathsList[currentIndex],
                 "-filter_complex", "\"atempo=$selectedSpeedOption[aout]\"",
                 "-map", "[aout]",
                 outputPathSpeed
@@ -1128,46 +1456,24 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
                 currentSpeedOption = selectedSpeedOption
                 audioUri = Uri.fromFile(File(outputPathSpeed))
                 lastFunctionCalled = "speed"
+                updatePathsList(outputPathSpeed)
             } else if (volume) {
                 currentVolume = selectedVolume
                 audioUri = Uri.fromFile(File(outputPathVolume))
                 lastFunctionCalled = "volume"
-
+                updatePathsList(outputPathVolume)
             } else if (fadein) {
                 currentFadeInTime = selectedFadeInTime
                 audioUri = Uri.fromFile(File(outputPathFadeIn))
                 lastFunctionCalled = "fadein"
-
+                updatePathsList(outputPathFadeIn)
             } else if (fadeout) {
                 currentFadeOutTime = selectedFadeOutTime
                 audioUri = Uri.fromFile(File(outputPathFadeOut))
                 lastFunctionCalled = "fadeout"
-
-
+                updatePathsList(outputPathFadeOut)
             }
 
-
-            withContext(Dispatchers.Main) {
-                createMediaPlayer(audioUri)
-                if(::mediaPlayer.isInitialized && !mediaPlayer.isPlaying){
-                    if (fadein) {
-                        if(::mediaPlayer.isInitialized && !mediaPlayer.isPlaying){
-                            mediaPlayer.seekTo((startingFadeInTime * 1000).toInt())
-                            Log.d(TAG, "onCommandExecutionSuccess: $startingFadeInTime")
-                            mediaPlayer.start()
-                            binding.btnPlayPause.setImageResource(R.drawable.pause_button)
-                            updateSeekBar()
-                        }
-                    } else if (fadeout) {
-
-                        mediaPlayer.seekTo((startingFadeOutTime * 1000).toInt())
-                        Log.d(TAG, "onCommandExecutionSuccess: $startingFadeOutTime")
-                        mediaPlayer.start()
-                        binding.btnPlayPause.setImageResource(R.drawable.pause_button)
-                        updateSeekBar()
-                    }
-                }
-            }
         }
     }
 
@@ -1177,5 +1483,130 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         dialogDismiss()
     }
 
+    //*****************************************   Utility Functions  ***********************************************
+
+    private fun onTextViewClick(clickedTextView: TextView) {
+        // Reset all TextViews to white
+        val allTextViews = listOf(
+            speedBinding.tv05x,
+            speedBinding.tv075x,
+            speedBinding.tv10x,
+            speedBinding.tv125x,
+            speedBinding.tv15x,
+            speedBinding.tv20x
+        )
+        for (textView in allTextViews) {
+
+            context?.let {
+                textView.setBackgroundResource(R.drawable.button_bg_grey_rounded)
+                textView.setTextColor(
+                    ContextCompat.getColor(
+                        it,
+                        R.color.textColorDarkGrey
+                    )
+                )
+            }
+        }
+
+        val text = clickedTextView.text.toString()
+        selectedSpeedOption = text.removeSuffix("x")
+        Log.d(TAG, "onTextViewClick: $selectedSpeedOption")
+        // Change the background color of the clicked TextView to blue
+        clickedTextView.setBackgroundResource(R.drawable.button_bg_rounded)
+        context?.let {
+            clickedTextView.setTextColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.white
+                )
+            )
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun updatePathsList(path: String){
+
+        Log.d(TAG, "rightTogglePositionChanged: paths list $pathsList")
+
+        if(pathsList.size>0){ pathsList.subList(currentIndex + 1, pathsList.size).clear() }
+
+        pathsList.add(path)
+
+        if(pathsList.size>4){
+            pathsList.removeAt(1)
+        }
+
+        currentIndex = pathsList.lastIndex
+//        pathsListMutableLiveData.postValue(pathsList)
+
+        if(pathsList.size>1 && currentIndex>0){
+            Handler(Looper.getMainLooper()).post {
+                enableUndo()
+            }
+        }
+        if(currentIndex==pathsList.size-1){
+            Handler(Looper.getMainLooper()).post {
+                disableRedo()
+            }
+        }
+
+
+        GlobalScope.launch {
+            createMediaPlayer(audioUri)
+        }
+
+        Log.d(TAG, "rightTogglePositionChanged: paths list $pathsList")
+
+    }
+
+    private fun removePreviousEdits(){
+        if(pathsList.size>1){
+            context?.showSmallLengthToast("All previous edits removed")
+            pathsList.subList(1, pathsList.size).clear()
+            disableRedo()
+            disableUndo()
+//            pathsListMutableLiveData.postValue(pathsList)
+            currentIndex= pathsList.lastIndex
+            audioUri = pathsList.last().getUriFromPath()
+            audioUri?.let{
+                createMediaPlayer(it)
+            }
+            disableUndo()
+            disableRedo()
+
+        }
+    }
+
+    private fun enableUndo() {
+        Log.d(TAG, "enableUndo: ")
+        binding.btnUndo.setImageResource(R.drawable.ic_undo_enabled)
+        binding.btnUndo.isClickable = true
+        binding.btnUndo.isFocusable = true
+    }
+
+    private fun enableRedo() {
+        Log.d(TAG, "enableRedo: ")
+        binding.btnRedo.setImageResource(R.drawable.ic_redo_enabled)
+        binding.btnRedo.isClickable = true
+        binding.btnRedo.isFocusable = true
+
+    }
+
+    private fun disableUndo() {
+        Log.d(TAG, "disableUndo: ")
+        binding.btnUndo.setImageResource(R.drawable.ic_undo_disabled)
+        binding.btnUndo.isClickable = false
+        binding.btnUndo.isFocusable = false
+
+    }
+
+    private fun disableRedo() {
+        Log.d(TAG, "disableRedo: ")
+        
+        binding.btnRedo.setImageResource(R.drawable.ic_redo_disabled)
+        binding.btnRedo.isClickable = false
+        binding.btnRedo.isFocusable = false
+
+    }
 
 }

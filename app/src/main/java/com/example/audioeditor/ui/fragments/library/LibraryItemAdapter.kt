@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.audioeditor.R
+import com.example.audioeditor.models.LibraryItemModel
 
 class LibraryItemAdapter(
     private var mList: ArrayList<LibraryItemModel>,
@@ -16,7 +17,7 @@ class LibraryItemAdapter(
 ) :
     RecyclerView.Adapter<LibraryItemAdapter.ViewHolder>() {
     interface OnItemClicked {
-        fun onItemClicked(audioList: List<LibraryItemModel> ,position: Int)
+        fun onItemClicked(audioList: List<LibraryItemModel>, position: Int)
 
         fun onMenuClicked(audioItem: LibraryItemModel, position: Int)
     }

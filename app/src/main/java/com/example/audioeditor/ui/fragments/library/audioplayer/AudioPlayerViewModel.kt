@@ -1,6 +1,6 @@
 package com.example.audioeditor.ui.fragments.library.audioplayer
 
-import com.example.audioeditor.ui.fragments.library.LibraryItemModel
+import com.example.audioeditor.models.LibraryItemModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 

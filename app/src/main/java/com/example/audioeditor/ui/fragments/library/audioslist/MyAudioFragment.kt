@@ -21,14 +21,13 @@ import com.example.audioeditor.databinding.FragmentMyAudioBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.repo.AppRepo
 import com.example.audioeditor.ui.fragments.library.LibraryItemAdapter
-import com.example.audioeditor.ui.fragments.library.LibraryItemModel
+import com.example.audioeditor.models.LibraryItemModel
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
 import com.example.audioeditor.utils.scanFiles
 import com.example.audioeditor.utils.showSmallLengthToast
 
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -140,8 +139,6 @@ class MyAudioFragment() : Fragment() {
 
     private fun submitNewList(libraryList: ArrayList<LibraryItemModel>) {
         adapter.submitNewList(libraryList)
-
-
     }
 
     private fun navigateToPlayer(libList: List<LibraryItemModel>, position: Int) {

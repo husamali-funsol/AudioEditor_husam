@@ -28,8 +28,7 @@ import com.example.audioeditor.utils.executeCommand
 import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getFileNameFromUri
 import com.example.audioeditor.utils.getInputPath
-import com.example.audioeditor.utils.getOutputFilePath
-import com.example.audioeditor.utils.getUriFromPath
+import com.example.audioeditor.utils.getOutputFile
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
@@ -157,6 +156,16 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         binding.btnBack.setOnOneClickListener {
             context?.performHapticFeedback()
             showQuitDialog()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        if(::mediaPlayer.isInitialized){
+            mediaPlayer.release()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+
         }
     }
 
@@ -348,7 +357,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
         context?.let{
             val inputAudioPath = it.getInputPath(audioUri)
-            val outputFile = filename.getOutputFilePath(selected)
+            val outputFile = filename.getOutputFile(selected)
             outputPath = outputFile.path
 
 
@@ -444,6 +453,18 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
        dismissDialog()
 
     }
+
+    override fun onPause() {
+        super.onPause()
+
+        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
+            mediaPlayer.pause()
+            binding.btnPlayPause.setImageResource(R.drawable.ic_play)
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+        }
+    }
+
+
 
 
 

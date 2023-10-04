@@ -1,22 +1,16 @@
 package com.example.audioeditor.ui.fragments.library.audioplayer
 
-import android.content.ContentUris
-import android.content.ContentValues
 import android.content.Intent
 import android.media.MediaPlayer
-import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
-import android.provider.MediaStore
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
@@ -26,7 +20,7 @@ import com.example.audioeditor.databinding.BottomSheetLibraryBinding
 import com.example.audioeditor.databinding.DeleteDialogBinding
 import com.example.audioeditor.databinding.FragmentMyAudioPlayerBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
-import com.example.audioeditor.ui.fragments.library.LibraryItemModel
+import com.example.audioeditor.models.LibraryItemModel
 import com.example.audioeditor.utils.convertMillisToMinutes
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
@@ -327,6 +321,8 @@ class MyAudioPlayerFragment : Fragment() {
         }
     }
 
+
+
     private fun setAudioFileData() {
         if (libItem != null) {
             audioUri = libItem!!.uri!!
@@ -454,8 +450,19 @@ class MyAudioPlayerFragment : Fragment() {
         if (::mediaPlayer.isInitialized) {
             mediaPlayer.release()
             updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
-
         }
     }
+
+    override fun onPause() {
+        super.onPause()
+
+        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
+            mediaPlayer.pause()
+            binding.ivPlayerLP.setImageResource(R.drawable.play_button)
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+        }
+    }
+
+
 
 }

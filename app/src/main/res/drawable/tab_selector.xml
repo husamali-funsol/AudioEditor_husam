@@ -5,8 +5,6 @@
         android:state_selected="true">
     </item>
 
-    <item
-        android:drawable="@drawable/custom_tab_background_unselected">
-    </item>
+
 
 </selector>

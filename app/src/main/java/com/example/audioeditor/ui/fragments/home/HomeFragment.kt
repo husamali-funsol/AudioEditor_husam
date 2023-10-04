@@ -42,6 +42,10 @@ class HomeFragment : Fragment() {
             findNavController().navigate(R.id.action_homeFragment_to_trimAudio)
         }
 
+        binding.btnRecorder.setOnOneClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_mainRecorderFragment)
+        }
+
 
     }
 

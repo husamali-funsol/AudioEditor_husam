@@ -8,7 +8,6 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import com.example.audioeditor.R
 
-//import com.iammert.rangeview.library.R
 
 
 class RangeView @JvmOverloads constructor(
@@ -137,6 +136,13 @@ class RangeView @JvmOverloads constructor(
     fun colorBackground(int: Int) {
         bgColor = int
         backgroundPaint.color = bgColor
+
+        postInvalidate()
+    }
+
+    fun maskColor(int: Int){
+        maskColor = int
+        maskPaint.color = maskColor
 
         postInvalidate()
     }
@@ -354,14 +360,6 @@ class RangeView @JvmOverloads constructor(
         postInvalidate()
     }
 
-//    fun trimOutRangeView(){
-//        bgColor = ContextCompat.getColor(context, R.color.white)
-//
-//        strokeColor = ContextCompat.getColor(context, R.color.black)
-//
-//        postInvalidate()
-//
-//    }
 
     fun setCurrentValues(leftValue: Float, rightValue: Float) {
         currentLeftValue = leftValue

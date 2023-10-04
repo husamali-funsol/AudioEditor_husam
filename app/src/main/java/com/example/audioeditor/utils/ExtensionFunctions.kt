@@ -23,6 +23,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
@@ -102,6 +103,18 @@ fun Context.scanFiles(file: File) {
     ) { _, _ -> }
 }
 
+fun Context.scanDirectory() {
+    val storageDir = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+        "FunsolAudioEditor"
+    )
+    MediaScannerConnection.scanFile(
+        this,
+        arrayOf(storageDir.absolutePath),
+        null
+    ) { _, _ -> }
+}
+
 fun Context.refreshMediaStore(file: File) {
     val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
     mediaScanIntent.data = Uri.fromFile(file)
@@ -112,7 +125,7 @@ fun Context.refreshMediaStore(file: File) {
 
 fun Context.refreshMediaStoreForAudioFiles() {
     val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-    mediaScanIntent.data = Uri.fromFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC))
+    mediaScanIntent.data = Uri.fromFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
     this.sendBroadcast(mediaScanIntent)
 }
 
@@ -211,7 +224,7 @@ fun getCurrentTimestampString(): String {
     return sdf.format(currentDate)
 }
 
-fun String.getOutputFilePath(ext: String): File {
+fun String.getOutputFile(ext: String): File {
 //        val storageDir = File(Environment.getExternalStorageDirectory(), "FunsolAudioEditor")
     val storageDir = File(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -228,6 +241,26 @@ fun String.getOutputFilePath(ext: String): File {
 
     val fileName = "${this}.$ext"
     return File(storageDir, fileName)
+}
+
+
+fun getStorageDir(): String {
+//        val storageDir = File(Environment.getExternalStorageDirectory(), "FunsolAudioEditor")
+    val storageDir = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+        "FunsolAudioEditor"
+    )
+
+//    val ext = ext.lowercase()
+
+    if (!storageDir.exists()) {
+        storageDir.mkdirs() // Create the directory if it doesn't exist
+    }
+
+//    val fileName = "audio_editor_${getCurrentTimestampString()}.$ext"
+
+//    val fileName = "${this}.$ext"
+    return storageDir.path
 }
 
 //@RequiresApi(Build.VERSION_CODES.O)
@@ -271,18 +304,24 @@ fun String.getFileSize(): Long {
 
 fun String.getAudioFileDuration(): Long {
     val mediaPlayer = MediaPlayer()
-
-
     return try {
-        mediaPlayer.setDataSource(this)
-        mediaPlayer.prepare()
-        val duration = mediaPlayer.duration.toLong()
-        mediaPlayer.release()  // Release MediaPlayer after obtaining duration
-        duration
+        if (this.isNotEmpty()) {
+            mediaPlayer.setDataSource(this)
+            mediaPlayer.prepare()
+            val duration = mediaPlayer.duration.toLong()
+            duration
+        } else {
+            // Handle invalid input (empty or null path)
+            -1
+        }
     } catch (e: IOException) {
         // Log the error or handle it as needed
-        mediaPlayer.release()  // Make sure to release the MediaPlayer on error
-        0
+        -1
+    } catch (e: IllegalStateException) {
+        // Log the error or handle it as needed
+        -1
+    } finally {
+        mediaPlayer.release()  // Ensure MediaPlayer is released
     }
 }
 
@@ -290,15 +329,23 @@ fun String.getVideoFileDuration(): Long {
     val mediaPlayer = MediaPlayer()
 
     return try {
-        mediaPlayer.setDataSource(this)
-        mediaPlayer.prepare()
-        val duration = mediaPlayer.duration.toLong()
-        mediaPlayer.release()  // Release MediaPlayer after obtaining duration
-        duration
+        if (this.isNotEmpty()) {
+            mediaPlayer.setDataSource(this)
+            mediaPlayer.prepare()
+            val duration = mediaPlayer.duration.toLong()
+            duration
+        } else {
+            // Handle invalid input (empty or null path)
+            -1
+        }
     } catch (e: IOException) {
         // Log the error or handle it as needed
-        mediaPlayer.release()  // Make sure to release the MediaPlayer on error
-        0
+        -1
+    } catch (e: IllegalStateException) {
+        // Log the error or handle it as needed
+        -1
+    } finally {
+        mediaPlayer.release()  // Ensure MediaPlayer is released
     }
 }
 
@@ -356,12 +403,11 @@ fun dismissDialog(alertDialog: AlertDialog?, dialogView: ConstraintLayout?){
 
 
 fun String.getUriFromPath(): Uri? {
-
-    return Uri.parse(this)
-
+    val file = File(this)
+    return Uri.fromFile(file)
 }
 
-fun Array<String>.executeCommand( callback: (Boolean) -> Unit) {
+fun Array<String>.executeCommandInSeries( callback: (Boolean) -> Unit) {
     try {
         FFmpegKit.executeAsync(
             this.joinToString(" ")
@@ -399,6 +445,26 @@ fun Array<String>.executeCommand( callback: (Boolean) -> Unit) {
         callback(false)
     }
 }
+
+
+fun deleteFile(f1: File) {
+
+    val file1 = f1
+
+// Check if the files exist before attempting to delete them
+    if (file1.exists()) {
+        val deleted1 = file1.delete()
+        if (deleted1) {
+            println("File ${f1.path} deleted successfully.")
+        } else {
+            println("Failed to delete ${f1.path}.")
+        }
+    } else {
+        println("File ${f1.path} does not exist.")
+    }
+
+}
+
 
 
 
