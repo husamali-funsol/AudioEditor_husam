@@ -4,7 +4,6 @@ import AudioFileContract
 import android.annotation.SuppressLint
 import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,7 +14,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
@@ -61,7 +59,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 
-class TrimAudio : Fragment(), CommandExecutionCallback {
+class TrimAudioFragment : Fragment(), CommandExecutionCallback {
 
     private val binding by lazy {
         FragmentTrimAudioBinding.inflate(layoutInflater)
@@ -687,8 +685,6 @@ class TrimAudio : Fragment(), CommandExecutionCallback {
         Handler().postDelayed({
             dismissDialog(savingAlertDialog, savingDialogView)
         }, 1000)
-
-
     }
 
     //*****************************************   Media Player and Waveform  ***********************************************

@@ -6,5 +6,15 @@
         <item name="android:windowFullscreen">true</item>
     </style>
 
-    <style name="Theme.AudioEditor" parent="Base.Theme.AudioEditor" />
+    <style name="Theme.AudioEditor" parent="Base.Theme.AudioEditor" >
+
+
+<!--        <item name="popupMenuBackground">@drawable/popupmenu_background</item>-->
+        <item name="popupMenuStyle">@style/popupOverflowMenu</item>
+    </style>
+
+    <style name="popupOverflowMenu" parent="@style/Widget.MaterialComponents.PopupMenu.Overflow">
+        <item name="android:popupBackground">@drawable/popupmenu_background</item>
+    </style>
+    
 </resources>

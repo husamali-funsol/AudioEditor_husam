@@ -19,7 +19,7 @@ class LibraryItemAdapter(
     interface OnItemClicked {
         fun onItemClicked(audioList: List<LibraryItemModel>, position: Int)
 
-        fun onMenuClicked(audioItem: LibraryItemModel, position: Int)
+        fun onMenuClicked(audioItem: LibraryItemModel, position: Int, iv: ImageView)
     }
 
     // Holds the views for adding it to image and text
@@ -28,6 +28,7 @@ class LibraryItemAdapter(
         val menu: ImageView = itemView.findViewById(R.id.ibMenu_libItem)
         val metadata: TextView = itemView.findViewById(R.id.tvMetaData_libItem)
         val avatar: ImageView = itemView.findViewById(R.id.ivAvatar_libItem)
+        val view: View = itemView.findViewById(R.id.view)
 
     }
 
@@ -77,18 +78,22 @@ class LibraryItemAdapter(
             .into(holder.avatar)
 
         holder.menu.setOnClickListener {
-            onItemClicked.onMenuClicked(audioItem, position)
+            onItemClicked.onMenuClicked(audioItem, position, holder.menu)
         }
 
-        holder.title.setOnClickListener {
-            onItemClicked.onItemClicked(mList, position)
-        }
+//        holder.title.setOnClickListener {
+//            onItemClicked.onItemClicked(mList, position)
+//        }
+//
+//        holder.metadata.setOnClickListener {
+//            onItemClicked.onItemClicked(mList, position)
+//        }
+//
+//        holder.avatar.setOnClickListener {
+//            onItemClicked.onItemClicked(mList, position)
+//        }
 
-        holder.metadata.setOnClickListener {
-            onItemClicked.onItemClicked(mList, position)
-        }
-
-        holder.avatar.setOnClickListener {
+        holder.view.setOnClickListener {
             onItemClicked.onItemClicked(mList, position)
         }
     }

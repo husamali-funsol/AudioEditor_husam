@@ -1,4 +1,4 @@
-package com.example.audioeditor.ui.fragments.features.recorder
+package com.example.audioeditor.ui.fragments.features.recorder.recorder
 
 import android.content.pm.PackageManager
 import android.media.MediaRecorder

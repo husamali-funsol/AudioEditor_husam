@@ -1,4 +1,4 @@
-package com.example.audioeditor.ui.fragments.features.recorder
+package com.example.audioeditor.ui.fragments.features.recorder.recorder
 
 import android.os.Handler
 import android.os.Looper

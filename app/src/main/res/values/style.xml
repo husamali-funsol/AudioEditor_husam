@@ -25,4 +25,14 @@
     <style name="CustomAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
         <item name="android:windowBackground">@drawable/dialog_bg</item>
     </style>
+
+
+<!--    <style name="popupOverflowMenu" parent="@style/Widget.MaterialComponents.PopupMenu.Overflow">-->
+<!--        <item name="android:popupBackground">@drawable/popupmenu_background</item>-->
+<!--    </style>-->
+
+    <style name="DeleteMenuItemStyle">
+        <item name="android:textColor">@color/textColorRed</item>
+    </style>
+
 </resources>

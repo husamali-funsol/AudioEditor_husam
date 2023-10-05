@@ -1,4 +1,4 @@
-package com.example.audioeditor.ui.fragments.features.recorder
+package com.example.audioeditor.ui.fragments.features.recorder.listen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

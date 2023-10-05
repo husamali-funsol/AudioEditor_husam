@@ -6,6 +6,15 @@
     android:layout_marginBottom="20dp"
     android:layout_height="wrap_content">
 
+    <View
+        android:id="@+id/view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/tvTitle_libItem"
+        app:layout_constraintStart_toStartOf="@+id/ivAvatar_libItem"
+        app:layout_constraintTop_toTopOf="@+id/ivAvatar_libItem" />
+
     <TextView
         android:id="@+id/tvTitle_libItem"
         android:layout_width="0dp"

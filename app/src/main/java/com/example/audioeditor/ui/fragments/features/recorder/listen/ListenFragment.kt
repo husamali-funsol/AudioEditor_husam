@@ -1,4 +1,4 @@
-package com.example.audioeditor.ui.fragments.features.recorder
+package com.example.audioeditor.ui.fragments.features.recorder.listen
 
 import android.os.Bundle
 import android.os.Handler
@@ -7,7 +7,10 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.PopupMenu
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -23,10 +26,10 @@ import com.example.audioeditor.repo.AppRepo
 import com.example.audioeditor.ui.fragments.library.LibraryItemAdapter
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
-import com.example.audioeditor.utils.scanDirectory
 import com.example.audioeditor.utils.scanFiles
 import com.example.audioeditor.utils.showSmallLengthToast
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,22 +49,15 @@ class ListenFragment : Fragment() {
 
     private var alertDialog: AlertDialog? = null
 
-    private val libraryBottomSheetDialogBinding by lazy {
-        BottomSheetLibraryBinding.inflate(layoutInflater)
-    }
-    private val detailsBottomSheetDialogBinding by lazy {
-        BottomSheetDetailsBinding.inflate(layoutInflater)
-    }
-    private val renameDialogBinding by lazy {
-        RenameDialogBinding.inflate(layoutInflater)
-    }
-    private val deleteDialogBinding by lazy {
-        DeleteDialogBinding.inflate(layoutInflater)
-    }
+
+    private var previousList: ArrayList<LibraryItemModel>? = null
 
     private val bottomSheet by lazy{
         BottomSheetDialog(requireContext())    }
 
+    private var viewCreated = false
+
+    private var count =0
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -80,6 +76,7 @@ class ListenFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         context?.refreshMediaStoreForAudioFiles()
+        viewCreated=true
 
 
         context?.let{ binding.recyclerView.layoutManager = LinearLayoutManager(it) }
@@ -87,8 +84,9 @@ class ListenFragment : Fragment() {
             override fun onItemClicked(audioList: List<LibraryItemModel>, position: Int) {
                 navigateToPlayer(audioList, position)
             }
-            override fun onMenuClicked(audioItem: LibraryItemModel, position: Int) {
-                showOptions(audioItem, position)
+            override fun onMenuClicked(audioItem: LibraryItemModel, position: Int, iv: ImageView) {
+//                showOptions(audioItem, position)
+                showMenu(audioItem, position, iv)
             }
         })
 
@@ -128,66 +126,45 @@ class ListenFragment : Fragment() {
         }
     }
 
+    private fun showMenu(libItem: LibraryItemModel, position: Int, iv: ImageView){
+        val popupMenu = PopupMenu(requireContext(), iv)
+
+        popupMenu.menuInflater.inflate(R.menu.audio_item_menu, popupMenu.menu)
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+
+            if(menuItem.title == "Rename"){
+                showRenameDialog(libItem, position)
+            }
+            else if (menuItem.title == "Details"){
+                showDetailsBottomSheet(libItem, position)
+            }
+            else if (menuItem.title == "Delete"){
+                showDeleteDialog(libItem, position)
+            }
+            true
+        }
+        // Showing the popup menu
+        popupMenu.show()
+    }
+
     @Deprecated("Deprecated in Java")
     override fun setUserVisibleHint(isVisibleToUser: Boolean) {
         super.setUserVisibleHint(isVisibleToUser)
 
         if(isVisibleToUser)
         {
-            Log.d("tagggggggggggg", "setUserVisibleHint: ")
-//            context?.scanDirectory()
-
-            hideFragmentViews()
-
-            getList()
-            context?.refreshMediaStoreForAudioFiles()
-            viewModel.getFiles()
-
-
-            Handler().postDelayed(
-                { showFragmentViews() }, 1000
-            )
-
-        }
-    }
-
-    private fun showFragmentViews(){
-
-            binding.loader.visibility = View.GONE
-
-            if (adapter.itemCount == 0) {
-                binding.loader.visibility = View.GONE
-//                binding.ivNoAudio.visibility= View.VISIBLE
-//                binding.tvNoAudio.visibility= View.VISIBLE
-                binding.recyclerView.visibility = View.GONE
-            } else {
-                binding.loader.visibility = View.GONE
-                binding.recyclerView.visibility = View.VISIBLE
-//                binding.ivNoAudio.visibility= View.GONE
-//                binding.tvNoAudio.visibility= View.GONE
+//            getList()
+//            context?.refreshMediaStoreForAudioFiles()
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO){
+                viewModel.getFiles()
             }
-
-    }
-
-    private fun hideFragmentViews(){
-        binding.loader.visibility = View.VISIBLE
-
-        if (adapter.itemCount == 0) {
-            binding.loader.visibility = View.VISIBLE
-//            binding.ivNoAudio.visibility= View.GONE
-//            binding.tvNoAudio.visibility= View.GONE
-            binding.recyclerView.visibility = View.VISIBLE
-        } else {
-            binding.loader.visibility = View.VISIBLE
-            binding.recyclerView.visibility = View.GONE
-//            binding.ivNoAudio.visibility= View.VISIBLE
-//            binding.tvNoAudio.visibility= View.VISIBLE
         }
     }
 
     private fun getList() {
         lifecycleScope.launch {
             viewModel.libraryList.collect { audioList ->
+                previousList = audioList
                 withContext(Dispatchers.Main){
                     submitNewList(audioList)
                 }
@@ -205,48 +182,16 @@ class ListenFragment : Fragment() {
         val bundle = Bundle().apply {
             putParcelableArray("AUDIO_ITEMS", libItemArray)
             putInt("AUDIO_POSITION", position)
+            putParcelable("AUDIO_ITEM", libItemArray[position])
         }
 
         findNavController().apply {
             navigate(
-                R.id.action_libraryFragment_to_myAudioPlayerFragment2,
+                R.id.action_mainRecorderFragment_to_editAudio,
                 bundle
             )
-
         }
-//        callBack.invoke(libList, position)
     }
-
-
-    private fun showOptions(libItem: LibraryItemModel, position: Int) {
-//        val bottomSheet = BottomSheetDialog(requireContext())
-        val parent = libraryBottomSheetDialogBinding.root.parent as? ViewGroup
-        parent?.removeView(libraryBottomSheetDialogBinding.root)
-        bottomSheet.setContentView(libraryBottomSheetDialogBinding.root)
-
-        if (libItem != null) {
-            libraryBottomSheetDialogBinding.tvTitleLibSheet.text = libItem!!.title
-            libraryBottomSheetDialogBinding.tvMetaDataLibSheet.text = libItem!!.metadata
-        }
-
-        libraryBottomSheetDialogBinding.tvRenameLibSheet.setOnClickListener {
-//                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
-            showRenameDialog(libItem, position)
-        }
-
-        libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
-            showDetailsBottomSheet(libItem, position)
-        }
-
-
-        libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
-//                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
-            showDeleteDialog(libItem, position)
-
-        }
-        bottomSheet.show()
-    }
-
 
     private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel, position: Int) {
         val filePath =
@@ -293,6 +238,9 @@ class ListenFragment : Fragment() {
     }
 
     private fun showRenameDialog(libItem: LibraryItemModel, position: Int) {
+         val renameDialogBinding by lazy {
+            RenameDialogBinding.inflate(layoutInflater)
+        }
         val alertDialogBuilder =
             context?.let{
                 AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
@@ -331,11 +279,13 @@ class ListenFragment : Fragment() {
         }
 
         alertDialog = alertDialogBuilder?.create()
-        bottomSheet.dismiss()
         alertDialog!!.show()
     }
 
     private fun showDetailsBottomSheet(libItem: LibraryItemModel, position: Int) {
+         val detailsBottomSheetDialogBinding by lazy {
+            BottomSheetDetailsBinding.inflate(layoutInflater)
+        }
         val detailsBottomSheet = BottomSheetDialog(requireContext())
         val parent = detailsBottomSheetDialogBinding.root.parent as? ViewGroup
         parent?.removeView(detailsBottomSheetDialogBinding.root)
@@ -347,7 +297,6 @@ class ListenFragment : Fragment() {
             detailsBottomSheetDialogBinding.tvSetPath.text = libItem!!.path
             detailsBottomSheetDialogBinding.tvSetSize.text = libItem!!.size
         }
-        bottomSheet.dismiss()
 
         detailsBottomSheetDialogBinding.tvOkDetails.setOnClickListener {
             detailsBottomSheet.dismiss()
@@ -357,6 +306,9 @@ class ListenFragment : Fragment() {
     }
 
     private fun showDeleteDialog(libItem: LibraryItemModel, position: Int) {
+         val deleteDialogBinding by lazy {
+            DeleteDialogBinding.inflate(layoutInflater)
+        }
         val alertDialogBuilder =
             context?.let{
                 AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
@@ -390,7 +342,6 @@ class ListenFragment : Fragment() {
         }
 
         alertDialog = alertDialogBuilder?.create()
-        bottomSheet.dismiss()
         alertDialog!!.show()
     }
 
@@ -399,6 +350,8 @@ class ListenFragment : Fragment() {
 
         context?.refreshMediaStoreForAudioFiles()
     }
+
+
 
 
 }

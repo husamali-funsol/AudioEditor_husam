@@ -113,7 +113,7 @@
     </fragment>
     <fragment
         android:id="@+id/trimAudio"
-        android:name="com.example.audioeditor.ui.fragments.features.trimaudio.TrimAudio"
+        android:name="com.example.audioeditor.ui.fragments.features.trimaudio.TrimAudioFragment"
         android:label="fragment_trim_audio"
         tools:layout="@layout/fragment_trim_audio" >
         <action
@@ -122,12 +122,12 @@
     </fragment>
     <fragment
         android:id="@+id/recorderFragment"
-        android:name="com.example.audioeditor.ui.fragments.features.recorder.RecorderFragment"
+        android:name="com.example.audioeditor.ui.fragments.features.recorder.recorder.RecorderFragment"
         android:label="fragment_recorder"
         tools:layout="@layout/fragment_recorder" />
     <fragment
         android:id="@+id/listenFragment"
-        android:name="com.example.audioeditor.ui.fragments.features.recorder.ListenFragment"
+        android:name="com.example.audioeditor.ui.fragments.features.recorder.listen.ListenFragment"
         android:label="fragment_listen"
         tools:layout="@layout/fragment_listen" />
     <fragment
@@ -141,6 +141,14 @@
         <action
             android:id="@+id/action_mainRecorderFragment_to_listenFragment"
             app:destination="@id/listenFragment" />
+        <action
+            android:id="@+id/action_mainRecorderFragment_to_editAudio"
+            app:destination="@id/editAudio" />
     </fragment>
+    <fragment
+        android:id="@+id/editAudio"
+        android:name="com.example.audioeditor.ui.fragments.features.recorder.editaudio.EditAudioFragment"
+        android:label="fragment_edit_audio"
+        tools:layout="@layout/fragment_edit_audio" />
 
 </navigation>

@@ -1,5 +1,14 @@
 package com.example.audioeditor
 
+import android.view.View
+import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
+import com.example.audioeditor.models.LibraryItemModel
+import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 //    private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel) {
 //        val filePath =
 //            libItem!!.path
@@ -86,3 +95,105 @@ package com.example.audioeditor
 //        binding.tvTitleLP.text = updatedFile.name
 //
 //    }
+
+
+
+
+
+
+
+//private fun showOptions(libItem: LibraryItemModel, position: Int) {
+////        val bottomSheet = BottomSheetDialog(requireContext())
+//    val parent = libraryBottomSheetDialogBinding.root.parent as? ViewGroup
+//    parent?.removeView(libraryBottomSheetDialogBinding.root)
+//    bottomSheet.setContentView(libraryBottomSheetDialogBinding.root)
+//
+//    if (libItem != null) {
+//        libraryBottomSheetDialogBinding.tvTitleLibSheet.text = libItem!!.title
+//        libraryBottomSheetDialogBinding.tvMetaDataLibSheet.text = libItem!!.metadata
+//    }
+//
+//    libraryBottomSheetDialogBinding.tvRenameLibSheet.setOnClickListener {
+////                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
+//        showRenameDialog(libItem, position)
+//    }
+//
+//    libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
+//        showDetailsBottomSheet(libItem, position)
+//    }
+//
+//
+//    libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
+////                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
+//        showDeleteDialog(libItem, position)
+//
+//    }
+//    bottomSheet.show()
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//private fun showFragmentViews(){
+//
+//    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+//        // Perform your tasks on a background thread
+//        withContext(Dispatchers.Main) {
+//            binding.loader.visibility = View.VISIBLE
+//            binding.recyclerView.visibility = View.GONE
+//            binding.ivNoAudio.visibility= View.GONE
+//            binding.tvNoAudio.visibility= View.GONE
+//        }
+//        // Fetch the list in the background
+//        getList()
+//        context?.refreshMediaStoreForAudioFiles()
+//        viewModel.getFiles()
+//
+//        withContext(Dispatchers.Main) {
+//            binding.loader.visibility = View.GONE
+//
+//            if (adapter.itemCount == 0) {
+//                binding.loader.visibility = View.GONE
+//                binding.ivNoAudio.visibility= View.VISIBLE
+//                binding.tvNoAudio.visibility= View.VISIBLE
+//                binding.recyclerView.visibility = View.GONE
+//            } else {
+//                binding.loader.visibility = View.GONE
+//                binding.recyclerView.visibility = View.VISIBLE
+//                binding.ivNoAudio.visibility= View.GONE
+//                binding.tvNoAudio.visibility= View.GONE
+//            }
+//        }
+//
+//    }
+//
+//
+//}
+//
+//private fun hideFragmentViews(){
+//    binding.loader.visibility = View.VISIBLE
+//
+//    if (adapter.itemCount == 0) {
+////            binding.loader.visibility = View.VISIBLE
+////            binding.ivNoAudio.visibility= View.GONE
+////            binding.tvNoAudio.visibility= View.GONE
+//        binding.recyclerView.visibility = View.VISIBLE
+//    } else {
+//        binding.loader.visibility = View.VISIBLE
+//        binding.recyclerView.visibility = View.GONE
+////            binding.ivNoAudio.visibility= View.VISIBLE
+////            binding.tvNoAudio.visibility= View.VISIBLE
+//    }
+//}
