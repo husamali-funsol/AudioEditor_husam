@@ -541,8 +541,6 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
         }
     }
 
-
-
     //***************************************** Audio Upload ***********************************************
 
     private val audioFileLauncher = registerForActivityResult(AudioFileContract()) { uri: Uri? ->
@@ -643,7 +641,8 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
 
         renameDialogBinding.etRenameRD.setText(filename)
         renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
-
+        renameDialogBinding.etRenameRD.setSelectAllOnFocus(true)
+        renameDialogBinding.etRenameRD.highlightColor = resources.getColor(R.color.thirtyPrecentAppBlue)
         renameDialogBinding.tvConfirmRD.setOnClickListener {
             context?.performHapticFeedback()
             // Handle the positive button click event here
@@ -720,8 +719,12 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
                 val durationMillis = mp.duration
                 binding.tvCurrentDuration.text = mp.currentPosition.formatDuration()
                 binding.tvEndDuration.text = durationMillis.formatDuration()
-                binding.tvCropWindowLeft.text = mp.currentPosition.formatDuration()
-                binding.tvCropWindowRight.text = durationMillis.formatDuration()
+                val cropLeftProgress = cropLeft*100
+                val cropRightProgress = cropRight*100
+                val cropLeftDuration = cropLeftProgress * durationMillis
+                val cropRightDuration = cropRightProgress * durationMillis
+                binding.tvCropWindowLeft.text = cropLeftDuration.toInt().formatDuration()
+                binding.tvCropWindowRight.text = cropRightDuration.toInt().formatDuration()
 
                 mp.setOnCompletionListener {
                     binding.waveform.progress = 0F
@@ -1338,7 +1341,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
             val cmd = arrayOf(
                 "-y",
                 "-i", pathsList[currentIndex],
-                "-af", "afade=t=in:ss=${startingFadeInTime}:d=${selectedFadeInTime}",
+                "-af", "afade=t=in:st=${startingFadeInTime}:d=${selectedFadeInTime}",
                 outputPathFadeIn
             )
 
@@ -1384,6 +1387,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
             val durationInSeconds = mediaPlayer.duration / 1000
             val startingTime = durationInSeconds - selectedFadeOutTime.toFloat().toInt()
             startingFadeOutTime -= selectedFadeOutTime.toFloat()
+            startingFadeOutTime
 
             val cmd = arrayOf(
                 "-y",
@@ -1409,7 +1413,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
         context?.let{
             var inputAudioPath: String = ""
             if (lastFunctionCalled == null) {
-                inputAudioPath = it.getInputPath(audioUri!!)
+                inputAudioPath = pathsList[currentIndex]
             }
             else{
                 when(lastFunctionCalled){
@@ -1428,7 +1432,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
 
             val cmd = arrayOf(
                 "-y",
-                "-i", pathsList[currentIndex],
+                "-i", inputAudioPath,
                 "-filter_complex", "\"atempo=$selectedSpeedOption[aout]\"",
                 "-map", "[aout]",
                 outputPathSpeed
@@ -1443,7 +1447,6 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
 
             Log.d(TAG, "changeSpeed: $lastFunctionCalled")
             Log.d(TAG, "changeSpeed: ${cmd.joinToString(" ")}")
-
 
             cmd.executeCommand(this)
 
@@ -1581,6 +1584,16 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
             }
             disableUndo()
             disableRedo()
+
+            selectedSpeedOption = "-1"
+            selectedVolume = "1.00"
+            selectedFadeInTime = "0.0"
+            selectedFadeOutTime = "0.0"
+
+            currentSpeedOption = "1"
+            currentVolume = "1.00"
+            currentFadeInTime = "0.0"
+            currentFadeOutTime = "0.0"
 
         }
     }

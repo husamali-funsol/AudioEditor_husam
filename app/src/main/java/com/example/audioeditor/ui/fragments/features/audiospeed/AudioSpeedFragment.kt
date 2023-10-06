@@ -383,6 +383,8 @@ class AudioSpeedFragment : Fragment(), CommandExecutionCallback {
 
         renameDialogBinding.etRenameRD.setText(filename)
         renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
+        renameDialogBinding.etRenameRD.setSelectAllOnFocus(true)
+        renameDialogBinding.etRenameRD.highlightColor = resources.getColor(R.color.thirtyPrecentAppBlue)
 
         renameDialogBinding.tvConfirmRD.setOnClickListener {
             context?.performHapticFeedback()

@@ -206,6 +206,8 @@ class MyAudioPlayerFragment : Fragment() {
             // Set the initial text in your EditText (if needed)
             renameDialogBinding.etRenameRD.setText(libItem!!.title)
             renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
+            renameDialogBinding.etRenameRD.setSelectAllOnFocus(true)
+            renameDialogBinding.etRenameRD.highlightColor = resources.getColor(R.color.thirtyPrecentAppBlue)
 
         }
 

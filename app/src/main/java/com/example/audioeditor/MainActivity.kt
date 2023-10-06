@@ -1,8 +1,12 @@
 package com.example.audioeditor
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
@@ -38,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setStatusBarColor()
+
         fragmnetsList = listOf(
             R.id.trimAudio,
             R.id.convertFormat,
@@ -61,16 +67,24 @@ class MainActivity : AppCompatActivity() {
         bottomNavView.itemIconTintList = null
 
         // Bottom Navigation Bar Visibility Checks
-        navHost.addOnDestinationChangedListener{ controller , destination , arguments,->
+        navHost.addOnDestinationChangedListener{ _, destination, _,->
 
             if((destination.id == R.id.homeFragment) || (destination.id == R.id.libraryFragment) || (destination.id == R.id.settingsFragment) ){
-binding.bottomNavigationView.visibility = View.VISIBLE
+                binding.bottomNavigationView.visibility = View.VISIBLE
             }
             else{
                 binding.bottomNavigationView.visibility = View.GONE
             }
         }
 
+    }
+
+    private fun setStatusBarColor() {
+        val window = this.window
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        window.statusBarColor = this.resources.getColor(R.color.white)
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
     }
 
 

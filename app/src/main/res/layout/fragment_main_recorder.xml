@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
+        android:padding="3dp"
         android:src="@drawable/ic_backarrow"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -24,6 +25,7 @@
         android:layout_marginLeft="16dp"
         android:fontFamily="@font/poppins_semibold"
         android:text="Recorder"
+        android:includeFontPadding="false"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="@+id/btnBack"
         app:layout_constraintStart_toEndOf="@+id/btnBack"
