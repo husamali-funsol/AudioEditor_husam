@@ -159,15 +159,147 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
 
-        if(::mediaPlayer.isInitialized){
-            mediaPlayer.release()
-            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+    //***************************************** MAudio Upload ***********************************************
 
+    private val audioFileLauncher = registerForActivityResult(AudioFileContract()) { uri: Uri? ->
+        if (uri != null) {
+            audioUri = uri
+
+            createMediaPlayer(audioUri!!)
+//            setMetadata(audioUri!!)
+
+            binding.tvMusicTitle.text = context?.getFileNameFromUri(uri)
         }
     }
+
+    //***************************************** Media Player Functions  ***********************************************
+
+    private fun createMediaPlayer(uri: Uri) {
+
+        if (::mediaPlayer.isInitialized) {
+            // Release the previous MediaPlayer instance before creating a new one
+
+            mediaPlayer.release()
+        }
+        mediaPlayer = MediaPlayer().apply {
+            context?.let{
+                setDataSource(it, uri)
+            }
+            prepareAsync()
+
+            setOnPreparedListener { mp ->
+                binding.waveform.setSampleFrom(uri)
+                binding.waveform.waveWidth = 4F
+                binding.waveform.maxProgress = 100F
+
+                mp.setOnCompletionListener {
+                    binding.waveform.progress = 0F
+                    mediaPlayer.start()
+                    // Reset progress to 0 when audio completes
+                }
+
+            }
+        }
+    }
+    private fun updateSeekBar() {
+        updateSeekBarHandler.postDelayed(updateSeekBarRunnable, 100)
+    }
+
+    private val updateSeekBarRunnable = object : Runnable {
+        override fun run() {
+            if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
+                val progress = mediaPlayer.calculateProgress()
+                binding.waveform.progress = progress
+
+                // Check if progress is at the end
+                if (progress >= mediaPlayer.duration) {
+                    // If at the end, start playing from the beginning
+                    mediaPlayer.seekTo(0)
+                    mediaPlayer.start()
+                }
+
+                // Update the SeekBar position every 100 milliseconds
+                updateSeekBarHandler.postDelayed(this, 100)
+            }
+        }
+    }
+
+    //***************************************** FFmpeg Functions  ***********************************************
+
+    private fun convertFormat(filename: String, audioUri: Uri) {
+
+        context?.let{
+            val inputAudioPath = it.getInputPath(audioUri)
+            val outputFile = filename.getOutputFile(selected)
+            outputPath = outputFile.path
+
+
+            //ffmpeg -i input_file.ext output_file.ext
+
+            //to m4a
+            //ffmpeg -i input_file.mp3 -c:a aac -b:a 256k output_file.m4a
+
+//        if(ext == "m4a") {
+//            val cmd = arrayOf(
+//                "-y",
+//                "-i", inputAudioPath,
+//                "-c:a", "aac",
+//                "-b:a", "256k",
+//                outputPath
+//            )
+//        }
+//        else {
+//            val cmd = arrayOf(
+//                "-y",
+//                "-i", inputAudioPath,
+//                outputPath
+//            )
+//        }
+
+            //problem whil econverting to m4a===========================
+            //retry it again with above commands.==================================
+
+
+            val cmd = arrayOf(
+                "-y",
+                "-i", inputAudioPath,
+                outputPath
+            )
+
+            cmd.executeCommand(this)
+        }
+
+
+    }
+
+    override fun onCommandExecutionSuccess() {
+
+        savingDialogBinding.progressBar.progress = 100
+        savingDialogBinding.tvSaving.text = "File Saved!"
+        dismissDialog()
+
+        val bundle = Bundle().apply {
+            putString("AUDIO_URI", outputPath)
+        }
+
+        findNavController().apply {
+            if(currentDestination?.id == R.id.convertFormat){
+                navigate(R.id.action_convertFormat_to_savedScreenFragment, bundle)
+            }
+        }
+
+
+    }
+
+    override fun onCommandExecutionFailure(errorMessage: String) {
+        savingDialogBinding.progressBar.progress = 0
+        savingDialogBinding.tvSaving.text = "File Saving Failed!"
+        dismissDialog()
+
+    }
+
+    //***************************************** Dialogs  ***********************************************
 
     private fun showQuitDialog() {
         val alertDialogBuilder =
@@ -252,6 +384,36 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
     }
 
+    private fun savingDialog(progress: Int =50) {
+        // Update your progress UI or dialog here
+        Log.d("AudioEditor", "Progress: $progress%")
+
+        val alertDialogBuilder =
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+
+        val dialogView = savingDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)?.setCancelable(false)
+        savingAlertDialog = alertDialogBuilder?.create()
+
+        savingDialogView = dialogView
+
+
+        savingAlertDialog?.setOnDismissListener {
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }
+
+        savingAlertDialog?.show()
+    }
+
+    private fun dismissDialog() {
+        Handler().postDelayed({
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }, 1000)    }
+
+    //***************************************** Utility Functions  ***********************************************
+
     private fun onTextViewClick(clickedTextView: TextView) {
         // Reset all TextViews to white
         val allTextViews = listOf(
@@ -292,166 +454,16 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
 
     }
 
-    private val audioFileLauncher = registerForActivityResult(AudioFileContract()) { uri: Uri? ->
-        if (uri != null) {
-            audioUri = uri
+    //***************************************** Overrride Functions  ***********************************************
 
-            createMediaPlayer(audioUri!!)
-//            setMetadata(audioUri!!)
+    override fun onDestroy() {
+        super.onDestroy()
 
-            binding.tvMusicTitle.text = context?.getFileNameFromUri(uri)
-        }
-    }
-
-    private fun createMediaPlayer(uri: Uri) {
-
-        if (::mediaPlayer.isInitialized) {
-            // Release the previous MediaPlayer instance before creating a new one
-
+        if(::mediaPlayer.isInitialized){
             mediaPlayer.release()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+
         }
-        mediaPlayer = MediaPlayer().apply {
-            context?.let{
-                setDataSource(it, uri)
-            }
-            prepareAsync()
-
-            setOnPreparedListener { mp ->
-                binding.waveform.setSampleFrom(uri)
-                binding.waveform.waveWidth = 4F
-                binding.waveform.maxProgress = 100F
-
-                mp.setOnCompletionListener {
-                    binding.waveform.progress = 0F
-                    mediaPlayer.start()
-                    // Reset progress to 0 when audio completes
-                }
-
-            }
-        }
-    }
-    private fun updateSeekBar() {
-        updateSeekBarHandler.postDelayed(updateSeekBarRunnable, 100)
-    }
-
-    private val updateSeekBarRunnable = object : Runnable {
-        override fun run() {
-            if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
-                val progress = mediaPlayer.calculateProgress()
-                binding.waveform.progress = progress
-
-                // Check if progress is at the end
-                if (progress >= mediaPlayer.duration) {
-                    // If at the end, start playing from the beginning
-                    mediaPlayer.seekTo(0)
-                    mediaPlayer.start()
-                }
-
-                // Update the SeekBar position every 100 milliseconds
-                updateSeekBarHandler.postDelayed(this, 100)
-            }
-        }
-    }
-
-    private fun convertFormat(filename: String, audioUri: Uri) {
-
-        context?.let{
-            val inputAudioPath = it.getInputPath(audioUri)
-            val outputFile = filename.getOutputFile(selected)
-            outputPath = outputFile.path
-
-
-            //ffmpeg -i input_file.ext output_file.ext
-
-            //to m4a
-            //ffmpeg -i input_file.mp3 -c:a aac -b:a 256k output_file.m4a
-
-//        if(ext == "m4a") {
-//            val cmd = arrayOf(
-//                "-y",
-//                "-i", inputAudioPath,
-//                "-c:a", "aac",
-//                "-b:a", "256k",
-//                outputPath
-//            )
-//        }
-//        else {
-//            val cmd = arrayOf(
-//                "-y",
-//                "-i", inputAudioPath,
-//                outputPath
-//            )
-//        }
-
-            //problem whil econverting to m4a===========================
-            //retry it again with above commands.==================================
-
-
-            val cmd = arrayOf(
-                "-y",
-                "-i", inputAudioPath,
-                outputPath
-            )
-
-            cmd.executeCommand(this)
-        }
-
-
-    }
-
-
-    private fun savingDialog(progress: Int =50) {
-        // Update your progress UI or dialog here
-        Log.d("AudioEditor", "Progress: $progress%")
-
-        val alertDialogBuilder =
-            context?.let{
-                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-            }
-
-        val dialogView = savingDialogBinding.root
-        alertDialogBuilder?.setView(dialogView)?.setCancelable(false)
-        savingAlertDialog = alertDialogBuilder?.create()
-
-        savingDialogView = dialogView
-
-
-        savingAlertDialog?.setOnDismissListener {
-            dismissDialog(savingAlertDialog, savingDialogView)
-        }
-
-        savingAlertDialog?.show()
-    }
-
-    private fun dismissDialog() {
-        Handler().postDelayed({
-            dismissDialog(savingAlertDialog, savingDialogView)
-        }, 1000)    }
-
-    override fun onCommandExecutionSuccess() {
-
-        savingDialogBinding.progressBar.progress = 100
-        savingDialogBinding.tvSaving.text = "File Saved!"
-        dismissDialog()
-
-        val bundle = Bundle().apply {
-            putString("AUDIO_URI", outputPath)
-        }
-
-        findNavController().apply {
-            if(currentDestination?.id == R.id.convertFormat){
-                navigate(R.id.action_convertFormat_to_savedScreenFragment, bundle)
-            }
-        }
-
-
-    }
-
-    override fun onCommandExecutionFailure(errorMessage: String) {
-        savingDialogBinding.progressBar.progress = 0
-        savingDialogBinding.tvSaving.text = "File Saving Failed!"
-       dismissDialog()
-
     }
 
     override fun onPause() {

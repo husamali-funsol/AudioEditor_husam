@@ -12,7 +12,7 @@ data class LibraryItemModel(
     val metadata: String?,
     var path: String?,
     val extension: String?,
-    val size: String?,
+    var size: String?,
     var time: String?,
     val albumArt: Bitmap? = null // Include album artwork as a Bitmap property
 ) : Parcelable {

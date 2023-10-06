@@ -16,6 +16,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.audioeditor.R
 import com.example.audioeditor.TAG
@@ -24,6 +25,7 @@ import com.example.audioeditor.databinding.BottomSheetSpeedBinding
 import com.example.audioeditor.databinding.BottomSheetTrimBinding
 import com.example.audioeditor.databinding.DeleteDialogBinding
 import com.example.audioeditor.databinding.FragmentEditAudioBinding
+import com.example.audioeditor.databinding.FragmentMainRecorderBinding
 import com.example.audioeditor.databinding.QuitDialogBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.databinding.SavingDialogBinding
@@ -37,6 +39,7 @@ import com.example.audioeditor.utils.formatDuration
 import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getInputPath
 import com.example.audioeditor.utils.getOutputFile
+import com.example.audioeditor.utils.getStorageDir
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
@@ -81,9 +84,6 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
     private var cropLeft: Float = 0F
     private var cropRight: Float = 1F
 
-    private var trimIn = false
-    private var trimOut = false
-
     private var savingAlertDialog: AlertDialog? = null
     private val savingDialogBinding by lazy {
         SavingDialogBinding.inflate(layoutInflater)
@@ -104,6 +104,7 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
     private var trimBottomSheetShowing = false
 
     private var lastFunctionCalled: String? = null
+
 
 
     override fun onCreateView(
@@ -182,563 +183,9 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
             openTrimBottomSheet()
         }
 
-
-
     }
 
-    private fun openTrimBottomSheet() {
-
-
-        val bottomSheet = BottomSheetDialog(requireContext())
-        val parent = trimBinding.root.parent as? ViewGroup
-        parent?.removeView(trimBinding.root)
-        bottomSheet.setContentView(trimBinding.root)
-        trimBottomSheetShowing = true
-
-        if(lastFunctionCalled == null){
-            if(::mediaPlayer.isInitialized){
-                mediaPlayer.release()
-            }
-            createMediaPlayer(audioUri, audioItem?.path)
-        }
-        else{
-            if(::mediaPlayer.isInitialized){
-                mediaPlayer.release()
-            }
-            when(lastFunctionCalled){
-
-                "speed" -> createMediaPlayer(audioUri, outputPathSpeed)
-                "trim" -> createMediaPlayer(audioUri, outputPathTrim)
-
-            }
-        }
-
-
-//        mediaPlayer.start()
-        bottomSheet.setOnDismissListener {
-            trimBottomSheetShowing = false
-            if(::mediaPlayer.isInitialized){
-                mediaPlayer.release()
-                updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
-            }
-            createMediaPlayer(audioUri, audioItem?.path)
-        }
-
-        trimBinding.cropWindowTrimBottomSheet.rangePositionChangeListener =
-            object : RangeView.OnRangePositionListener {
-                override fun leftTogglePositionChanged(xCoordinate: Float, value: Float) {
-                    cropLeft = value
-                    val audioDurationMillis = mediaPlayer.duration
-                    val progress = value * 100
-                    val selectedPositionMillis = (progress * audioDurationMillis) / 100
-//                    binding.tvCropWindowLeft.text = selectedPositionMillis.toInt().formatDuration()
-                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
-
-
-                }
-
-                override fun rightTogglePositionChanged(xCoordinate: Float, value: Float) {
-                    cropRight = value
-                    val audioDurationMillis = mediaPlayer.duration
-                    val progress = (value * 100) - 5
-                    val exactProgress = value * 100
-                    val selectedPositionMillis = (progress * audioDurationMillis) / 100
-                    val exactMillis = (exactProgress * audioDurationMillis) / 100
-//                    binding.tvCropWindowRight.text = exactMillis.toInt().formatDuration()
-                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
-
-                }
-            }
-
-        trimBinding.waveformBottomSheet.onProgressChanged = object : SeekBarOnProgressChanged {
-            override fun onProgressChanged(
-                waveformSeekBar: WaveformSeekBar,
-                progress: Float,
-                fromUser: Boolean
-            ) {
-                if (fromUser) {
-                    val audioDurationMillis = mediaPlayer.duration
-                    val selectedPositionMillis = (progress * audioDurationMillis) / 100
-                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
-                }
-            }
-        }
-
-        trimBinding.ivCancel.setOnOneClickListener {
-            bottomSheet.dismiss()
-            trimBottomSheetShowing = false
-            if(::mediaPlayer.isInitialized){
-                mediaPlayer.release()
-                updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
-            }
-            createMediaPlayer(audioUri, audioItem?.path)
-        }
-
-        trimBinding.ivDone.setOnOneClickListener {
-            bottomSheet.dismiss()
-            trim=true
-            trimBottomSheetShowing = false
-            mediaPlayer.pause()
-            savingDialog(50)
-            trimInAudio()
-        }
-
-
-
-        bottomSheet.show()
-
-    }
-
-    private fun onTextViewClick(speedBinding: BottomSheetSpeedBinding, clickedTextView: TextView) {
-        // Reset all TextViews to white
-        val allTextViews = listOf(
-            speedBinding.tv05x,
-            speedBinding.tv075x,
-            speedBinding.tv10x,
-            speedBinding.tv125x,
-            speedBinding.tv15x,
-            speedBinding.tv20x
-        )
-        for (textView in allTextViews) {
-
-            context?.let {
-                textView.setBackgroundResource(R.drawable.button_bg_grey_rounded)
-                textView.setTextColor(
-                    ContextCompat.getColor(
-                        it,
-                        R.color.textColorDarkGrey
-                    )
-                )
-            }
-        }
-
-        val text = clickedTextView.text.toString()
-        selectedSpeedOption = text.removeSuffix("x")
-        Log.d(TAG, "onTextViewClick: $selectedSpeedOption")
-        // Change the background color of the clicked TextView to blue
-        clickedTextView.setBackgroundResource(R.drawable.button_bg_rounded)
-        context?.let {
-            clickedTextView.setTextColor(
-                ContextCompat.getColor(
-                    it,
-                    R.color.white
-                )
-            )
-        }
-    }
-
-
-    private fun openSpeedBottomSheet() {
-
-         val speedBinding = BottomSheetSpeedBinding.inflate(layoutInflater)
-
-
-        val bottomSheet = BottomSheetDialog(requireContext())
-        val parent = speedBinding.root.parent as? ViewGroup
-        parent?.removeView(speedBinding.root)
-        bottomSheet.setContentView(speedBinding.root)
-        with(speedBinding) {
-
-            tv05x.setOnOneClickListener {
-                onTextViewClick(speedBinding, tv05x)
-            }
-
-            tv075x.setOnOneClickListener {
-                onTextViewClick(speedBinding , tv075x)
-            }
-
-            tv10x.setOnOneClickListener {
-                onTextViewClick(speedBinding, tv10x)
-            }
-
-            tv125x.setOnOneClickListener {
-                onTextViewClick(speedBinding, tv125x)
-            }
-
-            tv15x.setOnOneClickListener {
-                onTextViewClick(speedBinding, tv15x)
-            }
-
-            tv20x.setOnOneClickListener {
-                onTextViewClick(speedBinding, tv20x)
-            }
-
-            btnDone.setOnOneClickListener {
-                if (selectedSpeedOption != "-1" && currentSpeedOption != selectedSpeedOption) {
-                    changeSpeed()
-                    speed = true
-//                    changeMediaPlayerSpeed()
-                    bottomSheet.dismiss()
-                    savingDialog(50)
-                } else {
-                    context?.showSmallLengthToast("Selected speed is same as current speed")
-                }
-            }
-        }
-        bottomSheet.show()
-    }
-
-    private fun changeMediaPlayerSpeed() {
-        if(::mediaPlayer.isInitialized){
-            mediaPlayer.playbackParams = mediaPlayer.playbackParams.setSpeed(selectedSpeedOption.toFloat())
-        }
-
-    }
-
-    private fun savingDialog(progress: Int = 50) {
-        // Update your progress UI or dialog here
-        Log.d("AudioEditor", "Progress: $progress%")
-
-        savingDialogBinding.progressBar.progress = 50
-        savingDialogBinding.tvSaving.text = "Processing...(50%)"
-
-        val alertDialogBuilder =
-            context?.let {
-                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-            }
-
-        val dialogView = savingDialogBinding.root
-        alertDialogBuilder?.setView(dialogView)?.setCancelable(false)
-        savingAlertDialog = alertDialogBuilder?.create()
-        savingDialogView = dialogView
-
-        savingAlertDialog?.setOnDismissListener {
-            dismissDialog(savingAlertDialog, savingDialogView)
-        }
-
-        savingAlertDialog?.show()
-    }
-
-    private fun changeSpeed() {
-
-        context?.let{
-            //audioitem.uri was giving error, file not found exception so used uri in this form.
-//            val inputAudioPath = it.getInputPath(Uri.fromFile(audioItem?.path?.let { it1 -> File(it1) }))
-            var inputAudioPath: String = ""
-            if (lastFunctionCalled == null) {
-                inputAudioPath = it.getInputPath(Uri.fromFile(audioItem?.path?.let { it1 -> File(it1) }))
-            }
-            else{
-                when(lastFunctionCalled){
-                    "speed" -> inputAudioPath = outputPathSpeed
-                    "trim" -> inputAudioPath = outputPathTrim
-                }
-            }
-
-            val outputFile = audioItem?.extension?.let {it2->
-                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it2)
-            }
-            outputPathSpeed = outputFile!!.path
-
-            val cmd = arrayOf(
-                "-y",
-                "-i", inputAudioPath,
-                "-filter_complex", "\"atempo=$selectedSpeedOption[aout]\"",
-                "-map", "[aout]",
-                outputPathSpeed
-            )
-
-            speed = true
-            trim = false
-
-            Log.d(TAG, "audioSpeed: ${cmd.joinToString(" ")}")
-
-            cmd.executeCommand(this)
-
-        }
-
-
-    }
-
-
-    private fun showMenu(libItem: LibraryItemModel, position: Int, iv: ImageView){
-        val popupMenu = PopupMenu(requireContext(), iv)
-
-        popupMenu.menuInflater.inflate(R.menu.audio_item_menu, popupMenu.menu)
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-
-            if(menuItem.title == "Rename"){
-                renameDialogBinding.tvConfirmRD.text = "Confirm"
-                showRenameDialog(libItem, position)
-            }
-            else if (menuItem.title == "Details"){
-                showDetailsBottomSheet(libItem, position)
-            }
-            else if (menuItem.title == "Delete"){
-                showDeleteDialog(libItem, position)
-            }
-            true
-        }
-        // Showing the popup menu
-        popupMenu.show()
-    }
-
-
-    private fun showQuitDialog() {
-
-        var quitAlertDialog: AlertDialog? = null
-         val quitDialogBinding by lazy {
-            QuitDialogBinding.inflate(layoutInflater)
-        }
-         var quitDialogView: ConstraintLayout? = null
-
-        val alertDialogBuilder =
-            context?.let {
-                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-            }
-
-        val dialogView = quitDialogBinding.root
-        alertDialogBuilder?.setView(dialogView)
-        quitAlertDialog = alertDialogBuilder?.create()
-
-        quitDialogView = dialogView
-
-
-        quitDialogBinding.tvNo.setOnClickListener {
-            context?.performHapticFeedback()
-            dismissDialog(quitAlertDialog, quitDialogView)
-        }
-
-        quitDialogBinding.tvYes.setOnClickListener {
-            context?.performHapticFeedback()
-            // Clear the back stack and navigate to the home fragment
-            findNavController().apply {
-                if (currentDestination?.id == R.id.editAudio) {
-                    popBackStack()
-                    navigate(R.id.mainRecorderFragment)
-                }
-            }
-            dismissDialog(quitAlertDialog, quitDialogView)
-        }
-
-        quitAlertDialog?.setOnDismissListener {
-            dismissDialog(quitAlertDialog, quitDialogView)
-        }
-
-        quitAlertDialog!!.show()
-    }
-
-
-    private fun setViews(audioItem: LibraryItemModel?) {
-
-        binding.tvFragmentTitle.text = audioItem?.title
-        audioItem?.let {
-            audioUri = it.uri!!
-            createMediaPlayer(it.uri, it.path)
-        }
-    }
-
-    private fun showRenameDialog(libItem: LibraryItemModel, position: Int) {
-
-        val alertDialogBuilder =
-            context?.let{
-                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-            }
-        val parent = renameDialogBinding.root.parent as? ViewGroup
-        parent?.removeView(renameDialogBinding.root)
-        val dialogView = renameDialogBinding.root
-        alertDialogBuilder?.setView(dialogView)
-
-        if (libItem != null) {
-            // Set the initial text in your EditText (if needed)
-            renameDialogBinding.etRenameRD.setText(libItem!!.title)
-            renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
-
-        }
-
-        renameDialogBinding.tvConfirmRD.setOnClickListener {
-            // Handle the positive button click event here
-            // You can retrieve the text entered in the EditText like this:
-            val enteredText = renameDialogBinding.etRenameRD.text.toString()
-
-            // Implement your logic here (e.g., renameFile(enteredText))
-            val ext = libItem!!.extension
-            Log.d("Debug", "entered text: $enteredText")
-            Log.d("Debug", "ext: $ext")
-            renameFile(enteredText, ext!!, libItem, position)
-
-            alertDialog?.dismiss()
-        }
-
-        renameDialogBinding.tvCancelRD.setOnClickListener {
-            // Handle the negative button click event here
-            // This is where you can cancel the dialog if needed
-            alertDialog?.dismiss()
-
-        }
-
-        alertDialog = alertDialogBuilder?.create()
-        alertDialog!!.show()
-    }
-
-    private fun showDetailsBottomSheet(libItem: LibraryItemModel, position: Int) {
-        val detailsBottomSheetDialogBinding by lazy {
-            BottomSheetDetailsBinding.inflate(layoutInflater)
-        }
-        val detailsBottomSheet = BottomSheetDialog(requireContext())
-        val parent = detailsBottomSheetDialogBinding.root.parent as? ViewGroup
-        parent?.removeView(detailsBottomSheetDialogBinding.root)
-        detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
-
-        if (libItem != null) {
-            detailsBottomSheetDialogBinding.tvSetFilename.text = libItem!!.title
-            detailsBottomSheetDialogBinding.tvSetTime.text = libItem!!.time
-            detailsBottomSheetDialogBinding.tvSetPath.text = libItem!!.path
-            detailsBottomSheetDialogBinding.tvSetSize.text = libItem!!.size
-        }
-
-        detailsBottomSheetDialogBinding.tvOkDetails.setOnClickListener {
-            detailsBottomSheet.dismiss()
-        }
-
-        detailsBottomSheet.show()
-    }
-
-    private fun showDeleteDialog(libItem: LibraryItemModel, position: Int) {
-        val deleteDialogBinding by lazy {
-            DeleteDialogBinding.inflate(layoutInflater)
-        }
-        val alertDialogBuilder =
-            context?.let{
-                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-            }
-        val parent = deleteDialogBinding.root.parent as? ViewGroup
-        parent?.removeView(deleteDialogBinding.root)
-        val dialogView = deleteDialogBinding.root
-        alertDialogBuilder?.setView(dialogView)
-
-
-        deleteDialogBinding.tvDeleteBtnDD.setOnClickListener {
-            // Handle the positive button click event here
-            val filePath =
-                libItem.path
-            val originalFile = File(filePath!!)
-
-            if (originalFile.exists()) {
-                originalFile.delete()
-                context?.scanFiles(originalFile)
-
-            }
-
-            context?.refreshMediaStoreForAudioFiles()
-            alertDialog?.dismiss()
-            findNavController().popBackStack()
-        }
-
-        deleteDialogBinding.tvCancelDD.setOnClickListener {
-            alertDialog?.dismiss()
-        }
-
-        alertDialog = alertDialogBuilder?.create()
-        alertDialog!!.show()
-    }
-
-    private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel, position: Int) {
-        val filePath =
-            libItem.path
-        val newFileName = "$newName.$ext" // Provide the new file name
-        val originalFile = File(filePath!!)
-        // Create a File object for the new file with the desired name
-        val directoryPath = originalFile.parentFile // Get the directory path
-        val newFile = File(directoryPath, newFileName)
-
-        // Rename the file
-        if (originalFile.exists()) {
-            if (originalFile.renameTo(newFile)) {
-
-                val newPath =
-                    newFile.path
-                val updatedFile = File(newPath!!)
-
-                val currentTimeMillis = System.currentTimeMillis()
-                newFile.setLastModified(currentTimeMillis)
-                originalFile.setLastModified(currentTimeMillis)
-                libItem.time =  SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.getDefault()).format(
-                    Date(currentTimeMillis)
-                )
-                // Refresh the MediaStore to reflect the changes
-                context?.refreshMediaStore(updatedFile)
-                context?.showSmallLengthToast("Renaming Successful")
-//                adapter.itemUpdated(position, viewModel.getSingleFile(position))
-
-            } else {
-                // Failed to rename the file
-                // Handle the error accordingly
-                context?.showSmallLengthToast("Renaming Failed")
-            }
-        } else {
-            // The original file does not exist
-            context?.showSmallLengthToast("Original File doen not exist")
-        }
-
-        val newPath =
-            newFile.path
-
-        val updatedFile = File(newPath)
-        libItem.path = newPath
-        context?.refreshMediaStore(updatedFile)
-
-        context?.refreshMediaStoreForAudioFiles()
-//        getList()
-
-        val fileNameWithExtension = updatedFile.name // This gives you "file.txt"
-        binding.tvFragmentTitle.text = fileNameWithExtension.substringBeforeLast(".")
-        libItem.title = fileNameWithExtension.substringBeforeLast(".")
-
-    }
-
-    private fun trimInAudio() {
-        if(::mediaPlayer.isInitialized){
-            if ( mediaPlayer.duration <= 0) {
-                Log.e(TAG, "Invalid MediaPlayer state or duration")
-                return
-            }
-            var durationInMillis = ((cropLeft) * (mediaPlayer.duration).toFloat()).toInt()
-            val formattedDurationStart = durationInMillis.formatDuration()
-
-            durationInMillis = ((cropRight) * (mediaPlayer.duration).toFloat()).toInt()
-            val formattedDurationEnd = durationInMillis.formatDuration()
-
-            context?.let {
-                var inputAudioPath: String = ""
-                if (lastFunctionCalled == null) {
-                    inputAudioPath = it.getInputPath(Uri.fromFile(audioItem?.path?.let { it1 -> File(it1) }))
-
-                } else {
-                    when (lastFunctionCalled) {
-                        "speed" -> inputAudioPath = outputPathSpeed
-                        "trim" -> inputAudioPath = outputPathTrim
-                    }
-                }
-
-                val outputFile = audioItem?.extension?.let { it2 ->
-                    "temp_audio_${getCurrentTimestampString()}".getOutputFile(it2)
-                }
-                outputPathTrim = outputFile!!.path
-
-                val cmd = arrayOf(
-                    "-y",//overwrite if exists
-                    "-i",
-                    inputAudioPath,
-                    "-ss",
-                    formattedDurationStart,
-                    "-to",
-                    formattedDurationEnd,
-                    outputPathTrim
-                )
-
-                Log.d(TAG, "trimInAudio: ${cmd.joinToString(" ")}")
-
-                speed = false
-                trim = true
-
-                cmd.executeCommand(this)
-
-            }
-        }
-    }
-
-
+    //***************************************** MediaPlayer Functions  ***********************************************
 
     private fun startMediaPlayer(){
         mediaPlayer.start()
@@ -868,9 +315,6 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
         }
     }
 
-
-
-
     private fun pauseMediaPlayer() {
         if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
             mediaPlayer.pause()
@@ -880,28 +324,98 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
     }
 
 
-    override fun onDestroy() {
-        super.onDestroy()
+    //***************************************** FFmpeg Functions  ***********************************************
 
+    private fun trimAudio() {
         if(::mediaPlayer.isInitialized){
-            mediaPlayer.release()
-            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+            if ( mediaPlayer.duration <= 0) {
+                Log.e(TAG, "Invalid MediaPlayer state or duration")
+                return
+            }
+            var durationInMillis = ((cropLeft) * (mediaPlayer.duration).toFloat()).toInt()
+            val formattedDurationStart = durationInMillis.formatDuration()
+
+            durationInMillis = ((cropRight) * (mediaPlayer.duration).toFloat()).toInt()
+            val formattedDurationEnd = durationInMillis.formatDuration()
+
+            context?.let {
+                var inputAudioPath: String = ""
+                if (lastFunctionCalled == null) {
+                    inputAudioPath = it.getInputPath(Uri.fromFile(audioItem?.path?.let { it1 -> File(it1) }))
+
+                } else {
+                    when (lastFunctionCalled) {
+                        "speed" -> inputAudioPath = outputPathSpeed
+                        "trim" -> inputAudioPath = outputPathTrim
+                    }
+                }
+
+                val outputFile = audioItem?.extension?.let { it2 ->
+                    "temp_audio_${getCurrentTimestampString()}".getOutputFile(it2)
+                }
+                outputPathTrim = outputFile!!.path
+
+                val cmd = arrayOf(
+                    "-y",//overwrite if exists
+                    "-i",
+                    inputAudioPath,
+                    "-ss",
+                    formattedDurationStart,
+                    "-to",
+                    formattedDurationEnd,
+                    outputPathTrim
+                )
+
+                Log.d(TAG, "trimAudio: ${cmd.joinToString(" ")}")
+
+                speed = false
+                trim = true
+
+                cmd.executeCommand(this)
+
+            }
         }
     }
 
-    override fun onPause() {
-        super.onPause()
+    private fun changeSpeed() {
 
-        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
-            mediaPlayer.pause()
-            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+        context?.let{
+            //audioitem.uri was giving error, file not found exception so used uri in this form.
+//            val inputAudioPath = it.getInputPath(Uri.fromFile(audioItem?.path?.let { it1 -> File(it1) }))
+            var inputAudioPath: String = ""
+            if (lastFunctionCalled == null) {
+                inputAudioPath = it.getInputPath(Uri.fromFile(audioItem?.path?.let { it1 -> File(it1) }))
+            }
+            else{
+                when(lastFunctionCalled){
+                    "speed" -> inputAudioPath = it.getInputPath(Uri.fromFile(audioItem?.path?.let { it1 -> File(it1) }))
+                    "trim" -> inputAudioPath = outputPathTrim
+                }
+            }
+
+            val outputFile = audioItem?.extension?.let {it2->
+                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it2)
+            }
+            outputPathSpeed = outputFile!!.path
+
+            val cmd = arrayOf(
+                "-y",
+                "-i", inputAudioPath,
+                "-filter_complex", "\"atempo=$selectedSpeedOption[aout]\"",
+                "-map", "[aout]",
+                outputPathSpeed
+            )
+
+            speed = true
+            trim = false
+
+            Log.d(TAG, "audioSpeed: ${cmd.joinToString(" ")}")
+
+            cmd.executeCommand(this)
+
         }
-    }
 
-    private fun dialogDismiss() {
-        Handler().postDelayed({
-            dismissDialog(savingAlertDialog, savingDialogView)
-        }, 1000)
+
     }
 
     override fun onCommandExecutionSuccess() {
@@ -933,5 +447,570 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
         dialogDismiss()
     }
 
+    //***************************************** Bottom Sheet  ***********************************************
+
+    private fun showDetailsBottomSheet(libItem: LibraryItemModel, position: Int) {
+        val detailsBottomSheetDialogBinding by lazy {
+            BottomSheetDetailsBinding.inflate(layoutInflater)
+        }
+        val detailsBottomSheet = BottomSheetDialog(requireContext())
+        val parent = detailsBottomSheetDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(detailsBottomSheetDialogBinding.root)
+        detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
+
+        if (libItem != null) {
+            detailsBottomSheetDialogBinding.tvSetFilename.text = libItem!!.title
+            detailsBottomSheetDialogBinding.tvSetTime.text = libItem!!.time
+            detailsBottomSheetDialogBinding.tvSetPath.text = libItem!!.path
+            detailsBottomSheetDialogBinding.tvSetSize.text = libItem!!.size
+        }
+
+        detailsBottomSheetDialogBinding.tvOkDetails.setOnClickListener {
+            detailsBottomSheet.dismiss()
+        }
+
+        detailsBottomSheet.show()
+    }
+
+    private fun openTrimBottomSheet() {
+
+
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = trimBinding.root.parent as? ViewGroup
+        parent?.removeView(trimBinding.root)
+        bottomSheet.setContentView(trimBinding.root)
+        trimBottomSheetShowing = true
+
+        if(lastFunctionCalled == null){
+            if(::mediaPlayer.isInitialized){
+                mediaPlayer.release()
+            }
+            createMediaPlayer(audioUri, audioItem?.path)
+        }
+        else{
+            if(::mediaPlayer.isInitialized){
+                mediaPlayer.release()
+            }
+            when(lastFunctionCalled){
+
+                "speed" -> createMediaPlayer(audioUri, outputPathSpeed)
+                "trim" -> createMediaPlayer(audioUri, outputPathTrim)
+
+            }
+        }
+
+
+//        mediaPlayer.start()
+        bottomSheet.setOnDismissListener {
+            trimBottomSheetShowing = false
+            if(::mediaPlayer.isInitialized){
+                mediaPlayer.release()
+                updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+            }
+            createMediaPlayer(audioUri, audioItem?.path)
+        }
+
+        trimBinding.cropWindowTrimBottomSheet.rangePositionChangeListener =
+            object : RangeView.OnRangePositionListener {
+                override fun leftTogglePositionChanged(xCoordinate: Float, value: Float) {
+                    cropLeft = value
+                    val audioDurationMillis = mediaPlayer.duration
+                    val progress = value * 100
+                    val selectedPositionMillis = (progress * audioDurationMillis) / 100
+//                    binding.tvCropWindowLeft.text = selectedPositionMillis.toInt().formatDuration()
+                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
+
+
+                }
+
+                override fun rightTogglePositionChanged(xCoordinate: Float, value: Float) {
+                    cropRight = value
+                    val audioDurationMillis = mediaPlayer.duration
+                    val progress = (value * 100) - 5
+                    val exactProgress = value * 100
+                    val selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    val exactMillis = (exactProgress * audioDurationMillis) / 100
+//                    binding.tvCropWindowRight.text = exactMillis.toInt().formatDuration()
+                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
+
+                }
+            }
+
+        trimBinding.waveformBottomSheet.onProgressChanged = object : SeekBarOnProgressChanged {
+            override fun onProgressChanged(
+                waveformSeekBar: WaveformSeekBar,
+                progress: Float,
+                fromUser: Boolean
+            ) {
+                if (fromUser) {
+                    val audioDurationMillis = mediaPlayer.duration
+                    val selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    mediaPlayer.seekTo(selectedPositionMillis.toInt())
+                }
+            }
+        }
+
+        trimBinding.ivCancel.setOnOneClickListener {
+            bottomSheet.dismiss()
+            trimBottomSheetShowing = false
+            if(::mediaPlayer.isInitialized){
+                mediaPlayer.release()
+                updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+            }
+            createMediaPlayer(audioUri, audioItem?.path)
+        }
+
+        trimBinding.ivDone.setOnOneClickListener {
+            bottomSheet.dismiss()
+            trim=true
+            trimBottomSheetShowing = false
+            mediaPlayer.pause()
+            savingDialog(50)
+            trimAudio()
+        }
+
+
+
+        bottomSheet.show()
+
+    }
+
+    private fun openSpeedBottomSheet() {
+
+        val speedBinding = BottomSheetSpeedBinding.inflate(layoutInflater)
+
+
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = speedBinding.root.parent as? ViewGroup
+        parent?.removeView(speedBinding.root)
+        bottomSheet.setContentView(speedBinding.root)
+
+
+
+        with(speedBinding) {
+
+            if(selectedSpeedOption.toFloat()>-1f){
+                when(selectedSpeedOption){
+                    "0.5" -> onTextViewClick(this, tv05x)
+                    "0.75" -> onTextViewClick(this, tv075x)
+                    "1.0" -> onTextViewClick(this, tv10x)
+                    "1.25" -> onTextViewClick(this, tv125x)
+                    "1.5" -> onTextViewClick(this, tv15x)
+                    "2.0" -> onTextViewClick(this, tv20x)
+                }
+            }
+
+            tv05x.setOnOneClickListener {
+                onTextViewClick(this, tv05x)
+            }
+
+            tv075x.setOnOneClickListener {
+                onTextViewClick(this , tv075x)
+            }
+
+            tv10x.setOnOneClickListener {
+                onTextViewClick(this, tv10x)
+            }
+
+            tv125x.setOnOneClickListener {
+                onTextViewClick(this, tv125x)
+            }
+
+            tv15x.setOnOneClickListener {
+                onTextViewClick(this, tv15x)
+            }
+
+            tv20x.setOnOneClickListener {
+                onTextViewClick(this, tv20x)
+            }
+
+            btnDone.setOnOneClickListener {
+                if (selectedSpeedOption != "-1" && currentSpeedOption != selectedSpeedOption) {
+                    changeSpeed()
+                    speed = true
+//                    changeMediaPlayerSpeed()
+                    bottomSheet.dismiss()
+                    savingDialog(50)
+                } else {
+                    context?.showSmallLengthToast("Selected speed is same as current speed")
+                }
+            }
+        }
+        bottomSheet.show()
+    }
+
+
+    //***************************************** Menu  ***********************************************
+
+    private fun showMenu(libItem: LibraryItemModel, position: Int, iv: ImageView){
+        val popupMenu = PopupMenu(requireContext(), iv)
+
+        popupMenu.menuInflater.inflate(R.menu.audio_item_menu, popupMenu.menu)
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+
+            if(menuItem.title == "Rename"){
+                renameDialogBinding.tvConfirmRD.text = "Confirm"
+                showRenameDialog(libItem, position)
+            }
+            else if (menuItem.title == "Details"){
+                showDetailsBottomSheet(libItem, position)
+            }
+            else if (menuItem.title == "Delete"){
+                showDeleteDialog(libItem, position)
+            }
+            true
+        }
+        // Showing the popup menu
+        popupMenu.show()
+    }
+
+
+    //***************************************** Dialogs  ***********************************************
+
+    private fun showRenameDialog(libItem: LibraryItemModel, position: Int) {
+
+        val alertDialogBuilder =
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+        val parent = renameDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(renameDialogBinding.root)
+        val dialogView = renameDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+
+        if (libItem != null) {
+            // Set the initial text in your EditText (if needed)
+            renameDialogBinding.etRenameRD.setText(libItem!!.title)
+            renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
+
+        }
+
+        renameDialogBinding.tvConfirmRD.setOnClickListener {
+            // Handle the positive button click event here
+            // You can retrieve the text entered in the EditText like this:
+            val enteredText = renameDialogBinding.etRenameRD.text.toString()
+
+            // Implement your logic here (e.g., renameFile(enteredText))
+            val ext = libItem!!.extension
+            Log.d("Debug", "entered text: $enteredText")
+            Log.d("Debug", "ext: $ext")
+
+            if(lastFunctionCalled == null){
+                    renameFile(enteredText, ext!!, libItem, position)
+
+            }
+            else{
+                    renameFile(enteredText, ext!!, libItem, position)
+
+                val bundle = Bundle().apply {
+
+                    putInt("VIEWPAGER_INDEX", 1)
+                }
+
+                findNavController().apply {
+                    if (currentDestination?.id == R.id.editAudio) {
+                        popBackStack()
+                        navigate(R.id.mainRecorderFragment, bundle)
+                    }
+                }
+            }
+
+            alertDialog?.dismiss()
+        }
+
+        renameDialogBinding.tvCancelRD.setOnClickListener {
+            // Handle the negative button click event here
+            // This is where you can cancel the dialog if needed
+            alertDialog?.dismiss()
+
+        }
+
+        alertDialog = alertDialogBuilder?.create()
+        alertDialog!!.show()
+    }
+
+
+    private fun showDeleteDialog(libItem: LibraryItemModel, position: Int) {
+        val deleteDialogBinding by lazy {
+            DeleteDialogBinding.inflate(layoutInflater)
+        }
+        val alertDialogBuilder =
+            context?.let{
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+        val parent = deleteDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(deleteDialogBinding.root)
+        val dialogView = deleteDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+
+
+        deleteDialogBinding.tvDeleteBtnDD.setOnClickListener {
+            // Handle the positive button click event here
+            val filePath =
+                libItem.path
+            val originalFile = File(filePath!!)
+
+            if (originalFile.exists()) {
+                originalFile.delete()
+                context?.scanFiles(originalFile)
+
+            }
+
+            context?.refreshMediaStoreForAudioFiles()
+            alertDialog?.dismiss()
+            val bundle = Bundle().apply {
+
+                putInt("VIEWPAGER_INDEX", 1)
+            }
+            findNavController().apply {
+                if (currentDestination?.id == R.id.editAudio) {
+                    popBackStack()
+                    navigate(R.id.mainRecorderFragment, bundle)
+                }
+            }
+
+        }
+
+        deleteDialogBinding.tvCancelDD.setOnClickListener {
+            alertDialog?.dismiss()
+        }
+
+        alertDialog = alertDialogBuilder?.create()
+        alertDialog!!.show()
+    }
+
+    private fun showQuitDialog() {
+
+        var quitAlertDialog: AlertDialog? = null
+        val quitDialogBinding by lazy {
+            QuitDialogBinding.inflate(layoutInflater)
+        }
+        var quitDialogView: ConstraintLayout? = null
+
+        val alertDialogBuilder =
+            context?.let {
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+
+
+        val dialogView = quitDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+        quitAlertDialog = alertDialogBuilder?.create()
+
+        quitDialogView = dialogView
+
+        if(lastFunctionCalled == null){
+            quitDialogBinding.tvText.text = "Are you sure you want to quit?"
+        }
+        else{
+            quitDialogBinding.tvText.text = "Are you sure you want to quit without saving?"
+        }
+
+        quitDialogBinding.tvNo.setOnClickListener {
+            context?.performHapticFeedback()
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitDialogBinding.tvYes.setOnClickListener {
+            context?.performHapticFeedback()
+            // Clear the back stack and navigate to the home fragment
+            val bundle = Bundle().apply {
+
+                putInt("VIEWPAGER_INDEX", 1)
+            }
+
+            findNavController().apply {
+                if (currentDestination?.id == R.id.editAudio) {
+                    popBackStack()
+                    navigate(R.id.mainRecorderFragment, bundle)
+                }
+            }
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitAlertDialog?.setOnDismissListener {
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitAlertDialog!!.show()
+    }
+
+    private fun savingDialog(progress: Int = 50) {
+        // Update your progress UI or dialog here
+        Log.d("AudioEditor", "Progress: $progress%")
+
+        savingDialogBinding.progressBar.progress = 50
+        savingDialogBinding.tvSaving.text = "Processing...(50%)"
+
+        val alertDialogBuilder =
+            context?.let {
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+
+        val dialogView = savingDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)?.setCancelable(false)
+        savingAlertDialog = alertDialogBuilder?.create()
+        savingDialogView = dialogView
+
+        savingAlertDialog?.setOnDismissListener {
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }
+
+        savingAlertDialog?.show()
+    }
+
+    private fun dialogDismiss() {
+        Handler().postDelayed({
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }, 1000)
+    }
+
+    //***************************************** Utility Functions ***********************************************
+
+    private fun setViews(audioItem: LibraryItemModel?) {
+
+        binding.tvFragmentTitle.text = audioItem?.title
+        audioItem?.let {
+            audioUri = it.uri!!
+            createMediaPlayer(it.uri, it.path)
+        }
+    }
+
+    private fun onTextViewClick(speedBinding: BottomSheetSpeedBinding, clickedTextView: TextView) {
+        // Reset all TextViews to white
+        var allTextViews: List<TextView>
+        speedBinding.apply{
+            allTextViews = listOf(
+                tv05x,
+                tv075x,
+                tv10x,
+                tv125x,
+                tv15x,
+                tv20x
+            )
+        }
+        for (textView in allTextViews) {
+
+            context?.let {
+                textView.setBackgroundResource(R.drawable.button_bg_grey_rounded)
+                textView.setTextColor(
+                    ContextCompat.getColor(
+                        it,
+                        R.color.textColorDarkGrey
+                    )
+                )
+            }
+        }
+
+        val text = clickedTextView.text.toString()
+        selectedSpeedOption = text.removeSuffix("x")
+        Log.d(TAG, "onTextViewClick: $selectedSpeedOption")
+        // Change the background color of the clicked TextView to blue
+        clickedTextView.setBackgroundResource(R.drawable.button_bg_rounded)
+        context?.let {
+            clickedTextView.setTextColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.white
+                )
+            )
+        }
+    }
+
+    private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel, position: Int) {
+        var filePath: String? = null
+        var originalFile: File? = null
+        var newFile: File? = null
+        if(lastFunctionCalled == null){
+            filePath = libItem.path
+
+            val newFileName = "$newName.$ext" // Provide the new file name
+            originalFile = File(filePath!!)
+            // Create a File object for the new file with the desired name
+            val directoryPath = originalFile.parentFile // Get the directory path
+            newFile = File(directoryPath, newFileName)
+        }
+        else{
+            when(lastFunctionCalled){
+                "speed" -> filePath = outputPathSpeed
+                "trim" -> filePath = outputPathTrim
+            }
+
+            val newFileName = "$newName.$ext" // Provide the new file name
+            originalFile = File(filePath!!)
+            // Create a File object for the new file with the desired name
+            val outputDir = getStorageDir()
+            val recorderFolder = File(outputDir, "FunsolAudioRecorder")
+//        val directoryPath = originalFile.parentFile // Get the directory path
+            newFile = File(recorderFolder, newFileName)
+        }
+
+
+        // Rename the file
+        if (originalFile.exists()) {
+                if (originalFile.renameTo(newFile)) {
+
+                    val newPath =
+                        newFile.path
+                    val updatedFile = File(newPath)
+
+                    val currentTimeMillis = System.currentTimeMillis()
+                    newFile.setLastModified(currentTimeMillis)
+                    originalFile.setLastModified(currentTimeMillis)
+                    libItem.time =  SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.getDefault()).format(
+                        Date(currentTimeMillis)
+                    )
+                    // Refresh the MediaStore to reflect the changes
+                    context?.refreshMediaStore(updatedFile)
+                    context?.showSmallLengthToast("Renaming Successful")
+    //                adapter.itemUpdated(position, viewModel.getSingleFile(position))
+
+                } else {
+                    // Failed to rename the file
+                    // Handle the error accordingly
+                    context?.showSmallLengthToast("Renaming Failed")
+                }
+            } else {
+                // The original file does not exist
+                context?.showSmallLengthToast("Original File doen not exist")
+            }
+
+        val newPath =
+            newFile.path
+
+        val updatedFile = newPath.let { File(it) }
+        libItem.path = newPath
+        context?.refreshMediaStore(updatedFile)
+
+        context?.refreshMediaStoreForAudioFiles()
+//        getList()
+
+        val fileNameWithExtension = updatedFile.name // This gives you "file.txt"
+        binding.tvFragmentTitle.text = fileNameWithExtension.substringBeforeLast(".")
+        libItem.title = fileNameWithExtension.substringBeforeLast(".")
+
+    }
+
+
+
+    //***************************************** Override Functions  ***********************************************
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        if(::mediaPlayer.isInitialized){
+            mediaPlayer.release()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
+            mediaPlayer.pause()
+            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+        }
+    }
 
 }

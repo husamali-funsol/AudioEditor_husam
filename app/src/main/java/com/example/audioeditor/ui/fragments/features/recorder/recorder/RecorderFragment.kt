@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.audioeditor.R
 import com.example.audioeditor.databinding.DiscardDialogBinding
@@ -28,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.IOException
 
@@ -51,6 +53,8 @@ class RecorderFragment : Fragment(), Timer.OnTimerTickListener {
 
     private val timer by lazy { Timer(this) }
 
+    private var btnCancel = "not pressed"
+    private var onDestroy = false
 
     private var permissions = arrayOf(
         android.Manifest.permission.RECORD_AUDIO ,
@@ -100,12 +104,25 @@ class RecorderFragment : Fragment(), Timer.OnTimerTickListener {
         }
 
         binding.btnCancel.setOnOneClickListener {
-            pauseRecording()
-            showDiscardDialog()
+            if(isRecording){
+                btnCancel = "pressed"
+                pauseRecording()
+                showDiscardDialog()
+            }
         }
 
 
 
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
+        super.setUserVisibleHint(isVisibleToUser)
+
+        if(isVisibleToUser) { }
+        else{
+            if(isRecording){ pauseRecording() }
+        }
     }
 
     //***************************************** Start Recording ***********************************************
@@ -208,12 +225,17 @@ class RecorderFragment : Fragment(), Timer.OnTimerTickListener {
 
         file?.let { context?.refreshMediaStore(it) }
 
-        savingDialog()
-        updateSavingDialog()
+        if(btnCancel == "not pressed" && !onDestroy){
+
+                savingDialog()
+                updateSavingDialog()
+
+
+
+
+        }
 
         context?.refreshMediaStoreForAudioFiles()
-
-
 
     }
 
@@ -244,6 +266,9 @@ class RecorderFragment : Fragment(), Timer.OnTimerTickListener {
             deleteFile(it)
             context?.refreshMediaStore(it)
         }
+
+        btnCancel = "not pressed"
+        onDestroy = false
 
     }
 
@@ -295,10 +320,12 @@ class RecorderFragment : Fragment(), Timer.OnTimerTickListener {
         discardDialogBinding.tvDiscard.setOnClickListener {
             context?.performHapticFeedback()
             // Clear the back stack and navigate to the home fragment
-            findNavController().apply {
-                if (currentDestination?.id == R.id.mainRecorderFragment) {
-                    popBackStack()
-                    navigate(R.id.homeFragment)
+           if(btnCancel == "not pressed") {
+                findNavController().apply {
+                    if (currentDestination?.id == R.id.mainRecorderFragment) {
+                        popBackStack()
+                        navigate(R.id.homeFragment)
+                    }
                 }
             }
             dismissDialog(discardAlertDialog, quitDialogView)
@@ -359,10 +386,21 @@ class RecorderFragment : Fragment(), Timer.OnTimerTickListener {
             context?.let {
                 dismissDialog(savingAlertDialog, savingDialogView)
             }
+
+            val bundle = Bundle().apply {
+
+                putString("AUDIO_FILEPATH", file?.path)
+            }
+
+            findNavController().apply {
+                if(currentDestination?.id == R.id.mainRecorderFragment){
+                    navigate(R.id.action_mainRecorderFragment_to_savedScreenFragment, bundle)
+                }
+            }
+
+
         }
     }
-
-
 
     //***************************************** Override Functions ***********************************************
     override fun onTimerTick(duration: String) {
@@ -373,6 +411,8 @@ class RecorderFragment : Fragment(), Timer.OnTimerTickListener {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        onDestroy = true
 
         if(::recorder.isInitialized && (isRecording || isPaused)){
             cancelOperations()

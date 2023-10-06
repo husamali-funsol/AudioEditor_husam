@@ -967,6 +967,17 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
         bottomSheet.setContentView(speedBinding.root)
         with(speedBinding) {
 
+            if(selectedSpeedOption.toFloat()>-1f){
+                when(selectedSpeedOption){
+                    "0.5" -> onTextViewClick( tv05x)
+                    "0.75" -> onTextViewClick( tv075x)
+                    "1.0" -> onTextViewClick( tv10x)
+                    "1.25" -> onTextViewClick( tv125x)
+                    "1.5" -> onTextViewClick( tv15x)
+                    "2.0" -> onTextViewClick( tv20x)
+                }
+            }
+
             tv05x.setOnOneClickListener {
                 onTextViewClick(tv05x)
             }
@@ -1402,10 +1413,10 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
             }
             else{
                 when(lastFunctionCalled){
-                    "speed" -> inputAudioPath = outputPathSpeed
-                    "volume" -> inputAudioPath = outputPathVolume
-                    "fadein" -> inputAudioPath = outputPathFadeIn
-                    "fadeout" -> inputAudioPath = outputPathFadeOut
+                    "speed" -> inputAudioPath = it.getInputPath(audioUri!!)
+                    "volume" -> inputAudioPath = pathsList[currentIndex]
+                    "fadein" -> inputAudioPath = pathsList[currentIndex]
+                    "fadeout" -> inputAudioPath = pathsList[currentIndex]
                 }
             }
 
@@ -1413,6 +1424,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
                 "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
             }
             outputPathSpeed = outputFile!!.path
+
 
             val cmd = arrayOf(
                 "-y",

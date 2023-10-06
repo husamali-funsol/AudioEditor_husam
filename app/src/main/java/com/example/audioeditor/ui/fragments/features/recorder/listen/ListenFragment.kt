@@ -49,16 +49,6 @@ class ListenFragment : Fragment() {
 
     private var alertDialog: AlertDialog? = null
 
-
-    private var previousList: ArrayList<LibraryItemModel>? = null
-
-    private val bottomSheet by lazy{
-        BottomSheetDialog(requireContext())    }
-
-    private var viewCreated = false
-
-    private var count =0
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -75,56 +65,11 @@ class ListenFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        context?.refreshMediaStoreForAudioFiles()
-        viewCreated=true
+        setViewsAndData()
 
-
-        context?.let{ binding.recyclerView.layoutManager = LinearLayoutManager(it) }
-        adapter = LibraryItemAdapter(ArrayList() , object : LibraryItemAdapter.OnItemClicked{
-            override fun onItemClicked(audioList: List<LibraryItemModel>, position: Int) {
-                navigateToPlayer(audioList, position)
-            }
-            override fun onMenuClicked(audioItem: LibraryItemModel, position: Int, iv: ImageView) {
-//                showOptions(audioItem, position)
-                showMenu(audioItem, position, iv)
-            }
-        })
-
-
-
-        binding.recyclerView.adapter = adapter
-
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            // Perform your tasks on a background thread
-            withContext(Dispatchers.Main) {
-                binding.loader.visibility = View.VISIBLE
-                binding.recyclerView.visibility = View.GONE
-                binding.ivNoAudio.visibility= View.GONE
-                binding.tvNoAudio.visibility= View.GONE
-            }
-            // Fetch the list in the background
-            getList()
-            context?.refreshMediaStoreForAudioFiles()
-            viewModel.getFiles()
-
-            withContext(Dispatchers.Main) {
-                binding.loader.visibility = View.GONE
-
-                if (adapter.itemCount == 0) {
-                    binding.loader.visibility = View.GONE
-                    binding.ivNoAudio.visibility= View.VISIBLE
-                    binding.tvNoAudio.visibility= View.VISIBLE
-                    binding.recyclerView.visibility = View.GONE
-                } else {
-                    binding.loader.visibility = View.GONE
-                    binding.recyclerView.visibility = View.VISIBLE
-                    binding.ivNoAudio.visibility= View.GONE
-                    binding.tvNoAudio.visibility= View.GONE
-                }
-            }
-
-        }
     }
+
+    //***************************************** Dialogs and Menu ***********************************************
 
     private fun showMenu(libItem: LibraryItemModel, position: Int, iv: ImageView){
         val popupMenu = PopupMenu(requireContext(), iv)
@@ -145,96 +90,6 @@ class ListenFragment : Fragment() {
         }
         // Showing the popup menu
         popupMenu.show()
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
-        super.setUserVisibleHint(isVisibleToUser)
-
-        if(isVisibleToUser)
-        {
-//            getList()
-//            context?.refreshMediaStoreForAudioFiles()
-            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO){
-                viewModel.getFiles()
-            }
-        }
-    }
-
-    private fun getList() {
-        lifecycleScope.launch {
-            viewModel.libraryList.collect { audioList ->
-                previousList = audioList
-                withContext(Dispatchers.Main){
-                    submitNewList(audioList)
-                }
-            }
-        }
-    }
-
-    private fun submitNewList(audioList: ArrayList<LibraryItemModel>) {
-        adapter.submitNewList(audioList)
-    }
-
-
-    private fun navigateToPlayer(libList: List<LibraryItemModel>, position: Int) {
-        val libItemArray = libList.toTypedArray()
-        val bundle = Bundle().apply {
-            putParcelableArray("AUDIO_ITEMS", libItemArray)
-            putInt("AUDIO_POSITION", position)
-            putParcelable("AUDIO_ITEM", libItemArray[position])
-        }
-
-        findNavController().apply {
-            navigate(
-                R.id.action_mainRecorderFragment_to_editAudio,
-                bundle
-            )
-        }
-    }
-
-    private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel, position: Int) {
-        val filePath =
-            libItem.path
-        val newFileName = "$newName.$ext" // Provide the new file name
-        val originalFile = File(filePath!!)
-        // Create a File object for the new file with the desired name
-        val directoryPath = originalFile.parentFile // Get the directory path
-        val newFile = File(directoryPath, newFileName)
-
-        // Rename the file
-        if (originalFile.exists()) {
-            if (originalFile.renameTo(newFile)) {
-
-                val newPath = newFile.path
-                val updatedFile = File(newPath!!)
-
-                val currentTimeMillis = System.currentTimeMillis()
-                newFile.setLastModified(currentTimeMillis)
-                originalFile.setLastModified(currentTimeMillis)
-                // Refresh the MediaStore to reflect the changes
-                context?.refreshMediaStore(updatedFile)
-                context?.showSmallLengthToast("Renaming Successful")
-                adapter.itemUpdated(position, viewModel.getSingleAudioFile(position))
-
-            } else {
-                // Failed to rename the file
-                // Handle the error accordingly
-                context?.showSmallLengthToast("Renaming Failed")
-
-            }
-        } else {
-            // The original file does not exist
-            context?.showSmallLengthToast("Original File does not exist")
-
-        }
-
-        val newPath = newFile.path
-        val updatedFile = File(newPath!!)
-        context?.refreshMediaStore(updatedFile)
-
-        context?.refreshMediaStoreForAudioFiles()
-        getList()
     }
 
     private fun showRenameDialog(libItem: LibraryItemModel, position: Int) {
@@ -345,13 +200,153 @@ class ListenFragment : Fragment() {
         alertDialog!!.show()
     }
 
+    //***************************************** Utility Functions ***********************************************
+    private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel, position: Int) {
+        val filePath =
+            libItem.path
+        val newFileName = "$newName.$ext" // Provide the new file name
+        val originalFile = File(filePath!!)
+        // Create a File object for the new file with the desired name
+        val directoryPath = originalFile.parentFile // Get the directory path
+        val newFile = File(directoryPath, newFileName)
+
+        // Rename the file
+        if (originalFile.exists()) {
+            if (originalFile.renameTo(newFile)) {
+
+                val newPath = newFile.path
+                val updatedFile = File(newPath!!)
+
+                val currentTimeMillis = System.currentTimeMillis()
+                newFile.setLastModified(currentTimeMillis)
+                originalFile.setLastModified(currentTimeMillis)
+                // Refresh the MediaStore to reflect the changes
+                context?.refreshMediaStore(updatedFile)
+                context?.showSmallLengthToast("Renaming Successful")
+                adapter.itemUpdated(position, viewModel.getSingleAudioFile(position))
+
+            } else {
+                // Failed to rename the file
+                // Handle the error accordingly
+                context?.showSmallLengthToast("Renaming Failed")
+
+            }
+        } else {
+            // The original file does not exist
+            context?.showSmallLengthToast("Original File does not exist")
+
+        }
+
+        val newPath = newFile.path
+        val updatedFile = File(newPath!!)
+        context?.refreshMediaStore(updatedFile)
+
+        context?.refreshMediaStoreForAudioFiles()
+        getList()
+    }
+
+    private fun navigateToPlayer(libList: List<LibraryItemModel>, position: Int) {
+        val libItemArray = libList.toTypedArray()
+        val bundle = Bundle().apply {
+//            putParcelableArray("AUDIO_ITEMS", libItemArray)
+            putInt("AUDIO_POSITION", position)
+            putParcelable("AUDIO_ITEM", libItemArray[position])
+        }
+
+        findNavController().apply {
+            navigate(
+                R.id.action_mainRecorderFragment_to_editAudio,
+                bundle
+            )
+        }
+    }
+
+    private fun getList() {
+        lifecycleScope.launch {
+            viewModel.libraryList.collect { audioList ->
+                withContext(Dispatchers.Main){
+                    submitNewList(audioList)
+                }
+            }
+        }
+    }
+
+    private fun submitNewList(audioList: ArrayList<LibraryItemModel>) {
+        adapter.submitNewList(audioList)
+    }
+
+    private fun setViewsAndData(){
+
+        context?.refreshMediaStoreForAudioFiles()
+
+        context?.let{ binding.recyclerView.layoutManager = LinearLayoutManager(it) }
+        adapter = LibraryItemAdapter(ArrayList() , object : LibraryItemAdapter.OnItemClicked{
+            override fun onItemClicked(audioList: List<LibraryItemModel>, position: Int) {
+                navigateToPlayer(audioList, position)
+            }
+            override fun onMenuClicked(audioItem: LibraryItemModel, position: Int, iv: ImageView) {
+//                showOptions(audioItem, position)
+                showMenu(audioItem, position, iv)
+            }
+        })
+
+        binding.recyclerView.adapter = adapter
+
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            // Perform your tasks on a background thread
+            withContext(Dispatchers.Main) {
+                binding.loader.visibility = View.VISIBLE
+                binding.recyclerView.visibility = View.GONE
+                binding.ivNoAudio.visibility= View.GONE
+                binding.tvNoAudio.visibility= View.GONE
+            }
+            // Fetch the list in the background
+            getList()
+            context?.refreshMediaStoreForAudioFiles()
+            viewModel.getFiles()
+
+            withContext(Dispatchers.Main) {
+                binding.loader.visibility = View.GONE
+
+                if (adapter.itemCount == 0) {
+                    binding.loader.visibility = View.GONE
+                    binding.ivNoAudio.visibility= View.VISIBLE
+                    binding.tvNoAudio.visibility= View.VISIBLE
+                    binding.recyclerView.visibility = View.GONE
+                } else {
+                    binding.loader.visibility = View.GONE
+                    binding.recyclerView.visibility = View.VISIBLE
+                    binding.ivNoAudio.visibility= View.GONE
+                    binding.tvNoAudio.visibility= View.GONE
+                }
+            }
+
+        }
+
+    }
+
+    //***************************************** Override Functions ***********************************************
+
     override fun onResume() {
         super.onResume()
 
         context?.refreshMediaStoreForAudioFiles()
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
+        super.setUserVisibleHint(isVisibleToUser)
 
+        if(isVisibleToUser)
+        {
+//            getList()
+//            context?.refreshMediaStoreForAudioFiles()
+            CoroutineScope(Dispatchers.IO).launch{
+                if(::viewModel.isInitialized){ viewModel.getFiles() }
+
+            }
+        }
+    }
 
 
 }

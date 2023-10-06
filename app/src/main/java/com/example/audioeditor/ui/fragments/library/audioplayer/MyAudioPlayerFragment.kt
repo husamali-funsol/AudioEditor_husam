@@ -91,69 +91,11 @@ class MyAudioPlayerFragment : Fragment() {
         }
 
         binding.ivSkipNextLP.setOnOneClickListener {
-            position = position!! + 1
-
-            if (position != null && position!! >= 0 && position!! < (mList?.size ?: 0)) {
-                libItem = mList?.get(position!!)
-            }
-            if (libItem != null) {
-                audioUri = libItem!!.uri!!
-                binding.tvTitleLP.text = libItem!!.title
-                binding.tvMetadataLP.text = libItem!!.metadata
-                // Use Glide to load and set the image
-                context?.let{
-                    Glide.with(it)
-                        .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                        .placeholder(R.drawable.music_thumbnail) // Placeholder image
-                        .error(R.drawable.music_thumbnail) // Error image
-                        .into(binding.imageView) // Set the ImageView you want to load the image into
-                    // Use Glide to load and set the image
-                    Glide.with(it)
-                        .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                        .placeholder(R.drawable.placeholder_image) // Placeholder image
-                        .error(R.drawable.placeholder_image) // Error image
-                        .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
-                }
-                binding.ivPlayerLP.setImageResource(R.drawable.play_button)
-
-
-                Log.d("get path", libItem!!.path.toString())
-            }
-//
-            audioUri?.let{ createMediaPlayer(it) }
+            skipNext(position, mList)
         }
 
         binding.ivSkipPrevLP.setOnOneClickListener {
-            position = position!! - 1
-
-            if (position != null && position!! >= 0 && position!! < (mList?.size ?: 0)) {
-                libItem = mList?.get(position!!)
-            }
-            if (libItem != null) {
-                audioUri = libItem!!.uri!!
-                binding.tvTitleLP.text = libItem!!.title
-                binding.tvMetadataLP.text = libItem!!.metadata
-                // Use Glide to load and set the image
-                context?.let{
-                    Glide.with(it)
-                        .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                        .placeholder(R.drawable.music_thumbnail) // Placeholder image
-                        .error(R.drawable.music_thumbnail) // Error image
-                        .into(binding.imageView) // Set the ImageView you want to load the image into
-                    // Use Glide to load and set the image
-                    Glide.with(it)
-                        .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
-                        .placeholder(R.drawable.placeholder_image) // Placeholder image
-                        .error(R.drawable.placeholder_image) // Error image
-                        .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
-                }
-                binding.ivPlayerLP.setImageResource(R.drawable.play_button)
-
-
-                Log.d("get path", libItem!!.path.toString())
-            }
-//
-            audioUri?.let{ createMediaPlayer(it) }
+            skipPrevious(position, mList)
         }
 
         binding.ivPlayerLP.setOnClickListener {
@@ -192,136 +134,285 @@ class MyAudioPlayerFragment : Fragment() {
 
         binding.ibMoreLP.setOnOneClickListener {
 
-            val bottomSheet = BottomSheetDialog(requireContext())
-            val parent = libraryBottomSheetDialogBinding.root.parent as? ViewGroup
-            parent?.removeView(libraryBottomSheetDialogBinding.root)
-            bottomSheet.setContentView(libraryBottomSheetDialogBinding.root)
-
-            if (libItem != null) {
-                libraryBottomSheetDialogBinding.tvTitleLibSheet.text = libItem!!.title
-                libraryBottomSheetDialogBinding.tvMetaDataLibSheet.text = libItem!!.metadata
-            }
-
-            libraryBottomSheetDialogBinding.tvRenameLibSheet.setOnClickListener {
-//                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
-                val alertDialogBuilder =
-                    context?.let{
-                        AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-                    }
-                val parent = renameDialogBinding.root.parent as? ViewGroup
-                parent?.removeView(renameDialogBinding.root)
-                val dialogView = renameDialogBinding.root
-                alertDialogBuilder?.setView(dialogView)
-
-                if (libItem != null) {
-                    // Set the initial text in your EditText (if needed)
-                    renameDialogBinding.etRenameRD.setText(libItem!!.title)
-                    renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
-
-                }
-
-                renameDialogBinding.tvConfirmRD.setOnClickListener {
-                    // Handle the positive button click event here
-                    // You can retrieve the text entered in the EditText like this:
-                    val enteredText = renameDialogBinding.etRenameRD.text.toString()
-
-                    // Implement your logic here (e.g., renameFile(enteredText))
-                    val ext = libItem!!.extension
-                    renameFile(enteredText, ext!!, libItem!!, position!!)
-
-                    alertDialog?.dismiss()
-                }
-
-                renameDialogBinding.tvCancelRD.setOnClickListener {
-                    // Handle the negative button click event here
-                    // This is where you can cancel the dialog if needed
-                    alertDialog?.dismiss()
-
-                }
-
-                alertDialog = alertDialogBuilder?.create()
-                bottomSheet.dismiss()
-                alertDialog!!.show()
-            }
-
-            libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
-                val detailsBottomSheet = BottomSheetDialog(requireContext())
-                val parent = detailsBottomSheetDialogBinding.root.parent as? ViewGroup
-                parent?.removeView(detailsBottomSheetDialogBinding.root)
-                detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
-
-                if (libItem != null) {
-                    detailsBottomSheetDialogBinding.tvSetFilename.text = libItem!!.title
-                    detailsBottomSheetDialogBinding.tvSetTime.text = libItem!!.time
-                    detailsBottomSheetDialogBinding.tvSetPath.text = libItem!!.path
-                    detailsBottomSheetDialogBinding.tvSetSize.text = libItem!!.size
-                }
-                bottomSheet.dismiss()
-
-                detailsBottomSheetDialogBinding.tvOkDetails.setOnClickListener {
-                    detailsBottomSheet.dismiss()
-                }
-
-                detailsBottomSheet.show()
-
-
-            }
-
-            libraryBottomSheetDialogBinding.tvShareLibSheet.setOnClickListener {
-
-                val shareIntent = Intent(Intent.ACTION_SEND)
-                shareIntent.type = "audio/*"
-
-                shareIntent.putExtra(Intent.EXTRA_STREAM, audioUri)
-
-                startActivity(Intent.createChooser(shareIntent, "Share Audio"))
-            }
-
-            libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
-//                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
-                val alertDialogBuilder =
-                    context?.let{
-                        AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-                    }
-                val parent = deleteDialogBinding.root.parent as? ViewGroup
-                parent?.removeView(deleteDialogBinding.root)
-                val dialogView = deleteDialogBinding.root
-                alertDialogBuilder?.setView(dialogView)
-
-
-                deleteDialogBinding.tvDeleteBtnDD.setOnClickListener {
-                    // Handle the positive button click event here
-                    val filePath =
-                        libItem?.path
-                    val originalFile = File(filePath!!)
-
-                    if (originalFile.exists()) {
-                        originalFile.delete()
-                        context?.scanFiles(originalFile)
-
-                    }
-
-                    context?.refreshMediaStoreForAudioFiles()
-
-                    alertDialog?.dismiss()
-                    findNavController().popBackStack()
-                }
-
-                deleteDialogBinding.tvCancelDD.setOnClickListener {
-                    alertDialog?.dismiss()
-                }
-
-
-                alertDialog = alertDialogBuilder?.create()
-                bottomSheet.dismiss()
-                alertDialog!!.show()
-
-            }
-            bottomSheet.show()
+            openAudioBottomSheet(position)
         }
     }
 
 
+
+    //*****************************************  Media Player Functions  ***********************************************
+
+    private fun createMediaPlayer(filepath: Uri) {
+        val uri = Uri.fromFile(File(filepath.toString()))
+
+        if (::mediaPlayer.isInitialized) {
+            mediaPlayer.release()
+        }
+
+        mediaPlayer = MediaPlayer().apply {
+            context?.let{ setDataSource(it, uri) }
+            prepareAsync()
+
+            setOnPreparedListener { mp ->
+                val durationMillis = mp.duration
+                binding.sbLP.max = 100 // We set the maximum progress to 100 to represent 100%
+                binding.sbLP.progress = 0 // Initially set progress to 0
+
+                binding.tvStartLp.text = "00:00"
+                binding.tvEndLP.text = durationMillis.toLong().convertMillisToMinutes()
+
+                mp.setOnCompletionListener {
+                    binding.sbLP.progress = 0
+                    mediaPlayer.start()
+                }
+            }
+        }
+    }
+
+    private fun updateSeekBar() {
+        updateSeekBarHandler.postDelayed(updateSeekBarRunnable, 100)
+    }
+
+    private val updateSeekBarRunnable = object : Runnable {
+        override fun run() {
+            if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
+                val audioDurationMillis = mediaPlayer.duration
+                val currentPositionMillis = mediaPlayer.currentPosition
+                val progress = (currentPositionMillis.toFloat() / audioDurationMillis) * 100
+                binding.sbLP.progress = progress.toInt()
+                binding.tvStartLp.text = currentPositionMillis.toLong().convertMillisToMinutes()
+                // Update the SeekBar position every 100 milliseconds
+                updateSeekBarHandler.postDelayed(this, 100)
+            }
+        }
+    }
+
+    //*****************************************  Dialogs  ***********************************************
+
+    private fun showRenameDialog(
+        position: Int?,
+        bottomSheet: BottomSheetDialog
+    ) {
+        val alertDialogBuilder =
+            context?.let {
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+        val parent = renameDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(renameDialogBinding.root)
+        val dialogView = renameDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+
+        if (libItem != null) {
+            // Set the initial text in your EditText (if needed)
+            renameDialogBinding.etRenameRD.setText(libItem!!.title)
+            renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
+
+        }
+
+        renameDialogBinding.tvConfirmRD.setOnClickListener {
+            // Handle the positive button click event here
+            // You can retrieve the text entered in the EditText like this:
+            val enteredText = renameDialogBinding.etRenameRD.text.toString()
+
+            // Implement your logic here (e.g., renameFile(enteredText))
+            val ext = libItem!!.extension
+            renameFile(enteredText, ext!!, libItem!!, position!!)
+
+            alertDialog?.dismiss()
+        }
+
+        renameDialogBinding.tvCancelRD.setOnClickListener {
+            // Handle the negative button click event here
+            // This is where you can cancel the dialog if needed
+            alertDialog?.dismiss()
+
+        }
+
+        alertDialog = alertDialogBuilder?.create()
+        bottomSheet.dismiss()
+        alertDialog!!.show()
+    }
+
+    private fun showDeleteDialog(bottomSheet: BottomSheetDialog) {
+        val alertDialogBuilder =
+            context?.let {
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+        val parent = deleteDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(deleteDialogBinding.root)
+        val dialogView = deleteDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+
+
+        deleteDialogBinding.tvDeleteBtnDD.setOnClickListener {
+            // Handle the positive button click event here
+            val filePath =
+                libItem?.path
+            val originalFile = File(filePath!!)
+
+            if (originalFile.exists()) {
+                originalFile.delete()
+                context?.scanFiles(originalFile)
+
+            }
+
+            context?.refreshMediaStoreForAudioFiles()
+
+            alertDialog?.dismiss()
+            findNavController().popBackStack()
+        }
+
+        deleteDialogBinding.tvCancelDD.setOnClickListener {
+            alertDialog?.dismiss()
+        }
+
+
+        alertDialog = alertDialogBuilder?.create()
+        bottomSheet.dismiss()
+        alertDialog!!.show()
+    }
+
+
+    //*****************************************  Bottom Sheet  ***********************************************
+
+    private fun openDetailsBottomSheet(bottomSheet: BottomSheetDialog) {
+        val detailsBottomSheet = BottomSheetDialog(requireContext())
+        val parent = detailsBottomSheetDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(detailsBottomSheetDialogBinding.root)
+        detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
+
+        if (libItem != null) {
+            detailsBottomSheetDialogBinding.tvSetFilename.text = libItem!!.title
+            detailsBottomSheetDialogBinding.tvSetTime.text = libItem!!.time
+            detailsBottomSheetDialogBinding.tvSetPath.text = libItem!!.path
+            detailsBottomSheetDialogBinding.tvSetSize.text = libItem!!.size
+        }
+        bottomSheet.dismiss()
+
+        detailsBottomSheetDialogBinding.tvOkDetails.setOnClickListener {
+            detailsBottomSheet.dismiss()
+        }
+
+        detailsBottomSheet.show()
+    }
+
+    private fun openAudioBottomSheet(position: Int?) {
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val parent = libraryBottomSheetDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(libraryBottomSheetDialogBinding.root)
+        bottomSheet.setContentView(libraryBottomSheetDialogBinding.root)
+
+        if (libItem != null) {
+            libraryBottomSheetDialogBinding.tvTitleLibSheet.text = libItem!!.title
+            libraryBottomSheetDialogBinding.tvMetaDataLibSheet.text = libItem!!.metadata
+        }
+
+        libraryBottomSheetDialogBinding.tvRenameLibSheet.setOnClickListener {
+            //                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
+            showRenameDialog(position, bottomSheet)
+        }
+
+        libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
+            openDetailsBottomSheet(bottomSheet)
+        }
+
+        libraryBottomSheetDialogBinding.tvShareLibSheet.setOnClickListener {
+            openShareIntent()
+        }
+
+        libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
+            //                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
+            showDeleteDialog(bottomSheet)
+
+        }
+        bottomSheet.show()
+    }
+
+    private fun openShareIntent() {
+        val shareIntent = Intent(Intent.ACTION_SEND)
+        shareIntent.type = "audio/*"
+
+        shareIntent.putExtra(Intent.EXTRA_STREAM, audioUri)
+
+        startActivity(Intent.createChooser(shareIntent, "Share Audio"))
+    }
+
+
+    //*****************************************  Utility Functions  ***********************************************
+
+    private fun skipPrevious(
+        position: Int?,
+        mList: Array<LibraryItemModel>?
+    ) {
+        var position1 = position
+        position1 = position1!! - 1
+
+        if (position1 != null && position1!! >= 0 && position1!! < (mList?.size ?: 0)) {
+            libItem = mList?.get(position1!!)
+        }
+        if (libItem != null) {
+            audioUri = libItem!!.uri!!
+            binding.tvTitleLP.text = libItem!!.title
+            binding.tvMetadataLP.text = libItem!!.metadata
+            // Use Glide to load and set the image
+            context?.let {
+                Glide.with(it)
+                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                    .placeholder(R.drawable.music_thumbnail) // Placeholder image
+                    .error(R.drawable.music_thumbnail) // Error image
+                    .into(binding.imageView) // Set the ImageView you want to load the image into
+                // Use Glide to load and set the image
+                Glide.with(it)
+                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                    .placeholder(R.drawable.placeholder_image) // Placeholder image
+                    .error(R.drawable.placeholder_image) // Error image
+                    .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
+            }
+            binding.ivPlayerLP.setImageResource(R.drawable.play_button)
+
+
+            Log.d("get path", libItem!!.path.toString())
+        }
+        //
+        audioUri?.let { createMediaPlayer(it) }
+    }
+
+    private fun skipNext(
+        position: Int?,
+        mList: Array<LibraryItemModel>?
+    ) {
+        var position1 = position
+        position1 = position1!! + 1
+
+        if (position1 != null && position1!! >= 0 && position1!! < (mList?.size ?: 0)) {
+            libItem = mList?.get(position1!!)
+        }
+        if (libItem != null) {
+            audioUri = libItem!!.uri!!
+            binding.tvTitleLP.text = libItem!!.title
+            binding.tvMetadataLP.text = libItem!!.metadata
+            // Use Glide to load and set the image
+            context?.let {
+                Glide.with(it)
+                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                    .placeholder(R.drawable.music_thumbnail) // Placeholder image
+                    .error(R.drawable.music_thumbnail) // Error image
+                    .into(binding.imageView) // Set the ImageView you want to load the image into
+                // Use Glide to load and set the image
+                Glide.with(it)
+                    .load(libItem!!.albumArt) // Replace with the appropriate URL or resource
+                    .placeholder(R.drawable.placeholder_image) // Placeholder image
+                    .error(R.drawable.placeholder_image) // Error image
+                    .into(binding.ivAvatarLibItem) // Set the ImageView you want to load the image into
+            }
+            binding.ivPlayerLP.setImageResource(R.drawable.play_button)
+
+
+            Log.d("get path", libItem!!.path.toString())
+        }
+        //
+        audioUri?.let { createMediaPlayer(it) }
+    }
 
     private fun setAudioFileData() {
         if (libItem != null) {
@@ -346,8 +437,6 @@ class MyAudioPlayerFragment : Fragment() {
             Log.d("get path", libItem!!.path.toString())
         }
     }
-
-
 
     private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel, position: Int) {
         val filePath =
@@ -399,50 +488,7 @@ class MyAudioPlayerFragment : Fragment() {
     }
 
 
-    private fun createMediaPlayer(filepath: Uri) {
-        val uri = Uri.fromFile(File(filepath.toString()))
-
-        if (::mediaPlayer.isInitialized) {
-            mediaPlayer.release()
-        }
-
-        mediaPlayer = MediaPlayer().apply {
-            context?.let{ setDataSource(it, uri) }
-            prepareAsync()
-
-            setOnPreparedListener { mp ->
-                val durationMillis = mp.duration
-                binding.sbLP.max = 100 // We set the maximum progress to 100 to represent 100%
-                binding.sbLP.progress = 0 // Initially set progress to 0
-
-                binding.tvStartLp.text = "00:00"
-                binding.tvEndLP.text = durationMillis.toLong().convertMillisToMinutes()
-
-                mp.setOnCompletionListener {
-                    binding.sbLP.progress = 0
-                    mediaPlayer.start()
-                }
-            }
-        }
-    }
-
-    private fun updateSeekBar() {
-        updateSeekBarHandler.postDelayed(updateSeekBarRunnable, 100)
-    }
-
-    private val updateSeekBarRunnable = object : Runnable {
-        override fun run() {
-            if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
-                val audioDurationMillis = mediaPlayer.duration
-                val currentPositionMillis = mediaPlayer.currentPosition
-                val progress = (currentPositionMillis.toFloat() / audioDurationMillis) * 100
-                binding.sbLP.progress = progress.toInt()
-                binding.tvStartLp.text = currentPositionMillis.toLong().convertMillisToMinutes()
-                // Update the SeekBar position every 100 milliseconds
-                updateSeekBarHandler.postDelayed(this, 100)
-            }
-        }
-    }
+    //*****************************************  Override Functions  ***********************************************
 
     override fun onDestroy() {
         super.onDestroy()

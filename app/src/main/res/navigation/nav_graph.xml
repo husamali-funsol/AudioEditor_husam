@@ -144,6 +144,9 @@
         <action
             android:id="@+id/action_mainRecorderFragment_to_editAudio"
             app:destination="@id/editAudio" />
+        <action
+            android:id="@+id/action_mainRecorderFragment_to_savedScreenFragment"
+            app:destination="@id/savedScreenFragment" />
     </fragment>
     <fragment
         android:id="@+id/editAudio"

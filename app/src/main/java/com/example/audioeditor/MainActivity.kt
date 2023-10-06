@@ -79,10 +79,11 @@ binding.bottomNavigationView.visibility = View.VISIBLE
 
         val navController = findNavController(R.id.navigation_fragment)
 
-        if(navController.currentDestination?.id == R.id.mainRecorderFragment){
-            showDiscardDialog()
-        }
-        else if(navController.currentDestination?.id in fragmnetsList){
+//        if(navController.currentDestination?.id == R.id.mainRecorderFragment){
+//            showDiscardDialog()
+//        }
+//        else
+        if(navController.currentDestination?.id in fragmnetsList){
             showQuitDialog()
         }
         else{
@@ -103,6 +104,8 @@ binding.bottomNavigationView.visibility = View.VISIBLE
         quitAlertDialog = alertDialogBuilder?.create()
 
         quitDialogView = dialogView
+
+        quitDialogBinding.tvText.text = "Are you sure you want to quit?"
 
 
         quitDialogBinding.tvNo.setOnClickListener {

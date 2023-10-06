@@ -80,6 +80,140 @@ class MyAudioFragment() : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setViewsAndData()
+    }
+
+    //*****************************************  Dialogs  ***********************************************
+
+    private fun showRenameDialog(
+        libItem: LibraryItemModel,
+        position: Int,
+        bottomSheet: BottomSheetDialog
+    ) {
+        val alertDialogBuilder =
+            context?.let {
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+        val parent = renameDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(renameDialogBinding.root)
+        val dialogView = renameDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+
+        if (libItem != null) {
+            // Set the initial text in your EditText (if needed)
+            renameDialogBinding.etRenameRD.setText(libItem!!.title)
+            renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
+
+        }
+
+        renameDialogBinding.tvConfirmRD.setOnClickListener {
+            // Handle the positive button click event here
+            // You can retrieve the text entered in the EditText like this:
+            val enteredText = renameDialogBinding.etRenameRD.text.toString()
+
+            // Implement your logic here (e.g., renameFile(enteredText))
+            val ext = libItem!!.extension
+            Log.d("Debug", "entered text: $enteredText")
+            Log.d("Debug", "ext: $ext")
+            renameFile(enteredText, ext!!, libItem, position)
+
+            alertDialog?.dismiss()
+        }
+
+        renameDialogBinding.tvCancelRD.setOnClickListener {
+            // Handle the negative button click event here
+            // This is where you can cancel the dialog if needed
+            alertDialog?.dismiss()
+
+        }
+
+        alertDialog = alertDialogBuilder?.create()
+        bottomSheet.dismiss()
+        alertDialog!!.show()
+    }
+
+    private fun showDeleteDialog(
+        libItem: LibraryItemModel,
+        position: Int,
+        bottomSheet: BottomSheetDialog
+    ) {
+        val alertDialogBuilder =
+            context?.let {
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+        val parent = deleteDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(deleteDialogBinding.root)
+        val dialogView = deleteDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+
+
+        deleteDialogBinding.tvDeleteBtnDD.setOnClickListener {
+            // Handle the positive button click event here
+            val filePath =
+                libItem.path
+            val originalFile = File(filePath!!)
+
+            if (originalFile.exists()) {
+                originalFile.delete()
+                context?.scanFiles(originalFile)
+
+            }
+
+            context?.refreshMediaStoreForAudioFiles()
+            adapter.itemRemoved(position)
+            getList()
+            alertDialog?.dismiss()
+        }
+
+        deleteDialogBinding.tvCancelDD.setOnClickListener {
+            alertDialog?.dismiss()
+        }
+
+        alertDialog = alertDialogBuilder?.create()
+        bottomSheet.dismiss()
+        alertDialog!!.show()
+    }
+
+    //*****************************************  Bottom Sheet  ***********************************************
+
+    private fun openShareBottomSheet(libItem: LibraryItemModel) {
+        val shareIntent = Intent(Intent.ACTION_SEND)
+        shareIntent.type = "audio/*"
+
+        audioUri = libItem.uri!!
+
+        shareIntent.putExtra(Intent.EXTRA_STREAM, audioUri)
+
+        startActivity(Intent.createChooser(shareIntent, "Share Audio"))
+    }
+
+    private fun showDetailsBottomSheet(
+        libItem: LibraryItemModel,
+        bottomSheet: BottomSheetDialog
+    ) {
+        val detailsBottomSheet = BottomSheetDialog(requireContext())
+        val parent = detailsBottomSheetDialogBinding.root.parent as? ViewGroup
+        parent?.removeView(detailsBottomSheetDialogBinding.root)
+        detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
+
+        if (libItem != null) {
+            detailsBottomSheetDialogBinding.tvSetFilename.text = libItem!!.title
+            detailsBottomSheetDialogBinding.tvSetTime.text = libItem!!.time
+            detailsBottomSheetDialogBinding.tvSetPath.text = libItem!!.path
+            detailsBottomSheetDialogBinding.tvSetSize.text = libItem!!.size
+        }
+        bottomSheet.dismiss()
+
+        detailsBottomSheetDialogBinding.tvOkDetails.setOnClickListener {
+            detailsBottomSheet.dismiss()
+        }
+
+        detailsBottomSheet.show()
+    }
+
+    //***************************************** Utility Functions  ***********************************************
+
+    private fun setViewsAndData() {
         context?.refreshMediaStoreForAudioFiles()
 //        listAudioFiles()
 
@@ -124,7 +258,6 @@ class MyAudioFragment() : Fragment() {
                     binding.tvNoAudio.visibility= View.GONE
                 }
             }
-
         }
     }
 
@@ -159,7 +292,6 @@ class MyAudioFragment() : Fragment() {
 //        callBack.invoke(libList, position)
     }
 
-
     private fun showOptions(libItem: LibraryItemModel, position: Int) {
         val bottomSheet = BottomSheetDialog(requireContext())
         val parent = libraryBottomSheetDialogBinding.root.parent as? ViewGroup
@@ -173,120 +305,22 @@ class MyAudioFragment() : Fragment() {
 
         libraryBottomSheetDialogBinding.tvRenameLibSheet.setOnClickListener {
 //                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
-            val alertDialogBuilder =
-                context?.let{
-                    AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-                }
-            val parent = renameDialogBinding.root.parent as? ViewGroup
-            parent?.removeView(renameDialogBinding.root)
-            val dialogView = renameDialogBinding.root
-            alertDialogBuilder?.setView(dialogView)
-
-            if (libItem != null) {
-                // Set the initial text in your EditText (if needed)
-                renameDialogBinding.etRenameRD.setText(libItem!!.title)
-                renameDialogBinding.etRenameRD.setSelection(renameDialogBinding.etRenameRD.length())//placing cursor at the end of the text
-
-            }
-
-            renameDialogBinding.tvConfirmRD.setOnClickListener {
-                // Handle the positive button click event here
-                // You can retrieve the text entered in the EditText like this:
-                val enteredText = renameDialogBinding.etRenameRD.text.toString()
-
-                // Implement your logic here (e.g., renameFile(enteredText))
-                val ext = libItem!!.extension
-                Log.d("Debug", "entered text: $enteredText")
-                Log.d("Debug", "ext: $ext")
-                renameFile(enteredText, ext!!, libItem, position)
-
-                alertDialog?.dismiss()
-            }
-
-            renameDialogBinding.tvCancelRD.setOnClickListener {
-                // Handle the negative button click event here
-                // This is where you can cancel the dialog if needed
-                alertDialog?.dismiss()
-
-            }
-
-            alertDialog = alertDialogBuilder?.create()
-            bottomSheet.dismiss()
-            alertDialog!!.show()
+            showRenameDialog(libItem, position, bottomSheet)
         }
 
         libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
-            val detailsBottomSheet = BottomSheetDialog(requireContext())
-            val parent = detailsBottomSheetDialogBinding.root.parent as? ViewGroup
-            parent?.removeView(detailsBottomSheetDialogBinding.root)
-            detailsBottomSheet.setContentView(detailsBottomSheetDialogBinding.root)
-
-            if (libItem != null) {
-                detailsBottomSheetDialogBinding.tvSetFilename.text = libItem!!.title
-                detailsBottomSheetDialogBinding.tvSetTime.text = libItem!!.time
-                detailsBottomSheetDialogBinding.tvSetPath.text = libItem!!.path
-                detailsBottomSheetDialogBinding.tvSetSize.text = libItem!!.size
-            }
-            bottomSheet.dismiss()
-
-            detailsBottomSheetDialogBinding.tvOkDetails.setOnClickListener {
-                detailsBottomSheet.dismiss()
-            }
-
-            detailsBottomSheet.show()
-
+            showDetailsBottomSheet(libItem, bottomSheet)
 
         }
 
         libraryBottomSheetDialogBinding.tvShareLibSheet.setOnClickListener {
 
-            val shareIntent = Intent(Intent.ACTION_SEND)
-            shareIntent.type = "audio/*"
-
-            audioUri = libItem.uri!!
-
-            shareIntent.putExtra(Intent.EXTRA_STREAM, audioUri)
-
-            startActivity(Intent.createChooser(shareIntent, "Share Audio"))
+            openShareBottomSheet(libItem)
         }
 
         libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
 //                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
-            val alertDialogBuilder =
-                context?.let{
-                    AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
-                }
-            val parent = deleteDialogBinding.root.parent as? ViewGroup
-            parent?.removeView(deleteDialogBinding.root)
-            val dialogView = deleteDialogBinding.root
-            alertDialogBuilder?.setView(dialogView)
-
-
-            deleteDialogBinding.tvDeleteBtnDD.setOnClickListener {
-                // Handle the positive button click event here
-                val filePath =
-                    libItem.path
-                val originalFile = File(filePath!!)
-
-                if (originalFile.exists()) {
-                    originalFile.delete()
-                    context?.scanFiles(originalFile)
-
-                }
-
-                context?.refreshMediaStoreForAudioFiles()
-                adapter.itemRemoved(position)
-                getList()
-                alertDialog?.dismiss()
-            }
-
-            deleteDialogBinding.tvCancelDD.setOnClickListener {
-                alertDialog?.dismiss()
-            }
-
-            alertDialog = alertDialogBuilder?.create()
-            bottomSheet.dismiss()
-            alertDialog!!.show()
+            showDeleteDialog(libItem, position, bottomSheet)
 
         }
         bottomSheet.show()

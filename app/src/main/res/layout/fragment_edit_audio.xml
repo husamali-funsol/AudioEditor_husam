@@ -20,16 +20,17 @@
 
     <TextView
         android:id="@+id/tvFragmentTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
+        android:ellipsize="end"
         android:fontFamily="@font/poppins_medium"
         android:includeFontPadding="false"
-        android:text="Audio Title"
         android:maxLines="1"
-        android:ellipsize="end"
+        android:text="Audio Title"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="@+id/btnBack"
+        app:layout_constraintEnd_toStartOf="@+id/btnMore"
         app:layout_constraintStart_toEndOf="@+id/btnBack"
         app:layout_constraintTop_toTopOf="@+id/btnBack" />
 

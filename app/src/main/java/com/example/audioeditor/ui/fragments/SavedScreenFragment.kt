@@ -39,8 +39,14 @@ class SavedScreenFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val abc = arguments?.getString("AUDIO_URI")
-        val name = File(abc).name
+        var abc: String? = null
+
+
+        abc= arguments?.getString("AUDIO_URI")
+        if(abc==null){
+        abc = arguments?.getString("AUDIO_FILEPATH")}
+
+        val name = abc?.let { File(it).name }
         binding.tvMusicTitle.text = name
 
         binding.btnBack.setOnOneClickListener {
@@ -93,11 +99,11 @@ class SavedScreenFragment : Fragment() {
         )
         for (textView in allTextViews) {
 //            textView.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.white))
-            textView.setBackgroundResource(R.drawable.button_outlined)
+            textView.setBackgroundResource(R.drawable.button_bg_light_blue_rounded)
             textView.setTextColor(
                 ContextCompat.getColor(
                     requireContext(),
-                    R.color.appBlue
+                    R.color.textColorBlack
                 )
             )  // Set your desired text color here
         }
@@ -106,7 +112,7 @@ class SavedScreenFragment : Fragment() {
         Log.d(TAG, "onTextViewClick: $selected")
 
         // Change the background color of the clicked TextView to blue
-        clickedTextView.setBackgroundResource(R.drawable.button_bg)
+        clickedTextView.setBackgroundResource(R.drawable.button_bg_rounded)
         clickedTextView.setTextColor(
             ContextCompat.getColor(
                 requireContext(),

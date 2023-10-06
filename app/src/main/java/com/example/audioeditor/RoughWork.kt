@@ -4,10 +4,17 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import com.example.audioeditor.models.LibraryItemModel
+import com.example.audioeditor.utils.getStorageDir
+import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
+import com.example.audioeditor.utils.showSmallLengthToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 //    private fun renameFile(newName: String, ext: String, libItem: LibraryItemModel) {
 //        val filePath =
@@ -196,4 +203,83 @@ import kotlinx.coroutines.withContext
 ////            binding.ivNoAudio.visibility= View.VISIBLE
 ////            binding.tvNoAudio.visibility= View.VISIBLE
 //    }
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//private fun renameAndMoveFile(newName: String, ext: String, libItem: LibraryItemModel, position: Int) {
+//    var filePath: String? = null
+//    if(lastFunctionCalled == null){
+//        filePath = libItem.path
+//    }
+//    else{
+//        when(lastFunctionCalled){
+//            "speed" -> filePath = outputPathSpeed
+//            "trim" -> filePath = outputPathTrim
+//        }
+//    }
+//    val newFileName = "$newName.$ext" // Provide the new file name
+//    val originalFile = File(filePath!!)
+//    // Create a File object for the new file with the desired name
+//    val outputDir = getStorageDir()
+//    val recorderFolder = File(outputDir, "FunsolAudioRecorder")
+////        val directoryPath = originalFile.parentFile // Get the directory path
+//    val newFile = File(recorderFolder, newFileName)
+//
+//    // Rename the file
+//    if (originalFile.exists()) {
+//        if (originalFile.renameTo(newFile)) {
+//
+//            val newPath =
+//                newFile.path
+//            val updatedFile = File(newPath!!)
+//
+//            val currentTimeMillis = System.currentTimeMillis()
+//            newFile.setLastModified(currentTimeMillis)
+//            originalFile.setLastModified(currentTimeMillis)
+//            libItem.time =  SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.getDefault()).format(
+//                Date(currentTimeMillis)
+//            )
+//            val fileSizeInBytes = newFile.length()
+//            val fileSizeInMB = fileSizeInBytes / (1024 * 1024)
+//
+//            libItem.size = "${fileSizeInMB}MB"
+//            // Refresh the MediaStore to reflect the changes
+//            context?.refreshMediaStore(updatedFile)
+//            context?.showSmallLengthToast("Renaming Successful")
+////                adapter.itemUpdated(position, viewModel.getSingleFile(position))
+//
+//        } else {
+//            // Failed to rename the file
+//            // Handle the error accordingly
+//            context?.showSmallLengthToast("Renaming Failed")
+//        }
+//    } else {
+//        // The original file does not exist
+//        context?.showSmallLengthToast("Original File does not exist")
+//    }
+//
+//    val newPath =
+//        newFile.path
+//
+//    val updatedFile = File(newPath)
+//    libItem.path = newPath
+//    context?.refreshMediaStore(updatedFile)
+//
+//    context?.refreshMediaStoreForAudioFiles()
+////        getList()
+//
+//    val fileNameWithExtension = updatedFile.name // This gives you "file.txt"
+//    binding.tvFragmentTitle.text = fileNameWithExtension.substringBeforeLast(".")
+//    libItem.title = fileNameWithExtension.substringBeforeLast(".")
 //}

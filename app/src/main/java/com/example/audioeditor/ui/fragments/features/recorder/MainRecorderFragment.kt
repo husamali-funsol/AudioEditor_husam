@@ -6,10 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.navigation.fragment.findNavController
 import com.example.audioeditor.R
 import com.example.audioeditor.databinding.DiscardDialogBinding
 import com.example.audioeditor.databinding.FragmentMainRecorderBinding
+import com.example.audioeditor.databinding.QuitDialogBinding
 import com.example.audioeditor.ui.fragments.features.recorder.listen.ListenFragment
 import com.example.audioeditor.ui.fragments.features.recorder.recorder.RecorderFragment
 import com.example.audioeditor.ui.fragments.library.ViewPagerAdapter
@@ -35,6 +37,12 @@ class MainRecorderFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        var index = 0
+        val temp = arguments?.getInt("VIEWPAGER_INDEX")
+        if(temp!= null){
+            index = temp
+        }
+
         val adapter = ViewPagerAdapter(childFragmentManager)
 
         adapter.addFragment(RecorderFragment(), "Recorder")
@@ -42,10 +50,13 @@ class MainRecorderFragment : Fragment() {
 
         binding.viewPager.adapter = adapter
         binding.tabs.setupWithViewPager(binding.viewPager)
+        binding.viewPager.currentItem = index
 
         binding.btnBack.setOnOneClickListener{
 
-            showDiscardDialog()
+//            showDiscardDialog()
+
+            showQuitDialog()
 
         }
 
@@ -93,5 +104,53 @@ class MainRecorderFragment : Fragment() {
 
         discardAlertDialog!!.show()
     }
+
+    private fun showQuitDialog() {
+
+        var quitAlertDialog: AlertDialog? = null
+        val quitDialogBinding by lazy {
+            QuitDialogBinding.inflate(layoutInflater)
+        }
+        var quitDialogView: ConstraintLayout? = null
+
+        val alertDialogBuilder =
+            context?.let {
+                AlertDialog.Builder(it, R.style.CustomAlertDialogStyle)
+            }
+
+
+        val dialogView = quitDialogBinding.root
+        alertDialogBuilder?.setView(dialogView)
+        quitAlertDialog = alertDialogBuilder?.create()
+
+        quitDialogView = dialogView
+
+            quitDialogBinding.tvText.text = "Are you sure you want to quit?"
+
+
+        quitDialogBinding.tvNo.setOnClickListener {
+            context?.performHapticFeedback()
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitDialogBinding.tvYes.setOnClickListener {
+            context?.performHapticFeedback()
+            // Clear the back stack and navigate to the home fragment
+            findNavController().apply {
+                if (currentDestination?.id == R.id.mainRecorderFragment) {
+                    popBackStack()
+                    navigate(R.id.homeFragment)
+                }
+            }
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitAlertDialog?.setOnDismissListener {
+            dismissDialog(quitAlertDialog, quitDialogView)
+        }
+
+        quitAlertDialog!!.show()
+    }
+
 
 }
