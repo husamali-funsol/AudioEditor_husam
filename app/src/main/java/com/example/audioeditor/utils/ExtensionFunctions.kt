@@ -53,6 +53,16 @@ fun View.setOnOneClickListener(debounceTime: Long = 600L, action: () -> Unit) {
 }
 
 
+fun String.getVideoThumbnail(): Bitmap? { //videopath.getvideothumbnail
+    val thumbnailPath = this.replace(".mp4", "_thumbnail.jpg") // Example: Replace with your naming convention
+    val thumbnailFile = File(thumbnailPath)
+
+    if (thumbnailFile.exists()) {
+        return BitmapFactory.decodeFile(thumbnailFile.absolutePath)
+    }
+
+    return null // Return null if thumbnail doesn't exist
+}
 
 
     fun Context.getAlbumArtwork(albumId: Long): Bitmap? {

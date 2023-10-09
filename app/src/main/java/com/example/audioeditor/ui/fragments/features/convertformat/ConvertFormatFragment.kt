@@ -160,7 +160,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
     }
 
 
-    //***************************************** MAudio Upload ***********************************************
+    //***************************************** Audio Upload ***********************************************
 
     private val audioFileLauncher = registerForActivityResult(AudioFileContract()) { uri: Uri? ->
         if (uri != null) {
@@ -260,10 +260,21 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             //problem whil econverting to m4a===========================
             //retry it again with above commands.==================================
 
+            var codecUsed = ""
+
+            when (selected.lowercase()) {
+                "mp3" -> codecUsed = "libmp3lame"
+                "aac" -> codecUsed = "aac"
+                "wav" -> codecUsed = "pcm_s16le"
+                "m4a" -> codecUsed = "aac"
+                "flac" -> codecUsed = "flac"
+                "ogg" -> codecUsed = "libvorbis"
+            }
 
             val cmd = arrayOf(
                 "-y",
                 "-i", inputAudioPath,
+                "-c:a", codecUsed,
                 outputPath
             )
 

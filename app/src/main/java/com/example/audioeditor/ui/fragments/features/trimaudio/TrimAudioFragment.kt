@@ -270,7 +270,6 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
                     binding.tvCropWindowRight.text = mediaPlayer.duration.formatDuration()
                     binding.tvCropWindowLeft.text = 0.formatDuration()
 
-
                     trimIn = true
                     trimOut = false
                 } else {
@@ -489,6 +488,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
                 }
             }
         }
+
         binding.btnRedo.setOnOneClickListener{
             Log.d(TAG, "onViewCreated: redo ${binding.btnRedo.isClickable}")
             Log.d(TAG, "onViewCreated: redo ${currentIndex}")
@@ -526,20 +526,10 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
     override fun onPause() {
         super.onPause()
 
-        if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
-            mediaPlayer.pause()
-            updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
-        }
+        pauseMediaPlayer()
     }
 
-    override fun onResume() {
-        super.onResume()
 
-        if(::mediaPlayer.isInitialized){
-            mediaPlayer.start()
-            updateSeekBar()
-        }
-    }
 
     //***************************************** Audio Upload ***********************************************
 
@@ -652,11 +642,11 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
 
             if(trimIn){
                 pauseMediaPlayer()
-                trimInAudio()
+                trimInAudio(name)
             }
             else if (trimOut){
                 pauseMediaPlayer()
-                trimOutAudio()
+                trimOutAudio(name)
             }
             dismissDialog(renameAlertDialog, renameDialogView)
 
@@ -710,6 +700,8 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
 
             setOnPreparedListener { mp ->
                 binding.waveform.visibility = View.VISIBLE
+                cropLeft=0f
+                cropRight=1f
                 if (uri != null) {
                     binding.waveform.setSampleFrom(uri)
                 }
@@ -718,13 +710,14 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
 
                 val durationMillis = mp.duration
                 binding.tvCurrentDuration.text = mp.currentPosition.formatDuration()
-                binding.tvEndDuration.text = durationMillis.formatDuration()
+                binding.tvEndDuration.text = mediaPlayer.duration.formatDuration()
+
                 val cropLeftProgress = cropLeft*100
                 val cropRightProgress = cropRight*100
                 val cropLeftDuration = cropLeftProgress * durationMillis
                 val cropRightDuration = cropRightProgress * durationMillis
                 binding.tvCropWindowLeft.text = cropLeftDuration.toInt().formatDuration()
-                binding.tvCropWindowRight.text = cropRightDuration.toInt().formatDuration()
+                binding.tvCropWindowRight.text = mediaPlayer.duration.formatDuration()
 
                 mp.setOnCompletionListener {
                     binding.waveform.progress = 0F
@@ -1022,24 +1015,15 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
     private fun startFadeInIncrease() {
         valueUpdateRunnable = Runnable {
             val currentValue = fadeInBinding.scrollRuler.currentPositionValue
-            if (currentValue <= 4.9) {
-                fadeInBinding.scrollRuler.scrollToValue(currentValue + 0.1f)
-                valueUpdateRunnable?.let {
-                    valueUpdateHandler.postDelayed(
-                        it,
-                        100
-                    )
-                } // Adjust the delay as needed
-            }
-        }
-        valueUpdateHandler.post(valueUpdateRunnable!!)
-    }
+            Log.d(TAG, "startFadeInIncrease: $currentValue")
+            if (currentValue <= 5) {
 
-    private fun startFadeOutIncrease() {
-        valueUpdateRunnable = Runnable {
-            val currentValue = fadeOutBinding.scrollRuler.currentPositionValue
-            if (currentValue <= 4.9) {
-                fadeOutBinding.scrollRuler.scrollToValue(currentValue + 0.1f)
+                var x = currentValue + 1f
+                if(x>5){
+                    x=5f
+                }
+                Log.d(TAG, "startFadeInIncrease: XXXTentacion $x")
+                fadeInBinding.scrollRuler.scrollToValue(x)
                 valueUpdateRunnable?.let {
                     valueUpdateHandler.postDelayed(
                         it,
@@ -1054,6 +1038,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
     private fun startFadeInDecrease() {
         valueUpdateRunnable = Runnable {
             val currentValue = fadeInBinding.scrollRuler.currentPositionValue
+            Log.d(TAG, "startFadeInDecrease: $currentValue")
             if (currentValue >= 0.1) {
                 fadeInBinding.scrollRuler.scrollToValue(currentValue - 0.1f)
                 valueUpdateRunnable?.let {
@@ -1066,6 +1051,32 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
         }
         valueUpdateHandler.post(valueUpdateRunnable!!)
     }
+
+    private fun startFadeOutIncrease() {
+        valueUpdateRunnable = Runnable {
+            val currentValue = fadeOutBinding.scrollRuler.currentPositionValue
+            Log.d(TAG, "startFadeOutIncrease: $currentValue")
+            if (currentValue <= 5) {
+
+                var x = currentValue + 1f
+                if(x>5){
+                    x=5f
+                }
+                Log.d(TAG, "startFadeInIncrease: XXXTentacion $x")
+                fadeOutBinding.scrollRuler.scrollToValue(x)
+
+                valueUpdateRunnable?.let {
+                    valueUpdateHandler.postDelayed(
+                        it,
+                        100
+                    )
+                } // Adjust the delay as needed
+            }
+        }
+        valueUpdateHandler.post(valueUpdateRunnable!!)
+    }
+
+
 
     private fun startFadeOutDecrease() {
         valueUpdateRunnable = Runnable {
@@ -1129,7 +1140,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
 
     //*****************************************   FFmpeg Functions  ***********************************************
 
-    private fun trimInAudio() {
+    private fun trimInAudio(name: String) {
         var durationInMillis = ((cropLeft) * (mediaPlayer.duration).toFloat()).toInt()
         val formattedDurationStart = durationInMillis.formatDuration()
 
@@ -1151,7 +1162,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
             }
 
             val outputFile = extension?.let {
-                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
+                name.getOutputFile(it)
             }
             outputPath = outputFile!!.path
 
@@ -1171,7 +1182,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
         }
     }
 
-    private fun trimOutAudio() {
+    private fun trimOutAudio(name: String) {
 
         var durationInMillis = ((cropLeft) * (mediaPlayer.duration).toFloat()).toInt()
         val formattedDurationStart = durationInMillis.formatDuration()
@@ -1208,7 +1219,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
             val outputPath2 = outputFile2!!.path
 
             val outputFile = extension?.let {
-                "temp_audio_${getCurrentTimestampString()}".getOutputFile(it)
+                name.getOutputFile(it)
             }
             outputPath = outputFile!!.path
 

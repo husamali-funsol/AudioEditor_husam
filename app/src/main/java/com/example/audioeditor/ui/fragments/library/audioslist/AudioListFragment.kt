@@ -18,7 +18,7 @@ import com.example.audioeditor.R
 import com.example.audioeditor.databinding.BottomSheetDetailsBinding
 import com.example.audioeditor.databinding.BottomSheetLibraryBinding
 import com.example.audioeditor.databinding.DeleteDialogBinding
-import com.example.audioeditor.databinding.FragmentMyAudioBinding
+import com.example.audioeditor.databinding.FragmentAudioListBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.repo.AppRepo
 import com.example.audioeditor.ui.fragments.library.LibraryItemAdapter
@@ -37,10 +37,10 @@ import java.util.ArrayList
 
 private const val TAG = "hello"
 
-class MyAudioFragment() : Fragment() {
+class AudioListFragment() : Fragment() {
 
     private val binding by lazy {
-        FragmentMyAudioBinding.inflate(layoutInflater)
+        FragmentAudioListBinding.inflate(layoutInflater)
     }
 
 

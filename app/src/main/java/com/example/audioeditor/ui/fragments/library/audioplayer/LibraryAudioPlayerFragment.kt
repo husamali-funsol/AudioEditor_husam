@@ -18,7 +18,7 @@ import com.example.audioeditor.R
 import com.example.audioeditor.databinding.BottomSheetDetailsBinding
 import com.example.audioeditor.databinding.BottomSheetLibraryBinding
 import com.example.audioeditor.databinding.DeleteDialogBinding
-import com.example.audioeditor.databinding.FragmentMyAudioPlayerBinding
+import com.example.audioeditor.databinding.FragmentLibraryAudioPlayerBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.models.LibraryItemModel
 import com.example.audioeditor.utils.convertMillisToMinutes
@@ -31,10 +31,10 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
 
 
-class MyAudioPlayerFragment : Fragment() {
+class LibraryAudioPlayerFragment : Fragment() {
 
     private val binding by lazy {
-        FragmentMyAudioPlayerBinding.inflate(layoutInflater)
+        FragmentLibraryAudioPlayerBinding.inflate(layoutInflater)
     }
 
     private val libraryBottomSheetDialogBinding by lazy {
@@ -309,20 +309,20 @@ class MyAudioPlayerFragment : Fragment() {
             libraryBottomSheetDialogBinding.tvMetaDataLibSheet.text = libItem!!.metadata
         }
 
-        libraryBottomSheetDialogBinding.tvRenameLibSheet.setOnClickListener {
+        libraryBottomSheetDialogBinding.viewRename.setOnClickListener {
             //                renameDialogBinding = RenameDialogBinding.inflate(layoutInflater)
             showRenameDialog(position, bottomSheet)
         }
 
-        libraryBottomSheetDialogBinding.tvDetailLibSheet.setOnClickListener {
+        libraryBottomSheetDialogBinding.viewDetail.setOnClickListener {
             openDetailsBottomSheet(bottomSheet)
         }
 
-        libraryBottomSheetDialogBinding.tvShareLibSheet.setOnClickListener {
+        libraryBottomSheetDialogBinding.viewShare.setOnClickListener {
             openShareIntent()
         }
 
-        libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
+        libraryBottomSheetDialogBinding.viewDelete.setOnClickListener {
             //                deleteDialogBinding = DeleteDialogBinding.inflate(layoutInflater)
             showDeleteDialog(bottomSheet)
 

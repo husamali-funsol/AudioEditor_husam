@@ -96,5 +96,10 @@ dependencies {
     //rangeview for trim
 //    implementation ("com.github.iammert:rangeview:0.1")
 
+    //exoplayer
+    implementation ("androidx.media3:media3-exoplayer:1.1.1")
+    implementation ("androidx.media3:media3-exoplayer-dash:1.1.1")
+    implementation ("androidx.media3:media3-ui:1.1.1")
+
 
 }

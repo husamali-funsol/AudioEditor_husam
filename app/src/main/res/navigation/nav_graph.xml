@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+ <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
@@ -44,6 +44,9 @@
         <action
             android:id="@+id/action_homeFragment_to_mainRecorderFragment"
             app:destination="@id/mainRecorderFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_videoToAudioFragment"
+            app:destination="@id/videoToAudioFragment" />
     </fragment>
     <fragment
         android:id="@+id/libraryFragment"
@@ -59,6 +62,9 @@
         <action
             android:id="@+id/action_libraryFragment_to_myAudioPlayerFragment2"
             app:destination="@id/myAudioPlayerFragment" />
+        <action
+            android:id="@+id/action_libraryFragment_to_libraryVideoPlayerFragment"
+            app:destination="@id/libraryVideoPlayerFragment" />
     </fragment>
     <fragment
         android:id="@+id/settingsFragment"
@@ -67,17 +73,17 @@
         tools:layout="@layout/fragment_settings" />
     <fragment
         android:id="@+id/myAudioFragment"
-        android:name="com.example.audioeditor.ui.fragments.library.audioslist.MyAudioFragment"
+        android:name="com.example.audioeditor.ui.fragments.library.audioslist.AudioListFragment"
         android:label="fragment_my_audio"
-        tools:layout="@layout/fragment_my_audio" />
+        tools:layout="@layout/fragment_audio_list" />
     <fragment
         android:id="@+id/myVideoFragment"
-        android:name="com.example.audioeditor.ui.fragments.library.videoslist.MyVideoFragment"
+        android:name="com.example.audioeditor.ui.fragments.library.videoslist.VideoListFragment"
         android:label="fragment_my_video"
-        tools:layout="@layout/fragment_my_video" />
+        tools:layout="@layout/fragment_video_list" />
     <fragment
         android:id="@+id/myAudioPlayerFragment"
-        android:name="com.example.audioeditor.ui.fragments.library.audioplayer.MyAudioPlayerFragment"
+        android:name="com.example.audioeditor.ui.fragments.library.audioplayer.LibraryAudioPlayerFragment"
         android:label="MyAudioPlayerFragment" />
     <fragment
         android:id="@+id/convertFormat"
@@ -153,5 +159,15 @@
         android:name="com.example.audioeditor.ui.fragments.features.recorder.editaudio.EditAudioFragment"
         android:label="fragment_edit_audio"
         tools:layout="@layout/fragment_edit_audio" />
+    <fragment
+        android:id="@+id/videoToAudioFragment"
+        android:name="com.example.audioeditor.ui.fragments.features.videotoaudio.VideoToAudioFragment"
+        android:label="fragment_video_to_audio"
+        tools:layout="@layout/fragment_video_to_audio" />
+    <fragment
+        android:id="@+id/libraryVideoPlayerFragment"
+        android:name="com.example.audioeditor.ui.fragments.library.videoplayer.LibraryVideoPlayerFragment"
+        android:label="fragment_library_video_player"
+        tools:layout="@layout/fragment_library_video_player" />
 
 </navigation>

@@ -49,6 +49,7 @@
             android:id="@+id/ivRenameLibSheet"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="3dp"
             android:layout_marginTop="32dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/ivAvatarLibSheet"
@@ -70,6 +71,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:padding="3dp"
+
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/ivRenameLibSheet"
             app:srcCompat="@drawable/ic_detail" />
@@ -80,6 +83,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:text="Detail"
+
             app:layout_constraintBottom_toBottomOf="@+id/ivDetailLibSheet"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/ivDetailLibSheet"
@@ -90,6 +94,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:padding="3dp"
+
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/ivDetailLibSheet"
             app:srcCompat="@drawable/ic_share" />
@@ -109,6 +115,8 @@
             android:id="@+id/ivDeleteLibSheet"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="3dp"
+
             android:layout_marginTop="16dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/ivShareLibSheet"
@@ -124,6 +132,45 @@
             app:layout_constraintBottom_toBottomOf="@+id/ivDeleteLibSheet"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/ivDeleteLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivDeleteLibSheet" />
+
+        <View
+            android:id="@+id/viewRename"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/ivRenameLibSheet"
+            app:layout_constraintEnd_toEndOf="@+id/tvRenameLibSheet"
+            app:layout_constraintStart_toStartOf="@+id/ivRenameLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivRenameLibSheet" />
+
+
+        <View
+            android:id="@+id/viewDetail"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/ivDetailLibSheet"
+            app:layout_constraintEnd_toEndOf="@+id/tvDetailLibSheet"
+            app:layout_constraintStart_toStartOf="@+id/ivDetailLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivDetailLibSheet" />
+
+
+        <View
+            android:id="@+id/viewShare"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/ivShareLibSheet"
+            app:layout_constraintEnd_toEndOf="@+id/tvShareLibSheet"
+            app:layout_constraintStart_toStartOf="@+id/ivShareLibSheet"
+            app:layout_constraintTop_toTopOf="@+id/ivShareLibSheet" />
+
+
+        <View
+            android:id="@+id/viewDelete"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/ivDeleteLibSheet"
+            app:layout_constraintEnd_toEndOf="@+id/tvDeleteLibSheet"
+            app:layout_constraintStart_toStartOf="@+id/ivDeleteLibSheet"
             app:layout_constraintTop_toTopOf="@+id/ivDeleteLibSheet" />
 
 

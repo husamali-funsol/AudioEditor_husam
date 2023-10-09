@@ -11,6 +11,7 @@ import com.example.audioeditor.utils.getAlbumArtwork
 import com.example.audioeditor.utils.getAudioFileDuration
 import com.example.audioeditor.utils.getFileSize
 import com.example.audioeditor.utils.getVideoFileDuration
+import com.example.audioeditor.utils.getVideoThumbnail
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -243,6 +244,8 @@ class AppRepo(private val appContext: Context) {
             MediaStore.Video.Media.SIZE,
             MediaStore.Video.Media.DATE_MODIFIED,
             MediaStore.Video.Media.DATE_ADDED,
+            MediaStore.Video.Media.ALBUM // Include the album ID in the projection
+
 
             // Add other fields you need
         )
@@ -278,6 +281,7 @@ class AppRepo(private val appContext: Context) {
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
             val dateModifiedColumn =
                 cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_MODIFIED)
+            val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.ALBUM)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
@@ -310,6 +314,8 @@ class AppRepo(private val appContext: Context) {
 
                 val metadata = "$durationFormatted | $sizeMB | $extension"
 
+                val thumbnail = path.getVideoThumbnail()
+
                 // Create an VideoItemViewModel or a data structure of your choice
                 val VideoItem =
                     LibraryItemModel(
@@ -321,6 +327,7 @@ class AppRepo(private val appContext: Context) {
                         extension,
                         sizeMB,
                         modifiedDateTime,
+                        thumbnail
                     )
 
 

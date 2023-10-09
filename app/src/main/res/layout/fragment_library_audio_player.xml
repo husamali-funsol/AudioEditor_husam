@@ -5,7 +5,45 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    tools:context=".ui.fragments.library.audioplayer.MyAudioPlayerFragment">
+    tools:context=".ui.fragments.library.audioplayer.LibraryAudioPlayerFragment">
+
+    <ImageButton
+        android:id="@+id/ibBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="10dp"
+        android:background="@color/white"
+        app:layout_constraintEnd_toStartOf="@+id/tvMAText"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_backarrow" />
+
+    <TextView
+        android:id="@+id/tvMAText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_medium"
+        android:text="My Audio"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/ibBack"
+        app:layout_constraintEnd_toStartOf="@+id/ibMoreLP"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/ibBack"
+        app:layout_constraintTop_toTopOf="@+id/ibBack" />
+
+    <ImageButton
+        android:id="@+id/ibMoreLP"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="10dp"
+        android:background="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tvMAText"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_more" />
 
     <ImageView
         android:id="@+id/imageView"
@@ -134,43 +172,11 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.6" />
 
-    <TextView
-        android:id="@+id/tvMAText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/poppins_medium"
-        android:text="My Audio"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toBottomOf="@+id/ibBack"
-        app:layout_constraintEnd_toStartOf="@+id/ibMoreLP"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/ibBack"
-        app:layout_constraintTop_toTopOf="@+id/ibBack" />
 
-    <ImageButton
-        android:id="@+id/ibMoreLP"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:padding="10dp"
-        android:background="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tvMAText"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_more" />
 
-    <ImageButton
-        android:id="@+id/ibBack"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:padding="10dp"
-        android:background="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/tvMAText"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_chainStyle="spread_inside"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_backarrow" />
+
+
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

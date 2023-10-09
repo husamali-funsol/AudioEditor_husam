@@ -37,6 +37,32 @@
                 app:layout_constraintStart_toEndOf="@+id/btnBack"
                 app:layout_constraintTop_toTopOf="@+id/btnBack" />
 
+            <ImageView
+                android:id="@+id/btnRedo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="30dp"
+                android:clickable="false"
+                android:padding="5dp"
+                android:focusable="false"
+                android:src="@drawable/ic_redo_disabled"
+                app:layout_constraintBottom_toBottomOf="@+id/btnSave"
+                app:layout_constraintEnd_toStartOf="@+id/btnSave"
+                app:layout_constraintTop_toTopOf="@+id/btnSave" />
+
+            <ImageView
+                android:id="@+id/btnUndo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20dp"
+                android:clickable="false"
+                android:focusable="false"
+                android:padding="5dp"
+                android:src="@drawable/ic_undo_disabled"
+                app:layout_constraintBottom_toBottomOf="@+id/btnSave"
+                app:layout_constraintEnd_toStartOf="@+id/btnRedo"
+                app:layout_constraintTop_toTopOf="@+id/btnSave" />
+
             <TextView
                 android:id="@+id/btnSave"
                 android:layout_width="wrap_content"
@@ -241,7 +267,6 @@
                 android:text="00:00:00"
                 android:textColor="@color/appBlue"
                 android:includeFontPadding="false"
-
                 android:textSize="10sp"
                 app:layout_constraintBottom_toBottomOf="@+id/ivMinusLeft"
                 app:layout_constraintStart_toEndOf="@+id/ivMinusLeft"
@@ -336,7 +361,6 @@
                 android:paddingRight="12dp"
                 android:paddingBottom="10dp"
                 android:includeFontPadding="false"
-
                 android:text="MP3"
                 android:textAlignment="center"
                 android:textColor="@color/white"
@@ -360,7 +384,6 @@
                 android:text="WAV"
                 android:textAlignment="center"
                 android:includeFontPadding="false"
-
                 android:textColor="@color/textColorDarkGrey"
                 android:textSize="12sp"
                 app:layout_constraintEnd_toEndOf="@+id/ivAddRight"
@@ -384,7 +407,6 @@
                 android:textAlignment="center"
                 android:textColor="@color/textColorDarkGrey"
                 android:includeFontPadding="false"
-
                 android:textSize="12sp"
                 app:layout_constraintEnd_toStartOf="@+id/tvFlac"
                 app:layout_constraintStart_toStartOf="@+id/tvMp3"
@@ -401,12 +423,10 @@
                 android:paddingTop="10dp"
                 android:paddingRight="12dp"
                 android:paddingBottom="10dp"
-
                 android:text="FLAC"
                 android:textAlignment="center"
                 android:textColor="@color/textColorDarkGrey"
                 android:includeFontPadding="false"
-
                 android:textSize="12sp"
                 app:layout_constraintEnd_toEndOf="@+id/tvWav"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -474,7 +494,6 @@
                         android:text="Volume"
                         android:textSize="10sp"
                         android:includeFontPadding="false"
-
                         app:layout_constraintEnd_toStartOf="@+id/tvFadeIn"
                         app:layout_constraintHorizontal_bias="0.5"
                         app:layout_constraintStart_toStartOf="parent"
@@ -497,7 +516,6 @@
                         android:fontFamily="@font/poppins_medium"
                         android:gravity="center_horizontal"
                         android:includeFontPadding="false"
-
                         android:text="Fade In"
                         android:textSize="10sp"
                         app:layout_constraintEnd_toStartOf="@+id/tvFadeOut"
@@ -583,31 +601,7 @@
                 app:layout_constraintStart_toEndOf="@+id/btnBack"
                 app:layout_constraintTop_toBottomOf="@+id/materialCardView5" />
 
-            <ImageView
-                android:id="@+id/btnRedo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="30dp"
-                android:clickable="false"
-                android:padding="5dp"
-                android:focusable="false"
-                android:src="@drawable/ic_redo_disabled"
-                app:layout_constraintBottom_toBottomOf="@+id/btnSave"
-                app:layout_constraintEnd_toStartOf="@+id/btnSave"
-                app:layout_constraintTop_toTopOf="@+id/btnSave" />
 
-            <ImageView
-                android:id="@+id/btnUndo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="20dp"
-                android:clickable="false"
-                android:focusable="false"
-                android:padding="5dp"
-                android:src="@drawable/ic_undo_disabled"
-                app:layout_constraintBottom_toBottomOf="@+id/btnSave"
-                app:layout_constraintEnd_toStartOf="@+id/btnRedo"
-                app:layout_constraintTop_toTopOf="@+id/btnSave" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
