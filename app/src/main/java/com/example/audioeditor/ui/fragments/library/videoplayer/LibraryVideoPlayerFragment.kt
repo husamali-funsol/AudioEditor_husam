@@ -1,6 +1,5 @@
 package com.example.audioeditor.ui.fragments.library.videoplayer
 
-import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -28,6 +27,9 @@ import com.example.audioeditor.utils.setOnOneClickListener
 import com.example.audioeditor.utils.showSmallLengthToast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class LibraryVideoPlayerFragment : Fragment() {
@@ -172,7 +174,7 @@ class LibraryVideoPlayerFragment : Fragment() {
         }
 
         libraryBottomSheetDialogBinding.viewShare.setOnClickListener {
-            openShareIntent()
+            openShareIntent(bottomSheet)
         }
 
         libraryBottomSheetDialogBinding.viewDelete.setOnClickListener {
@@ -183,11 +185,14 @@ class LibraryVideoPlayerFragment : Fragment() {
         bottomSheet.show()
     }
 
-    private fun openShareIntent() {
+    private fun openShareIntent(bottomSheet: BottomSheetDialog) {
         val shareIntent = Intent(Intent.ACTION_SEND)
         shareIntent.type = "audio/*"
 
         shareIntent.putExtra(Intent.EXTRA_STREAM, videoUri)
+
+        bottomSheet.dismiss()
+
 
         startActivity(Intent.createChooser(shareIntent, "Share Audio"))
     }
@@ -302,6 +307,8 @@ class LibraryVideoPlayerFragment : Fragment() {
                 val currentTimeMillis = System.currentTimeMillis()
                 newFile.setLastModified(currentTimeMillis)
                 originalFile.setLastModified(currentTimeMillis)
+                libItem.time =  SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.getDefault()).format(
+                    Date(currentTimeMillis))
                 // Refresh the MediaStore to reflect the changes
                 context?.refreshMediaStore(updatedFile)
                 context?.showSmallLengthToast("Renaming Successful")
@@ -320,6 +327,9 @@ class LibraryVideoPlayerFragment : Fragment() {
         val newPath =
             newFile.path
 
+        libItem.path = newPath
+
+
         val updatedFile = File(newPath)
         context?.refreshMediaStore(updatedFile)
 
@@ -328,6 +338,7 @@ class LibraryVideoPlayerFragment : Fragment() {
 
         val fileNameWithExtension = updatedFile.name // This gives you "file.txt"
         binding.tvMusicTitle.text = fileNameWithExtension.substringBeforeLast(".")
+        libItem.title = fileNameWithExtension.substringBeforeLast(".")
 
     }
 

@@ -47,6 +47,9 @@
         <action
             android:id="@+id/action_homeFragment_to_videoToAudioFragment"
             app:destination="@id/videoToAudioFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_textToAudioFragment"
+            app:destination="@id/textToAudioFragment" />
     </fragment>
     <fragment
         android:id="@+id/libraryFragment"
@@ -169,5 +172,10 @@
         android:name="com.example.audioeditor.ui.fragments.library.videoplayer.LibraryVideoPlayerFragment"
         android:label="fragment_library_video_player"
         tools:layout="@layout/fragment_library_video_player" />
+    <fragment
+        android:id="@+id/textToAudioFragment"
+        android:name="com.example.audioeditor.ui.fragments.features.texttoaudio.TextToAudioFragment"
+        android:label="fragment_text_to_audio"
+        tools:layout="@layout/fragment_text_to_audio" />
 
 </navigation>

@@ -32,7 +32,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
 import java.util.ArrayList
+import java.util.Date
+import java.util.Locale
 
 
 class VideoListFragment : Fragment() {
@@ -183,13 +186,15 @@ class VideoListFragment : Fragment() {
 
     //*****************************************  Bottom Sheet  ***********************************************
 
-    private fun openShareBottomSheet(libItem: LibraryItemModel) {
+    private fun openShareBottomSheet(libItem: LibraryItemModel, bottomSheet: BottomSheetDialog) {
         val shareIntent = Intent(Intent.ACTION_SEND)
         shareIntent.type = "video/*"
 
         audioUri = libItem.uri!!
 
         shareIntent.putExtra(Intent.EXTRA_STREAM, audioUri)
+
+        bottomSheet.dismiss()
 
         startActivity(Intent.createChooser(shareIntent, "Share Video"))
     }
@@ -322,7 +327,7 @@ class VideoListFragment : Fragment() {
 
         libraryBottomSheetDialogBinding.tvShareLibSheet.setOnClickListener {
 
-            openShareBottomSheet(libItem)
+            openShareBottomSheet(libItem, bottomSheet)
         }
 
         libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
@@ -352,6 +357,9 @@ class VideoListFragment : Fragment() {
                 val currentTimeMillis = System.currentTimeMillis()
                 newFile.setLastModified(currentTimeMillis)
                 originalFile.setLastModified(currentTimeMillis)
+                libItem.time =  SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.getDefault()).format(
+                    Date(currentTimeMillis)
+                )
                 // Refresh the MediaStore to reflect the changes
                 context?.refreshMediaStore(updatedFile)
                 context?.showSmallLengthToast("Renaming Successful")

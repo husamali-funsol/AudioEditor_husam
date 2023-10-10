@@ -33,7 +33,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
 import java.util.ArrayList
+import java.util.Date
+import java.util.Locale
 
 private const val TAG = "hello"
 
@@ -178,13 +181,16 @@ class AudioListFragment() : Fragment() {
 
     //*****************************************  Bottom Sheet  ***********************************************
 
-    private fun openShareBottomSheet(libItem: LibraryItemModel) {
+    private fun openShareBottomSheet(libItem: LibraryItemModel, bottomSheet: BottomSheetDialog) {
         val shareIntent = Intent(Intent.ACTION_SEND)
         shareIntent.type = "audio/*"
 
         audioUri = libItem.uri!!
 
         shareIntent.putExtra(Intent.EXTRA_STREAM, audioUri)
+
+        bottomSheet.dismiss()
+
 
         startActivity(Intent.createChooser(shareIntent, "Share Audio"))
     }
@@ -317,7 +323,7 @@ class AudioListFragment() : Fragment() {
 
         libraryBottomSheetDialogBinding.tvShareLibSheet.setOnClickListener {
 
-            openShareBottomSheet(libItem)
+            openShareBottomSheet(libItem, bottomSheet)
         }
 
         libraryBottomSheetDialogBinding.tvDeleteLibSheet.setOnClickListener {
@@ -347,6 +353,9 @@ class AudioListFragment() : Fragment() {
                 val currentTimeMillis = System.currentTimeMillis()
                 newFile.setLastModified(currentTimeMillis)
                 originalFile.setLastModified(currentTimeMillis)
+                libItem.time =  SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.getDefault()).format(
+                    Date(currentTimeMillis)
+                )
                 // Refresh the MediaStore to reflect the changes
                 context?.refreshMediaStore(updatedFile)
                 context?.showSmallLengthToast("Renaming Successful")

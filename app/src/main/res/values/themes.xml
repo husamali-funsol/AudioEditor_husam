@@ -8,8 +8,13 @@
 
     <style name="Theme.AudioEditor" parent="Base.Theme.AudioEditor" >
 
+        <item name="colorAccent">@color/appBlue</item>
+        <item name="colorPrimary">@color/appBlue</item>
+<!--        <item name="colorPrimaryDark">@color/appBlue</item>-->
 
-<!--        <item name="popupMenuBackground">@drawable/popupmenu_background</item>-->
+
+
+        <!--        <item name="popupMenuBackground">@drawable/popupmenu_background</item>-->
         <item name="popupMenuStyle">@style/popupOverflowMenu</item>
     </style>
 

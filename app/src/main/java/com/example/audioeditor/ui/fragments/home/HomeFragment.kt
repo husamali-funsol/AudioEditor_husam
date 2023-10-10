@@ -50,6 +50,10 @@ class HomeFragment : Fragment() {
             findNavController().navigate(R.id.action_homeFragment_to_videoToAudioFragment)
         }
 
+        binding.btnTexttoAudio.setOnOneClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_textToAudioFragment)
+        }
+
 
     }
 

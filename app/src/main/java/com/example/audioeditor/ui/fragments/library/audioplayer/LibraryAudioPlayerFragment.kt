@@ -29,6 +29,9 @@ import com.example.audioeditor.utils.setOnOneClickListener
 import com.example.audioeditor.utils.showSmallLengthToast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class LibraryAudioPlayerFragment : Fragment() {
@@ -319,7 +322,7 @@ class LibraryAudioPlayerFragment : Fragment() {
         }
 
         libraryBottomSheetDialogBinding.viewShare.setOnClickListener {
-            openShareIntent()
+            openShareIntent(bottomSheet)
         }
 
         libraryBottomSheetDialogBinding.viewDelete.setOnClickListener {
@@ -330,11 +333,13 @@ class LibraryAudioPlayerFragment : Fragment() {
         bottomSheet.show()
     }
 
-    private fun openShareIntent() {
+    private fun openShareIntent(bottomSheet: BottomSheetDialog) {
         val shareIntent = Intent(Intent.ACTION_SEND)
         shareIntent.type = "audio/*"
 
         shareIntent.putExtra(Intent.EXTRA_STREAM, audioUri)
+
+        bottomSheet.dismiss()
 
         startActivity(Intent.createChooser(shareIntent, "Share Audio"))
     }
@@ -460,6 +465,9 @@ class LibraryAudioPlayerFragment : Fragment() {
                 val currentTimeMillis = System.currentTimeMillis()
                 newFile.setLastModified(currentTimeMillis)
                 originalFile.setLastModified(currentTimeMillis)
+                libItem.time =  SimpleDateFormat("dd/MM/yyyy hh:mm:ss a", Locale.getDefault()).format(
+                    Date(currentTimeMillis)
+                )
                 // Refresh the MediaStore to reflect the changes
                 context?.refreshMediaStore(updatedFile)
                 context?.showSmallLengthToast("Renaming Successful")
@@ -472,11 +480,13 @@ class LibraryAudioPlayerFragment : Fragment() {
             }
         } else {
             // The original file does not exist
-            context?.showSmallLengthToast("Original File doen not exist")
+            context?.showSmallLengthToast("Original File does not exist")
         }
 
         val newPath =
             newFile.path
+
+        libItem.path = newPath
 
         val updatedFile = File(newPath)
         context?.refreshMediaStore(updatedFile)
@@ -486,6 +496,8 @@ class LibraryAudioPlayerFragment : Fragment() {
 
         val fileNameWithExtension = updatedFile.name // This gives you "file.txt"
         binding.tvTitleLP.text = fileNameWithExtension.substringBeforeLast(".")
+        libItem.title = fileNameWithExtension.substringBeforeLast(".")
+
 
     }
 

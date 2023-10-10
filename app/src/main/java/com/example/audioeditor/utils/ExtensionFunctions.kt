@@ -475,6 +475,16 @@ fun deleteFile(f1: File) {
 
 }
 
+fun Context.getTemporaryFileInPrivateDirectory(ext: String): File {
+    val outputDir =
+        getExternalFilesDir(Environment.DIRECTORY_MUSIC) // Create a directory within the app's private directory
+    outputDir?.mkdirs()
+
+    val fileName =
+        "temp_audio_${getCurrentTimestampString()}.${ext}" // Replace with your desired filename and extension
+    return File(outputDir, fileName)
+}
+
 
 
 
