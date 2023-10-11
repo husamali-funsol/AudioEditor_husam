@@ -291,7 +291,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         dismissDialog()
 
         val bundle = Bundle().apply {
-            putString("AUDIO_URI", outputPath)
+            putString("AUDIO_FILEPATH", outputPath)
         }
 
         findNavController().apply {

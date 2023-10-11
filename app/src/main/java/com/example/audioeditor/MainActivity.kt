@@ -1,8 +1,5 @@
 package com.example.audioeditor
 
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -35,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     }
     private var quitDialogView: ConstraintLayout? = null
 
-    private var fragmnetsList = listOf<Int>()
+    private var fragmentsList = listOf<Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,12 +41,14 @@ class MainActivity : AppCompatActivity() {
 
         setStatusBarColor()
 
-        fragmnetsList = listOf(
+        fragmentsList = listOf(
             R.id.trimAudio,
             R.id.convertFormat,
             R.id.audioCompress,
             R.id.audioSpeed,
-            R.id.mainRecorderFragment
+            R.id.mainRecorderFragment,
+            R.id.videoToAudioFragment,
+            R.id.textToAudioFragment
         )
 
 
@@ -97,7 +96,7 @@ class MainActivity : AppCompatActivity() {
 //            showDiscardDialog()
 //        }
 //        else
-        if(navController.currentDestination?.id in fragmnetsList){
+        if(navController.currentDestination?.id in fragmentsList){
             showQuitDialog()
         }
         else{
@@ -131,7 +130,7 @@ class MainActivity : AppCompatActivity() {
             this.performHapticFeedback()
             // Clear the back stack and navigate to the home fragment
             findNavController(R.id.navigation_fragment).apply{
-                if(currentDestination?.id in fragmnetsList){
+                if(currentDestination?.id in fragmentsList){
                     popBackStack()
                     navigate(R.id.homeFragment)
                 }

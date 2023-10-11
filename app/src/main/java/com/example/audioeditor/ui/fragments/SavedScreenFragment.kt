@@ -44,7 +44,11 @@ class SavedScreenFragment : Fragment() {
 
         abc= arguments?.getString("AUDIO_URI")
         if(abc==null){
-        abc = arguments?.getString("AUDIO_FILEPATH")}
+            abc = arguments?.getString("AUDIO_FILEPATH")
+        }
+
+        val metadata = arguments?.getString("METADATA")
+        binding.tvMetadata.text = metadata
 
         val name = abc?.let { File(it).name }
         binding.tvMusicTitle.text = name

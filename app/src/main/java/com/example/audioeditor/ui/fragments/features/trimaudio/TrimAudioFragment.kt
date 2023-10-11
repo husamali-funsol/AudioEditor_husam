@@ -1495,7 +1495,16 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
                 lastFunctionCalled = "fadeout"
                 updatePathsList(outputPathFadeOut)
             }
+        }
 
+        val bundle = Bundle().apply {
+            putString("AUDIO_FILEPATH", outputPath)
+        }
+
+        findNavController().apply {
+            if(currentDestination?.id == R.id.trimAudio){
+                navigate(R.id.action_trimAudio_to_savedScreenFragment, bundle)
+            }
         }
     }
 

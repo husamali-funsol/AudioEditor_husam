@@ -3,8 +3,6 @@ package com.example.audioeditor.ui.fragments.features.texttoaudio
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Rect
-import android.media.AudioAttributes
-import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
@@ -18,6 +16,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -33,8 +33,11 @@ import com.example.audioeditor.databinding.SavingDialogBinding
 import com.example.audioeditor.utils.calculateProgress
 import com.example.audioeditor.utils.dismissDialog
 import com.example.audioeditor.utils.formatDuration
+import com.example.audioeditor.utils.getAudioFileDuration
 import com.example.audioeditor.utils.getCurrentTimestampString
+import com.example.audioeditor.utils.getMetadataFromFile
 import com.example.audioeditor.utils.getTemporaryFileInPrivateDirectory
+import com.example.audioeditor.utils.moveFileFromPrivateToPublicDirectory
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
@@ -67,7 +70,7 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
 
     private val updateSeekBarHandler = Handler()
     private val createPlayerHandler = Handler()
-    var count = 0
+    private var count = 0
 
     private lateinit var textToSpeech: TextToSpeech
 
@@ -75,6 +78,11 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
     private var previousOutputFile: File? = null
 
     private var selectedVoice = "Female"
+    private var toneValue = -1f
+    private var tempoValue = -1f
+    private var speedValue = -1f
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -150,9 +158,6 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
             btnPlayPause.setOnClickListener {
                 clearEditTextFocus(etText)
 
-//                val textToSpeak = binding.etText.text.toString()
-//                speak(textToSpeak)
-
                 context?.performHapticFeedback()
                 if (::mediaPlayer.isInitialized && !mediaPlayer.isPlaying) {
                     mediaPlayer.start()
@@ -168,32 +173,52 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
 
 
             tvFemale.setOnOneClickListener {
+                selectedVoice = "Female"
+                CoroutineScope(Dispatchers.Main).launch{ onTextViewClick(tvFemale) }
                 clearEditTextFocus(etText)
-
-                onTextViewClick(tvFemale)
+                if(etText.text?.isNotEmpty() == true){
+                    setLoadingViews()
+                    generateAudio()
+                }
             }
 
             tvMale.setOnOneClickListener {
+                selectedVoice = "Male"
+                CoroutineScope(Dispatchers.Main).launch{ onTextViewClick(tvMale) }
                 clearEditTextFocus(etText)
-
-                onTextViewClick(tvMale)
+                if(etText.text?.isNotEmpty() == true){
+                    setLoadingViews()
+                    generateAudio()
+                }
             }
 
             tvRobot.setOnOneClickListener {
+                selectedVoice = "Robot"
+                CoroutineScope(Dispatchers.Main).launch{ onTextViewClick(tvRobot) }
                 clearEditTextFocus(etText)
-
-                onTextViewClick(tvRobot)
+                if(etText.text?.isNotEmpty() == true){
+                    setLoadingViews()
+                    generateAudio()
+                }
             }
 
             tvGirl.setOnOneClickListener {
+                selectedVoice = "Girl"
+                CoroutineScope(Dispatchers.Main).launch{ onTextViewClick(tvGirl) }
                 clearEditTextFocus(etText)
-
-                onTextViewClick(tvGirl)
+                if(etText.text?.isNotEmpty() == true){
+                    setLoadingViews()
+                    generateAudio()
+                }
             }
             tvBoy.setOnOneClickListener {
+                selectedVoice = "Boy"
+                CoroutineScope(Dispatchers.Main).launch{ onTextViewClick(tvBoy) }
                 clearEditTextFocus(etText)
-
-                onTextViewClick(tvBoy)
+                if(etText.text?.isNotEmpty() == true){
+                    setLoadingViews()
+                    generateAudio()
+                }
             }
 
 
@@ -211,14 +236,122 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
                 }
             }
 
+
+            seekBarTone.setOnSeekBarChangeListener(object: OnSeekBarChangeListener{
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    if(fromUser){
+                        onTextViewClick(null , "all")
+                        toneValue = mapProgressToNewRange(progress, 0, 2)
+                        if(toneValue == 0f){
+                            toneValue = 0.05f
+                        }
+                        tvToneValue.text = String.format("%.2f", mapProgressToNewRange(progress, 0, 20))
+                    }
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    if(etText.text?.isNotEmpty() == true) {
+                        setLoadingViews()
+                    }
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    if(etText.text?.isNotEmpty() == true) {
+                        generateAudio()
+                    }
+                }
+
+            })
+
+
+            seekBarTempo.setOnSeekBarChangeListener(object: OnSeekBarChangeListener{
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    if(fromUser){
+                        onTextViewClick(null , "all")
+                        tempoValue = mapProgressToNewRange(progress, 0, 2)
+                        if(tempoValue==0f){
+                            tempoValue = 0.05f
+                        }
+                        tvTempoValue.text = String.format("%.2f", mapProgressToNewRange(progress, 0, 20))
+                    }
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    if(etText.text?.isNotEmpty() == true) {
+                        setLoadingViews()
+                    }
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    if(etText.text?.isNotEmpty() == true) {
+                        generateAudio()
+                    }
+                }
+
+            })
+
+            seekBarSpeed.setOnSeekBarChangeListener(object: OnSeekBarChangeListener{
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    if(fromUser){
+                        onTextViewClick(null , "all")
+                        speedValue = mapProgressToNewRange(progress, 0, 2)
+                        tvSpeedValue.text = String.format("%.2f", mapProgressToNewRange(progress, 0, 20))
+                    }
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    if(etText.text?.isNotEmpty() == true) {
+                        setLoadingViews()
+                    }
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    if(etText.text?.isNotEmpty() == true) {
+                        generateAudio()
+                    }
+                }
+
+            })
+
+
+            btnBack.setOnOneClickListener {
+                context?.performHapticFeedback()
+                showQuitDialog()
+            }
+
+
         }
 
 
     }
 
+    fun mapProgressToNewRange(currentProgress: Int, newMin : Int , newMax: Int): Float {
+        val totalProgress = 100
 
-    private fun onTextViewClick(clickedTextView: TextView) {
+        // Calculate the proportion of currentProgress to totalProgress
+        val proportion = currentProgress.toFloat() / totalProgress
+
+        // Map the proportion to the new range (0-2)
+        return proportion * (newMax - newMin) + newMin
+    }
+
+
+    private fun onTextViewClick(clickedTextView: TextView? = null, str: String = "current") {
         // Reset all TextViews to white
+
+
         val allTextViews = listOf(
             binding.tvFemale,
             binding.tvMale,
@@ -239,23 +372,34 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
             }
         }
 
-        selectedVoice = clickedTextView.text.toString()
-        Log.d(TAG, "onTextViewClick: $selectedVoice")
-        // Change the background color of the clicked TextView to blue
-        clickedTextView.setBackgroundResource(R.drawable.button_bg_rounded)
-        context?.let {
-            clickedTextView.setTextColor(
-                ContextCompat.getColor(
-                    it,
-                    R.color.white
-                )
-            )
+        when (str){
+            "all" -> {
+                selectedVoice = ""
+                Log.d(TAG, "onTextViewClick: $selectedVoice")
+            }
+            "current" -> {
+                selectedVoice = clickedTextView?.text.toString()
+                Log.d(TAG, "onTextViewClick: $selectedVoice")
+                // Change the background color of the clicked TextView to blue
+
+                clickedTextView?.setBackgroundResource(R.drawable.button_bg_rounded)
+
+                context?.let {
+                    clickedTextView?.setTextColor(
+                        ContextCompat.getColor(
+                            it,
+                            R.color.white
+                        )
+                    )
+                }
+            }
         }
     }
 
 
     private fun FragmentTextToAudioBinding.setLoadingViews() {
         CoroutineScope(Dispatchers.Main).launch {
+
             loader.visibility = View.VISIBLE
             tvDuration.visibility = View.GONE
             waveform.visibility = View.GONE
@@ -278,31 +422,48 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
     }
 
     private fun changeVoice(){
+        Log.d(TAG, "changeVoice: ")
         when(selectedVoice){
 
             "Female" -> {
-                textToSpeech.setPitch(1f)
-                textToSpeech.setSpeechRate(0.8f)
+                textToSpeech.setPitch(1.2f)
+                textToSpeech.setSpeechRate(0.9f)
+                textToSpeech.language = Locale.US
+
             }
 
             "Male" -> {
-                textToSpeech.setPitch(0.8f)
-                textToSpeech.setSpeechRate(0.8f)
+                textToSpeech.setPitch(0.5f)
+                textToSpeech.setSpeechRate(0.7f)
+                textToSpeech.language = Locale.US
+
             }
 
             "Robot" -> {
-                textToSpeech.setPitch(1.2f)
-                textToSpeech.setSpeechRate(0.8f)
+                textToSpeech.setPitch(0.2f)
+                textToSpeech.setSpeechRate(0.2f)
+                textToSpeech.language = Locale.US
+
             }
 
             "Girl" -> {
-                textToSpeech.setPitch(1f)
-                textToSpeech.setSpeechRate(1f)
+                textToSpeech.setPitch(1.2f)
+                textToSpeech.setSpeechRate(1.2f)
+                textToSpeech.language = Locale.US
+
             }
 
             "Boy" -> {
-                textToSpeech.setPitch(0.8f)
+                textToSpeech.setPitch(0.7f)
                 textToSpeech.setSpeechRate(1f)
+                textToSpeech.language = Locale.US
+
+            }
+
+            "" -> {
+                textToSpeech.setPitch(toneValue)
+                textToSpeech.setSpeechRate(tempoValue)
+                textToSpeech.language = Locale.US
             }
 
         }
@@ -473,6 +634,7 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
 
             pauseMediaPlayer()
 //            trimAndChangeFormatAudio(name)
+            moveFileToPublicDirectory(name)
             dismissDialog(renameAlertDialog, renameDialogView)
 
             savingDialog(50)
@@ -492,6 +654,45 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
 
         renameAlertDialog!!.show()
 
+    }
+
+    private fun moveFileToPublicDirectory(name: String) {
+        val file = outputFile?.path?.moveFileFromPrivateToPublicDirectory(name)
+
+        if(file != null){
+            Log.d(TAG, "moveFileToPublicDirectory: true")
+            savingDialogBinding.progressBar.progress = 100
+            savingDialogBinding.tvSaving.text = "File Saved!"
+            dialogDismiss()
+
+            val metadata = file.getMetadataFromFile()
+
+            Log.d(TAG, "moveFileToPublicDirectory: ${file.length()} ${file.extension} ${file.path.getAudioFileDuration()}")
+
+            val bundle = Bundle().apply {
+                putString("AUDIO_FILEPATH", file.path )
+                putString("METADATA", metadata)
+
+            }
+
+            findNavController().apply {
+                if(currentDestination?.id == R.id.textToAudioFragment){
+                    navigate(R.id.action_textToAudioFragment_to_savedScreenFragment, bundle)
+                }
+            }
+        }
+        else{
+            Log.d(TAG, "moveFileToPublicDirectory: false")
+            savingDialogBinding.progressBar.progress = 0
+            savingDialogBinding.tvSaving.text = "File Saving Failed!"
+            dialogDismiss()
+        }
+    }
+
+    private fun dialogDismiss() {
+        Handler().postDelayed({
+            dismissDialog(savingAlertDialog, savingDialogView)
+        }, 1000)
     }
 
     private fun pauseMediaPlayer() {
@@ -531,7 +732,7 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
         Log.d("AudioEditor", "Progress: $progress%")
 
         savingDialogBinding.progressBar.progress = 50
-        savingDialogBinding.tvSaving.text = "Saving...(50%)"
+        savingDialogBinding.tvSaving.text = "Converting to Audio...(50%)"
 
         val alertDialogBuilder =
             context?.let {

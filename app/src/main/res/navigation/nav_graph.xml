@@ -166,7 +166,11 @@
         android:id="@+id/videoToAudioFragment"
         android:name="com.example.audioeditor.ui.fragments.features.videotoaudio.VideoToAudioFragment"
         android:label="fragment_video_to_audio"
-        tools:layout="@layout/fragment_video_to_audio" />
+        tools:layout="@layout/fragment_video_to_audio" >
+        <action
+            android:id="@+id/action_videoToAudioFragment_to_savedScreenFragment"
+            app:destination="@id/savedScreenFragment" />
+    </fragment>
     <fragment
         android:id="@+id/libraryVideoPlayerFragment"
         android:name="com.example.audioeditor.ui.fragments.library.videoplayer.LibraryVideoPlayerFragment"
@@ -176,6 +180,10 @@
         android:id="@+id/textToAudioFragment"
         android:name="com.example.audioeditor.ui.fragments.features.texttoaudio.TextToAudioFragment"
         android:label="fragment_text_to_audio"
-        tools:layout="@layout/fragment_text_to_audio" />
+        tools:layout="@layout/fragment_text_to_audio" >
+        <action
+            android:id="@+id/action_textToAudioFragment_to_savedScreenFragment"
+            app:destination="@id/savedScreenFragment" />
+    </fragment>
 
 </navigation>

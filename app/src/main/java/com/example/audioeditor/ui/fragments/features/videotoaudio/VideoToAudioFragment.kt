@@ -1424,6 +1424,16 @@ class VideoToAudioFragment : Fragment(), CommandExecutionCallback {
             }
 
         }
+
+        val bundle = Bundle().apply {
+            putString("AUDIO_FILEPATH", outputPath)
+        }
+
+        findNavController().apply {
+            if(currentDestination?.id == R.id.videoToAudioFragment){
+                navigate(R.id.action_videoToAudioFragment_to_savedScreenFragment, bundle)
+            }
+        }
     }
 
     override fun onCommandExecutionFailure(errorMessage: String) {

@@ -52,7 +52,6 @@ fun View.setOnOneClickListener(debounceTime: Long = 600L, action: () -> Unit) {
     })
 }
 
-
 fun String.getVideoThumbnail(): Bitmap? { //videopath.getvideothumbnail
     val thumbnailPath = this.replace(".mp4", "_thumbnail.jpg") // Example: Replace with your naming convention
     val thumbnailFile = File(thumbnailPath)
@@ -64,8 +63,7 @@ fun String.getVideoThumbnail(): Bitmap? { //videopath.getvideothumbnail
     return null // Return null if thumbnail doesn't exist
 }
 
-
-    fun Context.getAlbumArtwork(albumId: Long): Bitmap? {
+fun Context.getAlbumArtwork(albumId: Long): Bitmap? {
         val albumArtworkUri = Uri.parse("content://media/external/audio/albumart")
         val albumArtworkUriWithAlbumId = ContentUris.withAppendedId(albumArtworkUri, albumId)
         try {
@@ -78,7 +76,7 @@ fun String.getVideoThumbnail(): Bitmap? { //videopath.getvideothumbnail
         return null
     }
 
-    fun Int.formatDuration(): String {
+fun Int.formatDuration(): String {
         val hours = TimeUnit.MILLISECONDS.toHours(this.toLong())
         val minutes = TimeUnit.MILLISECONDS.toMinutes(this.toLong()) % 60
         val seconds = TimeUnit.MILLISECONDS.toSeconds(this.toLong()) % 60
@@ -98,12 +96,11 @@ fun String.getVideoThumbnail(): Bitmap? { //videopath.getvideothumbnail
         return "$hoursStr$minutesStr$secondsStr"
     }
 
-
-    fun Long.formatSizeToMB(): String {
+fun Long.formatSizeToMB(): String {
         val sizeKB = this / 1024.0
         val sizeMB = sizeKB / 1024.0
         return String.format("%.2f", sizeMB) // Format size with two decimal places
-    }
+}
 
 fun Context.scanFiles(file: File) {
     MediaScannerConnection.scanFile(
@@ -130,8 +127,6 @@ fun Context.refreshMediaStore(file: File) {
     mediaScanIntent.data = Uri.fromFile(file)
     this.sendBroadcast(mediaScanIntent)
 }
-
-
 
 fun Context.refreshMediaStoreForAudioFiles() {
     val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
@@ -253,7 +248,6 @@ fun String.getOutputFile(ext: String): File {
     return File(storageDir, fileName)
 }
 
-
 fun getStorageDir(): String {
 //        val storageDir = File(Environment.getExternalStorageDirectory(), "FunsolAudioEditor")
     val storageDir = File(
@@ -302,7 +296,6 @@ fun Context.hasVibrationPermission(): Boolean {
     return result == PackageManager.PERMISSION_GRANTED
 }
 
-
 fun String.getFileSize(): Long {
     val file = File(this)
     return if (file.exists()) {
@@ -312,7 +305,7 @@ fun String.getFileSize(): Long {
     }
 }
 
-fun String.getAudioFileDuration(): Long {
+fun String.getAudioFileDuration(): Long { // path as input
     val mediaPlayer = MediaPlayer()
     return try {
         if (this.isNotEmpty()) {
@@ -359,7 +352,6 @@ fun String.getVideoFileDuration(): Long {
     }
 }
 
-
 fun Context.getFileNameFromUri(uri: Uri): String? {
     val cursor = this?.contentResolver?.query(uri, null, null, null, null)
     cursor?.use {
@@ -373,7 +365,6 @@ fun Context.getFileNameFromUri(uri: Uri): String? {
     }
     return null
 }
-
 
 fun Context.getExtensionFromUri(uri: Uri): String? {
     val cursor = this?.contentResolver?.query(uri, null, null, null, null)
@@ -410,7 +401,6 @@ fun dismissDialog(alertDialog: AlertDialog?, dialogView: ConstraintLayout?){
     val parentView = dialogView?.parent as? ViewGroup
     parentView?.removeView(dialogView)
 }
-
 
 fun String.getUriFromPath(): Uri? {
     val file = File(this)
@@ -456,7 +446,6 @@ fun Array<String>.executeCommandInSeries( callback: (Boolean) -> Unit) {
     }
 }
 
-
 fun deleteFile(f1: File) {
 
     val file1 = f1
@@ -483,6 +472,39 @@ fun Context.getTemporaryFileInPrivateDirectory(ext: String): File {
     val fileName =
         "temp_audio_${getCurrentTimestampString()}.${ext}" // Replace with your desired filename and extension
     return File(outputDir, fileName)
+}
+
+fun String.moveFileFromPrivateToPublicDirectory(newFilename: String) : File? {
+
+    val sourceFile = File(this)
+    val storageDir = getStorageDir()
+//    val targetDirectory = File(storageDir, "targetDirectoryName")
+    val targetDirectory = File(storageDir)
+
+    if (!targetDirectory.exists()) {
+        targetDirectory.mkdirs()
+    }
+
+    val targetFilePath = File(targetDirectory, "${newFilename}.mp3").absolutePath
+    val targetFile = File(targetFilePath)
+
+    if (sourceFile.renameTo(targetFile)) {
+        println("File moved successfully to: $targetFilePath")
+        return targetFile
+    } else {
+        println("Failed to move the file")
+        return null
+    }
+
+}
+
+fun File.getMetadataFromFile(): String {
+    val fileSizeInMb = this.length().formatSizeToMB()
+    val fileExtension = this.extension
+    val audioDuration = this.path.getAudioFileDuration().toInt().formatDuration()
+
+
+    return "$audioDuration | ${fileSizeInMb}MB | $fileExtension"
 }
 
 

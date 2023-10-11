@@ -34,6 +34,32 @@
             app:layout_constraintStart_toEndOf="@+id/btnBack"
             app:layout_constraintTop_toTopOf="@+id/btnBack" />
 
+        <ImageView
+            android:id="@+id/btnRedo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="30dp"
+            android:clickable="false"
+            android:padding="5dp"
+            android:focusable="false"
+            android:src="@drawable/ic_redo_disabled"
+            app:layout_constraintBottom_toBottomOf="@+id/btnSave"
+            app:layout_constraintEnd_toStartOf="@+id/btnSave"
+            app:layout_constraintTop_toTopOf="@+id/btnSave" />
+
+        <ImageView
+            android:id="@+id/btnUndo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:padding="5dp"
+            android:src="@drawable/ic_undo_disabled"
+            app:layout_constraintBottom_toBottomOf="@+id/btnSave"
+            app:layout_constraintEnd_toStartOf="@+id/btnRedo"
+            app:layout_constraintTop_toTopOf="@+id/btnSave" />
+
         <TextView
             android:id="@+id/btnSave"
             android:layout_width="wrap_content"
@@ -606,31 +632,7 @@
             app:layout_constraintStart_toEndOf="@+id/btnBack"
             app:layout_constraintTop_toBottomOf="@+id/materialCardView5" />
 
-        <ImageView
-            android:id="@+id/btnRedo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:clickable="false"
-            android:padding="5dp"
-            android:focusable="false"
-            android:src="@drawable/ic_redo_disabled"
-            app:layout_constraintBottom_toBottomOf="@+id/btnSave"
-            app:layout_constraintEnd_toStartOf="@+id/btnSave"
-            app:layout_constraintTop_toTopOf="@+id/btnSave" />
 
-        <ImageView
-            android:id="@+id/btnUndo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="20dp"
-            android:clickable="false"
-            android:focusable="false"
-            android:padding="5dp"
-            android:src="@drawable/ic_undo_disabled"
-            app:layout_constraintBottom_toBottomOf="@+id/btnSave"
-            app:layout_constraintEnd_toStartOf="@+id/btnRedo"
-            app:layout_constraintTop_toTopOf="@+id/btnSave" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
