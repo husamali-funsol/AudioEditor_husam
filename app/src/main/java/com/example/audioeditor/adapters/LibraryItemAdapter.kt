@@ -1,4 +1,4 @@
-package com.example.audioeditor.ui.fragments.library
+package com.example.audioeditor.adapters
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -35,7 +35,7 @@ class LibraryItemAdapter(
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): LibraryItemAdapter.ViewHolder {
+    ): ViewHolder {
 
         val view = LayoutInflater.from(parent.context).inflate(R.layout.library_item, parent, false)
 
@@ -63,7 +63,7 @@ class LibraryItemAdapter(
         }
     }
 
-    override fun onBindViewHolder(holder: LibraryItemAdapter.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val audioItem = mList[position]
         holder.title.text = audioItem.title
         holder.metadata.text = audioItem.metadata

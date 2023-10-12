@@ -1,4 +1,4 @@
-package com.example.audioeditor.ui.fragments.library
+package com.example.audioeditor.adapters
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager

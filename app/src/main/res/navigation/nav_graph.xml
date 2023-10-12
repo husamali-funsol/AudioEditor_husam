@@ -50,6 +50,9 @@
         <action
             android:id="@+id/action_homeFragment_to_textToAudioFragment"
             app:destination="@id/textToAudioFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_mergeAudiosFragment"
+            app:destination="@id/mergeAudiosFragment" />
     </fragment>
     <fragment
         android:id="@+id/libraryFragment"
@@ -183,6 +186,15 @@
         tools:layout="@layout/fragment_text_to_audio" >
         <action
             android:id="@+id/action_textToAudioFragment_to_savedScreenFragment"
+            app:destination="@id/savedScreenFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/mergeAudiosFragment"
+        android:name="com.example.audioeditor.ui.fragments.features.mergeaudios.MergeAudiosFragment"
+        android:label="fragment_merge_audios"
+        tools:layout="@layout/fragment_merge_audios" >
+        <action
+            android:id="@+id/action_mergeAudiosFragment_to_savedScreenFragment"
             app:destination="@id/savedScreenFragment" />
     </fragment>
 

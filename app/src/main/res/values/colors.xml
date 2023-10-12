@@ -47,6 +47,13 @@
     <color name="ruler_bottom_divider">#D5D5D5</color>
     <color name="ruler_indicator_bar">#1071E3</color>
 
+    //colors
+    <color name="maroon">#A2234B</color>
+    <color name="green">#2AA0A0</color>
+    <color name="yellow">#DCA109</color>
+    <color name="purple">#CD0FA3</color>
+
+
 
 
 

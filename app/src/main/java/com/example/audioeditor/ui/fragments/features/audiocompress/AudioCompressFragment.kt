@@ -25,6 +25,7 @@ import com.example.audioeditor.interfaces.CommandExecutionCallback
 import com.example.audioeditor.utils.calculateProgress
 import com.example.audioeditor.utils.dismissDialog
 import com.example.audioeditor.utils.executeCommand
+import com.example.audioeditor.utils.formatDuration
 import com.example.audioeditor.utils.formatSizeToMB
 import com.example.audioeditor.utils.getCurrentTimestampString
 import com.example.audioeditor.utils.getExtensionFromUri

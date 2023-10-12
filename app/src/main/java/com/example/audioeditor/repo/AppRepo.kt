@@ -272,7 +272,6 @@ class AppRepo(private val appContext: Context) {
         )
 
 
-
         cursor?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
             val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.TITLE)

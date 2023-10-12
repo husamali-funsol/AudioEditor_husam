@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.example.audioeditor.adapters.ViewPagerAdapter
 import com.example.audioeditor.databinding.FragmentLibraryBinding
 import com.example.audioeditor.ui.fragments.library.audioslist.AudioListFragment
 import com.example.audioeditor.ui.fragments.library.videoslist.VideoListFragment

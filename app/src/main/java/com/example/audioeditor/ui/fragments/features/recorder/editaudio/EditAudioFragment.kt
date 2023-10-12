@@ -142,6 +142,8 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
                 if (fromUser) {
                     val audioDurationMillis = mediaPlayer.duration
                     val selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    binding.tvCurrentDuration.text = selectedPositionMillis.toInt().formatDuration()
+
                     mediaPlayer.seekTo(selectedPositionMillis.toInt())
                 }
             }
@@ -233,6 +235,8 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
                         binding.waveform.progress = 0F
                         mediaPlayer.pause()
                         binding.btnPlayPause.setImageResource(R.drawable.play_button)
+                        binding.tvCurrentDuration.text = 0.formatDuration()
+
                     }
                 }
                 else{

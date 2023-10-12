@@ -14,7 +14,7 @@ import com.example.audioeditor.databinding.FragmentMainRecorderBinding
 import com.example.audioeditor.databinding.QuitDialogBinding
 import com.example.audioeditor.ui.fragments.features.recorder.listen.ListenFragment
 import com.example.audioeditor.ui.fragments.features.recorder.recorder.RecorderFragment
-import com.example.audioeditor.ui.fragments.library.ViewPagerAdapter
+import com.example.audioeditor.adapters.ViewPagerAdapter
 import com.example.audioeditor.utils.dismissDialog
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.setOnOneClickListener

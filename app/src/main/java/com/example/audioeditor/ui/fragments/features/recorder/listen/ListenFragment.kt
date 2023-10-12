@@ -1,14 +1,12 @@
 package com.example.audioeditor.ui.fragments.features.recorder.listen
 
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.lifecycle.ViewModelProvider
@@ -17,13 +15,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.audioeditor.R
 import com.example.audioeditor.databinding.BottomSheetDetailsBinding
-import com.example.audioeditor.databinding.BottomSheetLibraryBinding
 import com.example.audioeditor.databinding.DeleteDialogBinding
 import com.example.audioeditor.databinding.FragmentListenBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.models.LibraryItemModel
 import com.example.audioeditor.repo.AppRepo
-import com.example.audioeditor.ui.fragments.library.LibraryItemAdapter
+import com.example.audioeditor.adapters.LibraryItemAdapter
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
 import com.example.audioeditor.utils.scanFiles

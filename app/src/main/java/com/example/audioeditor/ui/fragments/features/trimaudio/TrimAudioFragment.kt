@@ -723,6 +723,8 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
                     binding.waveform.progress = 0F
                     mediaPlayer.pause()
                     binding.btnPlayPause.setImageResource(R.drawable.play_button)
+                    binding.tvCurrentDuration.text = 0.formatDuration()
+
                 }
 
             }

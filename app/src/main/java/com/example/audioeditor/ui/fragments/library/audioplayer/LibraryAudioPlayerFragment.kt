@@ -22,6 +22,7 @@ import com.example.audioeditor.databinding.FragmentLibraryAudioPlayerBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.models.LibraryItemModel
 import com.example.audioeditor.utils.convertMillisToMinutes
+import com.example.audioeditor.utils.formatDuration
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
 import com.example.audioeditor.utils.scanFiles
@@ -126,6 +127,7 @@ class LibraryAudioPlayerFragment : Fragment() {
                 if (fromUser) {
                     val audioDurationMillis = mediaPlayer.duration
                     val selectedPositionMillis = (progress * audioDurationMillis) / 100
+                    binding.tvStartLp.text = selectedPositionMillis.toInt().formatDuration()
                     mediaPlayer.seekTo(selectedPositionMillis)
                 }
             }
@@ -161,11 +163,12 @@ class LibraryAudioPlayerFragment : Fragment() {
                 binding.sbLP.max = 100 // We set the maximum progress to 100 to represent 100%
                 binding.sbLP.progress = 0 // Initially set progress to 0
 
-                binding.tvStartLp.text = "00:00"
-                binding.tvEndLP.text = durationMillis.toLong().convertMillisToMinutes()
+                binding.tvStartLp.text = 0.formatDuration()
+                binding.tvEndLP.text = durationMillis.formatDuration()
 
                 mp.setOnCompletionListener {
                     binding.sbLP.progress = 0
+                    binding.tvStartLp.text = 0.formatDuration()
                     mediaPlayer.start()
                 }
             }
@@ -183,7 +186,7 @@ class LibraryAudioPlayerFragment : Fragment() {
                 val currentPositionMillis = mediaPlayer.currentPosition
                 val progress = (currentPositionMillis.toFloat() / audioDurationMillis) * 100
                 binding.sbLP.progress = progress.toInt()
-                binding.tvStartLp.text = currentPositionMillis.toLong().convertMillisToMinutes()
+                binding.tvStartLp.text = currentPositionMillis.formatDuration()
                 // Update the SeekBar position every 100 milliseconds
                 updateSeekBarHandler.postDelayed(this, 100)
             }

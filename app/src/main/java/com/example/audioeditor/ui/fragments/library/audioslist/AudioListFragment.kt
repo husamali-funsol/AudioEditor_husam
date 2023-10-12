@@ -21,7 +21,7 @@ import com.example.audioeditor.databinding.DeleteDialogBinding
 import com.example.audioeditor.databinding.FragmentAudioListBinding
 import com.example.audioeditor.databinding.RenameDialogBinding
 import com.example.audioeditor.repo.AppRepo
-import com.example.audioeditor.ui.fragments.library.LibraryItemAdapter
+import com.example.audioeditor.adapters.LibraryItemAdapter
 import com.example.audioeditor.models.LibraryItemModel
 import com.example.audioeditor.utils.refreshMediaStore
 import com.example.audioeditor.utils.refreshMediaStoreForAudioFiles
@@ -226,7 +226,7 @@ class AudioListFragment() : Fragment() {
 //        listAudioFiles()
 
         context?.let{ binding.rvMyAudio.layoutManager = LinearLayoutManager(it) }
-        adapter = LibraryItemAdapter(ArrayList() , object :LibraryItemAdapter.OnItemClicked{
+        adapter = LibraryItemAdapter(ArrayList() , object : LibraryItemAdapter.OnItemClicked{
             override fun onItemClicked(audioList: List<LibraryItemModel>, position: Int) {
                 navigateToPlayer(audioList, position)
             }

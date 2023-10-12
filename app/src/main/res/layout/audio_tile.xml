@@ -3,43 +3,50 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:paddingBottom="16dp">
 
 
     <ImageView
-        android:id="@+id/imageView3"
+        android:id="@+id/dragHandle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView4"
+        app:layout_constraintBottom_toBottomOf="@+id/albumImage"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imageView4"
+        app:layout_constraintTop_toTopOf="@+id/albumImage"
         app:srcCompat="@drawable/drag_handle_maroon" />
 
     <ImageView
-        android:id="@+id/imageView4"
+        android:id="@+id/albumImage"
         android:layout_width="24dp"
         android:layout_height="24dp"
+        android:layout_marginStart="16dp"
         android:background="@drawable/rounded_imageview"
-        app:layout_constraintStart_toEndOf="@+id/imageView3"
+        app:layout_constraintStart_toEndOf="@+id/dragHandle"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/placeholder_image" />
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/tvFilename"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
         android:text="TextView"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView4"
-        app:layout_constraintEnd_toStartOf="@+id/imageView6"
-        app:layout_constraintStart_toEndOf="@+id/imageView4"
-        app:layout_constraintTop_toTopOf="@+id/imageView4" />
+        android:fontFamily="@font/poppins_medium"
+        android:includeFontPadding="false"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/albumImage"
+        app:layout_constraintEnd_toStartOf="@+id/btnRemove"
+        app:layout_constraintStart_toEndOf="@+id/albumImage"
+        app:layout_constraintTop_toTopOf="@+id/albumImage" />
 
     <ImageView
-        android:id="@+id/imageView6"
+        android:id="@+id/btnRemove"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView4"
+        app:layout_constraintBottom_toBottomOf="@+id/albumImage"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imageView4"
+        app:layout_constraintTop_toTopOf="@+id/albumImage"
         app:srcCompat="@drawable/dont_disturb_maroon" />
 </androidx.constraintlayout.widget.ConstraintLayout>

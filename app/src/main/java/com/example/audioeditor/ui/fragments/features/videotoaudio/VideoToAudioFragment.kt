@@ -200,6 +200,7 @@ class VideoToAudioFragment : Fragment(), CommandExecutionCallback {
                     if (fromUser) {
                         val audioDurationMillis = mediaPlayer.duration
                         val selectedPositionMillis = (progress * audioDurationMillis) / 100
+                        tvCurrentDuration.text = selectedPositionMillis.toInt().formatDuration()
                         mediaPlayer.seekTo(selectedPositionMillis.toInt())
                     }
                 }
@@ -666,11 +667,14 @@ class VideoToAudioFragment : Fragment(), CommandExecutionCallback {
                 if (uri != null) {
                     binding.waveform.setSampleFrom(uri)
                 }
+                else if (path != null) {
+                    binding.waveform.setSampleFrom(Uri.fromFile(File(path)))
+                }
                 binding.waveform.waveWidth = 4F
                 binding.waveform.maxProgress = 100F
 
                 val durationMillis = mediaPlayer.duration
-                binding.tvCurrentDuration.text = mediaPlayer.duration.formatDuration()
+                binding.tvCurrentDuration.text = 0.formatDuration()
                 Log.d(TAG, "createMediaPlayer: $durationMillis")
                 binding.tvEndDuration.text = mediaPlayer.duration.formatDuration()
                 val cropLeftProgress = cropLeft*100
@@ -684,6 +688,8 @@ class VideoToAudioFragment : Fragment(), CommandExecutionCallback {
                     binding.waveform.progress = 0F
                     mediaPlayer.pause()
                     binding.btnPlayPause.setImageResource(R.drawable.play_button)
+                    binding.tvCurrentDuration.text = 0.formatDuration()
+
                 }
 
             }
@@ -1248,17 +1254,6 @@ class VideoToAudioFragment : Fragment(), CommandExecutionCallback {
 
 
     //*****************************************   Utility Functions  ***********************************************
-
-    private fun getVideoDuration(uri: Uri): Long {
-        val retriever = MediaMetadataRetriever()
-        retriever.setDataSource(requireContext(), uri)
-
-        val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-        val duration = durationString?.toLongOrNull() ?: 0
-
-        retriever.release()
-        return duration / 1000 // Convert to seconds
-    }
 
     private fun onTextViewClick(clickedTextView: TextView) {
         // Reset all TextViews to white

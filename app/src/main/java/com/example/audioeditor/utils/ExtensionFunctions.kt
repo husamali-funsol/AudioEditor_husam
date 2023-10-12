@@ -218,7 +218,7 @@ fun Context.getInputPath(audioUri: Uri): String {
 
 fun Context.createTempAudioFile(): File {
     // Create a temporary file in the app's private directory
-    val tempFileName = "temp_audio.mp3"
+    val tempFileName = "temp_audio_${getCurrentTimestampString()}.mp3"
     return File(filesDir, tempFileName)
 }
 
