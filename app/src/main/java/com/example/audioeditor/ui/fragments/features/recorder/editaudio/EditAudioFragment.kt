@@ -902,7 +902,7 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
                 textView.setTextColor(
                     ContextCompat.getColor(
                         it,
-                        R.color.textColorDarkGrey
+                        R.color.textColorlightGrey
                     )
                 )
             }
@@ -1016,6 +1016,7 @@ class EditAudioFragment : Fragment(), CommandExecutionCallback {
         if(::mediaPlayer.isInitialized && mediaPlayer.isPlaying){
             mediaPlayer.pause()
             updateSeekBarHandler.removeCallbacks(updateSeekBarRunnable)
+            binding.btnPlayPause.setImageResource(R.drawable.play_button)
         }
     }
 

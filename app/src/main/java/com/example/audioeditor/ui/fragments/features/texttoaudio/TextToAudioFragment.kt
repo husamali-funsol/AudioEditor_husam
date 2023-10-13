@@ -41,6 +41,7 @@ import com.example.audioeditor.utils.moveFileFromPrivateToPublicDirectory
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
+import com.example.audioeditor.utils.showSmallLengthToast
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 import kotlinx.coroutines.CoroutineScope
@@ -467,12 +468,16 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
             val name = enteredText.replaceSpaceWithUnderscore()
 
-            pauseMediaPlayer()
-//            trimAndChangeFormatAudio(name)
-            moveFileToPublicDirectory(name)
-            dismissDialog(renameAlertDialog, renameDialogView)
+            if(name!=""){
+                pauseMediaPlayer()
+                moveFileToPublicDirectory(name)
+                dismissDialog(renameAlertDialog, renameDialogView)
+                savingDialog(50)
+            }
+            else{
+                context?.showSmallLengthToast("Please write a valid name!")
+            }
 
-            savingDialog(50)
         }
 
         renameDialogBinding.tvCancelRD.setOnClickListener {
@@ -521,7 +526,7 @@ class TextToAudioFragment : Fragment(), TextToSpeech.OnInitListener {
             context?.performHapticFeedback()
             // Clear the back stack and navigate to the home fragment
             findNavController().apply {
-                if (currentDestination?.id == R.id.trimAudio) {
+                if (currentDestination?.id == R.id.textToAudioFragment) {
                     popBackStack()
                     navigate(R.id.homeFragment)
                 }

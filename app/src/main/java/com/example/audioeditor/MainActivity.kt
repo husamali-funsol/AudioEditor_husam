@@ -48,7 +48,8 @@ class MainActivity : AppCompatActivity() {
             R.id.audioSpeed,
             R.id.mainRecorderFragment,
             R.id.videoToAudioFragment,
-            R.id.textToAudioFragment
+            R.id.textToAudioFragment,
+            R.id.mergeAudiosFragment
         )
 
 

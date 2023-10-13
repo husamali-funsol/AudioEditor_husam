@@ -1,5 +1,6 @@
 package com.example.audioeditor.ui.fragments
 
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.navigation.fragment.findNavController
 import com.example.audioeditor.R
 import com.example.audioeditor.TAG
@@ -27,6 +29,7 @@ class SavedScreenFragment : Fragment() {
 
     private var audioUri: Uri? = null
     private var selected = ""
+    private var audioPath: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -43,8 +46,11 @@ class SavedScreenFragment : Fragment() {
 
 
         abc= arguments?.getString("AUDIO_URI")
+        audioUri = abc?.toUri()
         if(abc==null){
+            audioUri = null
             abc = arguments?.getString("AUDIO_FILEPATH")
+            audioPath = abc
         }
 
         val metadata = arguments?.getString("METADATA")
@@ -73,6 +79,8 @@ class SavedScreenFragment : Fragment() {
         binding.tvCallRingtone.setOnOneClickListener {
             context?.performHapticFeedback()
             onTextViewClick(binding.tvCallRingtone)
+            val x = setRingtone()
+            Log.d(TAG, "onViewCreated: ringtone $x")
         }
 
         binding.tvContactsRingtone.setOnOneClickListener {
@@ -124,6 +132,33 @@ class SavedScreenFragment : Fragment() {
             )
         )  // Set your desired text color here
 
+    }
+
+    private fun setRingtone(): Boolean{
+        return try{
+            Log.d(TAG, "Setting ringtone. Audio URI: $audioUri, Audio Path: $audioPath")
+
+            if (audioUri != null) {
+                RingtoneManager.setActualDefaultRingtoneUri(
+                    requireContext(),
+                    RingtoneManager.TYPE_RINGTONE,
+                    audioUri
+                )
+                true
+            } else {
+                RingtoneManager.setActualDefaultRingtoneUri(
+                    requireContext(),
+                    RingtoneManager.TYPE_RINGTONE,
+                    Uri.fromFile(File(audioPath!!))
+                )
+                true
+            }
+        }
+        catch(e: Exception){
+            Log.e(TAG, "Error setting ringtone: ${e.message}")
+            e.printStackTrace()
+            false
+        }
     }
 
 }

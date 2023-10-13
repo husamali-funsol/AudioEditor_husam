@@ -32,6 +32,7 @@ import com.example.audioeditor.utils.getOutputFile
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
+import com.example.audioeditor.utils.showSmallLengthToast
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 
@@ -375,10 +376,14 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
             val name = enteredText.replaceSpaceWithUnderscore()
 
-            convertFormat(name, audioUri!!)
-            dismissDialog(renameAlertDialog, renameDialogView)
-
-            savingDialog()
+            if(name!=""){
+                convertFormat(name, audioUri!!)
+                dismissDialog(renameAlertDialog, renameDialogView)
+                savingDialog()
+            }
+            else{
+                context?.showSmallLengthToast("Please write a valid name!")
+            }
         }
 
         renameDialogBinding.tvCancelRD.setOnClickListener {
@@ -440,7 +445,7 @@ class ConvertFormat : Fragment(), CommandExecutionCallback {
         for (textView in allTextViews) {
 
             context?.let{
-                textView.setBackgroundResource(R.drawable.button_bg_white)
+                textView.setBackgroundResource(R.drawable.button_bg_five_percent_blue)
                 textView.setTextColor(
                     ContextCompat.getColor(
                         it,

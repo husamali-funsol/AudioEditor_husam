@@ -153,6 +153,7 @@
                     app:marker_text_color="#123456"
                     app:marker_text_padding="2dp"
                     app:marker_text_size="12dp"
+                    android:visibility="gone"
                     app:marker_width="1dp"
                     app:wave_background_color="@color/textColorlightGrey"
                     app:wave_corner_radius="2dp"

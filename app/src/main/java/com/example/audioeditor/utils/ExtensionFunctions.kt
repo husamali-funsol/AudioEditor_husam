@@ -381,7 +381,7 @@ fun Context.getExtensionFromUri(uri: Uri): String? {
 }
 
 fun String.replaceSpaceWithUnderscore(): String{
-    return this.lowercase(Locale.getDefault()).replace(' ', '_').trim()
+    return this.trim().lowercase(Locale.getDefault()).replace(' ', '_').trim()
 }
 
 fun Context.showSmallLengthToast(text: String) {

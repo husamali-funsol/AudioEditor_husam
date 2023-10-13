@@ -35,6 +35,7 @@ import com.example.audioeditor.utils.getOutputFile
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
+import com.example.audioeditor.utils.showSmallLengthToast
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 import kotlinx.coroutines.CoroutineScope
@@ -524,7 +525,7 @@ class AudioCompressFragment : Fragment(), CommandExecutionCallback {
 
         for (textView in allTextViews) {
             if(cardName=="AudioQuality"){
-                textView.setBackgroundResource(R.drawable.button_outlined)
+                textView.setBackgroundResource(R.drawable.button_outlined_white)
                 context?.let{
                     textView.setTextColor(
                         ContextCompat.getColor(
@@ -536,12 +537,14 @@ class AudioCompressFragment : Fragment(), CommandExecutionCallback {
             }
             else{
                 context?.let{
-                    textView.setBackgroundColor(
-                        ContextCompat.getColor(
-                            it,
-                            R.color.transparent
-                        )
-                    )
+//                    textView.setBackgroundColor(
+//                        ContextCompat.getColor(
+//                            it,
+//                            R.color.transparent
+//                        )
+//                    )
+                    textView.setBackgroundResource(R.drawable.button_bg_white)
+
                     textView.setTextColor(
                         ContextCompat.getColor(
                             it,
@@ -566,7 +569,7 @@ class AudioCompressFragment : Fragment(), CommandExecutionCallback {
     private fun unselectAudioQuality(){
         when(selectedAudioQuality.lowercase()){
             "low" -> {
-                binding.tvLowQuality.setBackgroundResource(R.drawable.button_outlined)
+                binding.tvLowQuality.setBackgroundResource(R.drawable.button_outlined_white)
                 context?.let{
                     binding.tvLowQuality.setTextColor(
                         ContextCompat.getColor(
@@ -577,7 +580,7 @@ class AudioCompressFragment : Fragment(), CommandExecutionCallback {
                 }
             }
             "mid" -> {
-                binding.tvMidQuality.setBackgroundResource(R.drawable.button_outlined)
+                binding.tvMidQuality.setBackgroundResource(R.drawable.button_outlined_white)
                 context?.let{
                     binding.tvMidQuality.setTextColor(
                         ContextCompat.getColor(
@@ -588,7 +591,7 @@ class AudioCompressFragment : Fragment(), CommandExecutionCallback {
                 }
             }
             "high" -> {
-                binding.tvHighQuality.setBackgroundResource(R.drawable.button_outlined)
+                binding.tvHighQuality.setBackgroundResource(R.drawable.button_outlined_white)
                 context?.let{
                     binding.tvHighQuality.setTextColor(
                         ContextCompat.getColor(
@@ -693,9 +696,14 @@ class AudioCompressFragment : Fragment(), CommandExecutionCallback {
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
             val name = enteredText.replaceSpaceWithUnderscore()
 
-            audioCompress(name, audioUri!!)
-            dismissDialog(renameAlertDialog, renameDialogView)
-            savingDialog()
+            if(name!=""){
+                audioCompress(name, audioUri!!)
+                dismissDialog(renameAlertDialog, renameDialogView)
+                savingDialog()
+            }
+            else{
+                context?.showSmallLengthToast("Please write a valid name!")
+            }
 
         }
 

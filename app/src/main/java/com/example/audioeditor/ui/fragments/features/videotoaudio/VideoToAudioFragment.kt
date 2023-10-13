@@ -600,11 +600,15 @@ class VideoToAudioFragment : Fragment(), CommandExecutionCallback {
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
             val name = enteredText.replaceSpaceWithUnderscore()
 
-            pauseMediaPlayer()
-            trimAndChangeFormatAudio(name)
-            dismissDialog(renameAlertDialog, renameDialogView)
-
-            savingDialog(50)
+            if(name!=""){
+                pauseMediaPlayer()
+                trimAndChangeFormatAudio(name)
+                dismissDialog(renameAlertDialog, renameDialogView)
+                savingDialog(50)
+            }
+            else{
+                context?.showSmallLengthToast("Please write a valid name!")
+            }
         }
 
         renameDialogBinding.tvCancelRD.setOnClickListener {

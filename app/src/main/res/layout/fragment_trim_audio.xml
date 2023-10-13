@@ -181,7 +181,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/tenPrecentAppBlue">
+                android:background="@color/fifteenPrecentAppBlue">
 
 
                 <com.example.audioeditor.lib.rangeview.RangeView
@@ -250,7 +250,7 @@
             android:id="@+id/tvCropWindowLeft"
             android:layout_width="50dp"
             android:layout_height="0dp"
-            android:background="@color/tenPrecentAppBlue"
+            android:background="@color/fifteenPrecentAppBlue"
             android:fontFamily="@font/poppins_regular"
             android:gravity="center"
             android:paddingHorizontal="3dp"
@@ -288,7 +288,7 @@
             android:id="@+id/tvCropWindowRight"
             android:layout_width="50dp"
             android:layout_height="0dp"
-            android:background="@color/tenPrecentAppBlue"
+            android:background="@color/fifteenPrecentAppBlue"
             android:fontFamily="@font/poppins_regular"
             android:gravity="center"
             android:paddingHorizontal="3dp"

@@ -33,6 +33,7 @@ import com.example.audioeditor.utils.getOutputFile
 import com.example.audioeditor.utils.performHapticFeedback
 import com.example.audioeditor.utils.replaceSpaceWithUnderscore
 import com.example.audioeditor.utils.setOnOneClickListener
+import com.example.audioeditor.utils.showSmallLengthToast
 import com.masoudss.lib.SeekBarOnProgressChanged
 import com.masoudss.lib.WaveformSeekBar
 
@@ -255,7 +256,7 @@ class AudioSpeedFragment : Fragment(), CommandExecutionCallback {
                 textView.setTextColor(
                     ContextCompat.getColor(
                         it,
-                        R.color.textColorDarkGrey
+                        R.color.textColorlightGrey
                     )
                 )
             }
@@ -393,10 +394,14 @@ class AudioSpeedFragment : Fragment(), CommandExecutionCallback {
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
             val name = enteredText.replaceSpaceWithUnderscore()
 
-            audioSpeed(name, audioUri!!)
-            dismissDialog(renameAlertDialog, renameDialogView)
-
-            savingDialog(50)
+            if(name!=""){
+                audioSpeed(name, audioUri!!)
+                dismissDialog(renameAlertDialog, renameDialogView)
+                savingDialog(50)
+            }
+            else {
+                context?.showSmallLengthToast("Please write a valid name!")
+            }
         }
 
         renameDialogBinding.tvCancelRD.setOnClickListener {

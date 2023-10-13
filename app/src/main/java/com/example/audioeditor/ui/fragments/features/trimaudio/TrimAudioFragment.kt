@@ -640,17 +640,20 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
             val enteredText = renameDialogBinding.etRenameRD.text.toString()
             val name = enteredText.replaceSpaceWithUnderscore()
 
-            if(trimIn){
-                pauseMediaPlayer()
-                trimInAudio(name)
+            if(name!=""){
+                if (trimIn) {
+                    pauseMediaPlayer()
+                    trimInAudio(name)
+                } else if (trimOut) {
+                    pauseMediaPlayer()
+                    trimOutAudio(name)
+                }
+                dismissDialog(renameAlertDialog, renameDialogView)
+                savingDialog(50)
             }
-            else if (trimOut){
-                pauseMediaPlayer()
-                trimOutAudio(name)
+            else{
+                context?.showSmallLengthToast("Please write a valid name!")
             }
-            dismissDialog(renameAlertDialog, renameDialogView)
-
-            savingDialog(50)
         }
 
         renameDialogBinding.tvCancelRD.setOnClickListener {
@@ -1535,7 +1538,7 @@ class TrimAudioFragment : Fragment(), CommandExecutionCallback {
                 textView.setTextColor(
                     ContextCompat.getColor(
                         it,
-                        R.color.textColorDarkGrey
+                        R.color.textColorlightGrey
                     )
                 )
             }
